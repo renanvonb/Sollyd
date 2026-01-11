@@ -29,17 +29,17 @@ interface SidebarProps {
 const menuItems = [
     {
         label: 'Dashboard',
-        href: '/financeiro/resumo',
+        href: '/dashboard',
         icon: LayoutDashboard,
     },
     {
         label: 'Transações',
-        href: '/financeiro/transacoes',
+        href: '/transacoes',
         icon: ArrowRightLeft,
     },
     {
         label: 'Investimentos',
-        href: '/financeiro/investimentos',
+        href: '/investimentos',
         icon: TrendingUp,
         disabled: true,
     },
@@ -47,7 +47,6 @@ const menuItems = [
         label: 'Cadastros',
         href: '/cadastros',
         icon: UserPlus,
-        disabled: true,
     },
 ]
 

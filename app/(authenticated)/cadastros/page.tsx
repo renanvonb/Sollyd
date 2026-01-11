@@ -1,0 +1,139 @@
+'use client';
+
+import { useState, useRef } from 'react';
+import { Search, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { TopBar } from '@/components/ui/top-bar';
+import { WalletsContent } from '@/components/cadastros/wallets-content';
+import { PayersContent } from '@/components/cadastros/payers-content';
+import { PayeesContent } from '@/components/cadastros/payees-content';
+import { CategoriesContent } from '@/components/cadastros/categories-content';
+import { SubcategoriesContent } from '@/components/cadastros/subcategories-content';
+import { ClassificationsContent } from '@/components/cadastros/classifications-content';
+
+type TabType = 'carteiras' | 'pagadores' | 'beneficiarios' | 'categorias' | 'subcategorias' | 'classificacoes';
+
+const tabs = [
+    { id: 'carteiras', label: 'Carteiras' },
+    { id: 'pagadores', label: 'Pagadores' },
+    { id: 'beneficiarios', label: 'Beneficiários' },
+    { id: 'categorias', label: 'Categorias' },
+    { id: 'subcategorias', label: 'Subcategorias' },
+    { id: 'classificacoes', label: 'Classificações' },
+];
+
+const tabTitles: Record<TabType, { title: string; description: string }> = {
+    carteiras: {
+        title: 'Carteiras',
+        description: 'Gerencie suas carteiras e contas financeiras',
+    },
+    pagadores: {
+        title: 'Pagadores',
+        description: 'Gerencie os pagadores das suas transações',
+    },
+    beneficiarios: {
+        title: 'Beneficiários',
+        description: 'Gerencie quem recebe seus pagamentos'
+    },
+    categorias: {
+        title: 'Categorias',
+        description: 'Gerencie as categorias de receitas e despesas',
+    },
+    subcategorias: {
+        title: 'Subcategorias',
+        description: 'Gerencie as subcategorias das suas despesas',
+    },
+    classificacoes: {
+        title: 'Classificações',
+        description: 'Gerencie as classificações das suas despesas',
+    },
+};
+
+export default function CadastrosPage() {
+    const [activeTab, setActiveTab] = useState<TabType>('carteiras');
+    const [searchValue, setSearchValue] = useState('');
+
+    // Refs para controlar os dialogs dos componentes
+    const walletsRef = useRef<{ openCreateDialog: () => void }>(null);
+    const payersRef = useRef<{ openCreateDialog: () => void }>(null);
+    const payeesRef = useRef<{ openCreateDialog: () => void }>(null);
+
+    const currentTab = tabTitles[activeTab];
+
+    const handleAddClick = () => {
+        switch (activeTab) {
+            case 'carteiras':
+                walletsRef.current?.openCreateDialog();
+                break;
+            case 'pagadores':
+                payersRef.current?.openCreateDialog();
+                break;
+            case 'beneficiarios':
+                payeesRef.current?.openCreateDialog();
+                break;
+            // Adicionar outros casos conforme necessário
+        }
+    };
+
+    return (
+        <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Top Bar - Usando componente reutilizável */}
+            <TopBar
+                moduleName="Cadastros"
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={(tabId) => setActiveTab(tabId as TabType)}
+                variant="simple"
+            />
+
+            {/* Wrapper Principal */}
+            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-6 overflow-hidden">
+
+                {/* Page Header - Título, descrição, busca e botão no mesmo nível */}
+                <div className="flex items-center justify-between flex-none">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-zinc-950 font-jakarta">
+                            {currentTab.title}
+                        </h1>
+                        <p className="text-zinc-500 mt-1 font-sans text-sm font-inter">
+                            {currentTab.description}
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        {/* Search Bar */}
+                        <div className="relative w-[200px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                            <Input
+                                placeholder="Buscar..."
+                                className="pl-9 h-10 font-inter w-full"
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Add Button */}
+                        <Button
+                            onClick={handleAddClick}
+                            className="font-inter font-medium bg-[#00665C] hover:bg-[#00665C]/90"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Adicionar
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Content Area - Cards */}
+                <div className="flex-1 flex flex-col gap-8 overflow-auto">
+                    {activeTab === 'carteiras' && <WalletsContent ref={walletsRef} />}
+                    {activeTab === 'pagadores' && <PayersContent ref={payersRef} />}
+                    {activeTab === 'beneficiarios' && <PayeesContent ref={payeesRef} />}
+                    {activeTab === 'categorias' && <CategoriesContent />}
+                    {activeTab === 'subcategorias' && <SubcategoriesContent />}
+                    {activeTab === 'classificacoes' && <ClassificationsContent />}
+                </div>
+            </div>
+        </div>
+    );
+}

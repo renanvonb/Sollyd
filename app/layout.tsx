@@ -19,6 +19,14 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
     title: "Sollyd",
     description: "Plataforma de gestão financeira, jurídica e de documentos com foco em eficiência.",
+    icons: {
+        icon: [
+            { url: '/icon.png', sizes: 'any' },
+        ],
+        apple: [
+            { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+        ],
+    },
 };
 
 export const viewport: Viewport = {

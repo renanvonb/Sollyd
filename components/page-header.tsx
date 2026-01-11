@@ -35,7 +35,7 @@ export function PageHeader({ links, isLoading }: PageHeaderProps) {
     const { isOpen, toggle } = useSidebar()
     const { isVisible, toggleVisibility } = useVisibility()
 
-    const moduleName = "Financeiro"
+    const moduleName = "Transações"
 
     return (
         <header id="global-header" className="sticky top-0 z-30 w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md h-16 flex-none font-sans">
