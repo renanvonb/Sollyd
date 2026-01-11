@@ -12,9 +12,10 @@ import { TransactionForm } from "@/components/transaction-form"
 import { TransactionDetailsDialog } from "@/components/transaction-details-dialog"
 import { TransactionsTableSkeleton } from "@/components/ui/skeletons"
 import { Sheet } from "@/components/ui/sheet"
+import { EmptyState } from "@/components/ui/empty-state"
 import { TimeRange } from "@/app/actions/transactions-fetch"
-import { Loader2, Plus, Search, ChevronDown } from "lucide-react"
-import type { Transaction } from "@/app/(authenticated)/financeiro/transacoes/components/columns"
+import { Loader2, Plus, Search, ChevronDown, Inbox } from "lucide-react"
+import type { Transaction } from "@/types/transaction"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -125,7 +126,6 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
     }, [initialData, searchQuery])
 
     const handleSuccess = () => {
-
         router.refresh()
         setIsEditSheetOpen(false)
     }
@@ -222,9 +222,7 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                                 <DropdownMenuItem onClick={() => handleNewTransaction('expense')} className="cursor-pointer">
                                     Despesa
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleNewTransaction('investment')} className="cursor-pointer">
-                                    Investimento
-                                </DropdownMenuItem>
+
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -241,20 +239,28 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
 
                     {/* Container da Tabela (Área E) - Scroll Interno */}
                     <div id="data-table-wrapper" className="flex-1 min-h-0 bg-white rounded-[16px] border border-zinc-200 shadow-sm flex flex-col relative overflow-hidden font-sans">
-                        {isPending && initialData.length === 0 ? (
-                            <div className="flex-1 flex flex-col items-center justify-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-zinc-400 mb-4" />
-                                <p className="text-zinc-500 font-medium font-sans">Carregando transações...</p>
+                        {isPending && (
+                            <div className="absolute inset-0 bg-white/50 z-20 flex items-center justify-center backdrop-blur-[1px]">
+                                <Loader2 className="h-8 w-8 animate-spin text-zinc-950" />
                             </div>
+                        )}
+
+                        {filteredData.length > 0 ? (
+                            <TransactionTable data={filteredData} onRowClick={handleRowClick} />
                         ) : (
-                            <>
-                                {isPending && (
-                                    <div className="absolute inset-0 bg-white/50 z-20 flex items-center justify-center backdrop-blur-[1px]">
-                                        <Loader2 className="h-8 w-8 animate-spin text-zinc-950" />
-                                    </div>
+                            <div className="flex-1 flex flex-col items-center justify-center h-full min-h-[400px] p-8 animate-in fade-in duration-500">
+                                <EmptyState
+                                    variant="default"
+                                    title="Nenhuma transação encontrada"
+                                    description="Parece que você ainda não registrou nenhuma movimentação neste período."
+                                    icon={Inbox}
+                                />
+                                {searchQuery && (
+                                    <Button variant="link" onClick={() => setSearchValue("")} className="mt-4 text-zinc-500">
+                                        Limpar busca
+                                    </Button>
                                 )}
-                                <TransactionTable data={filteredData} onRowClick={handleRowClick} />
-                            </>
+                            </div>
                         )}
                     </div>
 
@@ -285,6 +291,7 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                 {/* Edit Sheet */}
                 <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
                     <TransactionForm
+                        key={selectedTransaction?.id}
                         open={isEditSheetOpen}
                         transaction={selectedTransaction}
                         onSuccess={handleSuccess}

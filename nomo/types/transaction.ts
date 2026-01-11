@@ -1,6 +1,12 @@
 export type TransactionType = 'revenue' | 'expense' | 'investment';
 export type TransactionClassification = 'essential' | 'necessary' | 'superfluous';
 
+export interface Payer {
+    id: string;
+    name: string;
+    created_at: string;
+}
+
 export interface PaymentMethod {
     id: string;
     name: string;
@@ -10,6 +16,7 @@ export interface PaymentMethod {
 export interface Payee {
     id: string;
     name: string;
+    type?: string;
     created_at: string;
 }
 
@@ -32,6 +39,7 @@ export interface Transaction {
     description: string;
     amount: number;
     type: TransactionType;
+    payer_id?: string;
     payee_id?: string;
     payment_method_id?: string;
     classification: TransactionClassification;
@@ -40,9 +48,14 @@ export interface Transaction {
     due_date: string;
     payment_date?: string;
     is_installment: boolean;
+    wallet_id?: string;
+    competence_date?: string;
+    observation?: string;
+    status?: string;
     created_at: string;
     updated_at: string;
     // Joined relations
+    payers?: Payer;
     payees?: Payee;
     payment_methods?: PaymentMethod;
     categories?: Category;
@@ -53,6 +66,7 @@ export interface CreateTransactionInput {
     description: string;
     amount: number;
     type: TransactionType;
+    payer_id?: string;
     payee_id?: string;
     payment_method_id?: string;
     classification: TransactionClassification;
@@ -61,4 +75,8 @@ export interface CreateTransactionInput {
     due_date: string;
     payment_date?: string;
     is_installment: boolean;
+    wallet_id?: string;
+    competence_date?: string;
+    observation?: string;
+    status?: string;
 }

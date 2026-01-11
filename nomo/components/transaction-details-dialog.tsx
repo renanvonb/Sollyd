@@ -3,15 +3,13 @@
 import * as React from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { Pencil, Trash2, CircleArrowUp, CircleArrowDown, CircleDollarSign } from "lucide-react"
-import type { Transaction } from "@/app/(authenticated)/financeiro/transacoes/components/columns"
+import { Pencil, Trash2 } from "lucide-react"
+import type { Transaction } from "@/types/transaction"
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
-    DialogTitle,
 } from "@/components/ui/dialog"
 import {
     AlertDialog,
@@ -24,8 +22,9 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { StatusIndicator } from "@/components/ui/status-indicator"
+import { cn } from "@/lib/utils"
 import { useVisibility } from "@/hooks/use-visibility-state"
 import { deleteTransaction } from "@/app/actions/transactions"
 import { toast } from "sonner"
@@ -38,25 +37,10 @@ interface TransactionDetailsDialogProps {
     onSuccess: () => void
 }
 
-const transactionTypeConfig = {
-    revenue: {
-        icon: CircleArrowUp,
-        color: "text-emerald-500",
-        bgColor: "bg-emerald-50",
-        label: "Receita"
-    },
-    expense: {
-        icon: CircleArrowDown,
-        color: "text-rose-500",
-        bgColor: "bg-rose-50",
-        label: "Despesa"
-    },
-    investment: {
-        icon: CircleDollarSign,
-        color: "text-blue-500",
-        bgColor: "bg-blue-50",
-        label: "Investimento"
-    }
+const classificationMap: Record<string, string> = {
+    essential: "Essencial",
+    necessary: "Necessário",
+    superfluous: "Supérfluo"
 }
 
 export function TransactionDetailsDialog({
@@ -72,8 +56,7 @@ export function TransactionDetailsDialog({
 
     if (!transaction) return null
 
-    const typeConfig = transactionTypeConfig[transaction.type]
-    const TypeIcon = typeConfig.icon
+    const isExpense = transaction.type === 'expense'
 
     const formatValue = (value: number) => {
         if (!isVisible) return "R$ ••••"
@@ -83,16 +66,9 @@ export function TransactionDetailsDialog({
         }).format(value)
     }
 
-    const getStatus = (): "Pendente" | "Realizado" | "Agendado" | "Atrasado" => {
-        if (transaction.payment_date !== null) return "Realizado"
-        const dueDate = new Date(transaction.due_date)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        dueDate.setHours(0, 0, 0, 0)
-
-        if (dueDate > today) return "Agendado"
-        if (dueDate < today) return "Atrasado"
-        return "Pendente"
+    const formatDate = (dateString?: string | null) => {
+        if (!dateString) return "-"
+        return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR })
     }
 
     const handleDelete = async () => {
@@ -119,122 +95,83 @@ export function TransactionDetailsDialog({
         onEdit(transaction)
     }
 
+    const DetailItem = ({ label, value }: { label: string, value?: string | null }) => (
+        <div className="flex flex-col gap-1 items-start text-left">
+            <span className="text-sm font-normal text-zinc-500 font-inter">{label}</span>
+            <span className="text-base font-medium text-zinc-950 font-inter">{value || "-"}</span>
+        </div>
+    )
+
     return (
         <>
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-[500px] bg-white rounded-[16px]">
-                    {/* Transaction Type Icon */}
-                    <div className={`h-12 w-12 mx-auto mb-4 p-2 ${typeConfig.bgColor} rounded-full flex items-center justify-center`}>
-                        <TypeIcon className={`h-8 w-8 ${typeConfig.color}`} />
+                <DialogContent className="sm:max-w-[440px] bg-white p-0 gap-0 rounded-[16px] overflow-hidden focus:outline-none">
+                    <div className="p-6 pb-4 flex flex-col items-center gap-1 text-center">
+                        <h3 className="text-xl font-bold text-zinc-950 font-inter leading-tight">{transaction.description}</h3>
+
+                        <h2 className={cn(
+                            "text-3xl font-bold font-inter tracking-tight mt-1",
+                            isExpense ? "text-red-600" : "text-emerald-500"
+                        )}>
+                            {formatValue(transaction.amount)}
+                        </h2>
+
+                        <Badge variant="secondary" className="mt-2 font-inter text-sm font-medium">
+                            {isExpense ? (transaction.payees?.name || "Sem favorecido") : (transaction.payers?.name || "Sem pagador")}
+                        </Badge>
                     </div>
 
-                    <DialogHeader>
-                        <DialogTitle className="text-xl font-semibold font-jakarta text-zinc-950 text-center">
-                            {transaction.description}
-                        </DialogTitle>
-                        <DialogDescription className="text-sm text-zinc-500 font-inter text-center">
-                            Vencimento: {format(new Date(transaction.due_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                        </DialogDescription>
-                    </DialogHeader>
+                    <Separator />
 
-                    <Separator className="my-2" />
+                    <div className="p-6 grid grid-cols-2 gap-y-6 gap-x-4">
+                        {isExpense ? (
+                            <>
+                                <DetailItem label="Classificação" value={classificationMap[transaction.classification] || "-"} />
+                                <DetailItem label="Competência" value={transaction.competence_date ? format(new Date(transaction.competence_date), "MMM/yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) : "-"} />
+                                <DetailItem label="Categoria" value={transaction.categories?.name} />
+                                <DetailItem label="Subcategoria" value={transaction.subcategories?.name} />
+                                <DetailItem label="Data de vencimento" value={formatDate(transaction.due_date)} />
+                                <DetailItem label="Data de pagamento" value={formatDate(transaction.payment_date)} />
+                            </>
+                        ) : (
+                            <>
+                                <DetailItem label="Competência" value={transaction.competence_date ? format(new Date(transaction.competence_date), "MMM/yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) : "-"} />
+                                <DetailItem label="Data de recebimento" value={formatDate(transaction.payment_date || transaction.due_date)} />
+                            </>
+                        )}
 
-                    <div className="grid gap-4 py-4">
-                        {/* Descrição - Full width */}
-                        <div className="grid gap-2">
-                            <label className="text-sm font-medium text-zinc-700 font-inter">
-                                Descrição
-                            </label>
-                            <p className="text-sm text-zinc-950 font-inter">
-                                {transaction.description}
-                            </p>
-                        </div>
-
-                        {/* Valor - Destaque visual */}
-                        <div className="grid gap-2">
-                            <label className="text-sm font-medium text-zinc-700 font-inter">
-                                Valor
-                            </label>
-                            <p className="text-2xl font-bold text-zinc-950 font-jakarta">
-                                {formatValue(transaction.amount)}
-                            </p>
-                        </div>
-
-                        {/* Grid 2 colunas */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <label className="text-sm font-medium text-zinc-700 font-inter">
-                                    Favorecido
-                                </label>
-                                <p className="text-sm text-zinc-950 font-inter">
-                                    {transaction.payees?.name || "-"}
-                                </p>
-                            </div>
-
-                            <div className="grid gap-2">
-                                <label className="text-sm font-medium text-zinc-700 font-inter">
-                                    Categoria
-                                </label>
-                                <p className="text-sm text-zinc-950 font-inter">
-                                    {transaction.categories?.name || "-"}
-                                    {transaction.subcategories?.name && ` / ${transaction.subcategories.name}`}
-                                </p>
-                            </div>
-
-                            <div className="grid gap-2">
-                                <label className="text-sm font-medium text-zinc-700 font-inter">
-                                    Data de Vencimento
-                                </label>
-                                <p className="text-sm text-zinc-950 font-inter">
-                                    {format(new Date(transaction.due_date), "dd/MM/yyyy", { locale: ptBR })}
-                                </p>
-                            </div>
-
-                            <div className="grid gap-2">
-                                <label className="text-sm font-medium text-zinc-700 font-inter">
-                                    Status
-                                </label>
-                                <StatusIndicator status={getStatus()} />
-                            </div>
-                        </div>
-
-
-                        {transaction.payment_date !== null && (
-                            <div className="grid gap-2">
-                                <label className="text-sm font-medium text-zinc-700 font-inter">
-                                    Data de Pagamento
-                                </label>
-                                <p className="text-sm text-zinc-950 font-inter">
-                                    {format(new Date(transaction.payment_date), "dd/MM/yyyy", { locale: ptBR })}
-                                </p>
+                        {transaction.observation && (
+                            <div className="col-span-2 bg-muted/50 rounded-lg p-4 mt-2 border border-zinc-100/50">
+                                <p className="text-sm text-zinc-600 font-inter leading-relaxed">{transaction.observation}</p>
                             </div>
                         )}
                     </div>
 
-                    <Separator className="my-2" />
+                    <Separator className="mb-6" />
 
-                    <DialogFooter className="gap-2">
+                    <DialogFooter className="px-6 pb-6 pt-0 sm:justify-end gap-3 bg-white">
                         <Button
-                            variant="outline"
+                            variant="ghost"
                             onClick={() => setShowDeleteAlert(true)}
-                            className="text-destructive hover:text-destructive font-inter"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive font-inter"
                         >
-                            <Trash2 className="h-4 w-4 mr-2" />
                             Excluir
                         </Button>
-                        <Button onClick={handleEdit} className="font-inter">
-                            <Pencil className="h-4 w-4 mr-2" />
+                        <Button
+                            onClick={handleEdit}
+                            variant="outline"
+                            className="text-zinc-950 font-inter border-zinc-200"
+                        >
                             Editar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Delete Confirmation Alert */}
             <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
                 <AlertDialogContent className="bg-white">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="font-jakarta">
+                        <AlertDialogTitle className="font-inter">
                             Confirmar Exclusão
                         </AlertDialogTitle>
                         <AlertDialogDescription className="font-inter">

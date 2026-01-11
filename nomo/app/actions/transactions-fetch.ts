@@ -62,6 +62,7 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
         .from('transactions')
         .select(`
             *,
+            payers(id, name),
             payees(id, name),
             payment_methods(id, name),
             categories(id, name),

@@ -5,10 +5,11 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { format, parseISO } from "date-fns"
+import { Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 import {
     Select,
     SelectContent,
@@ -17,6 +18,8 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import { MonthPicker } from "@/components/ui/month-picker"
 import {
     SheetContent,
     SheetHeader,
@@ -46,32 +49,48 @@ import {
 import { DatePicker } from "@/components/ui/date-picker"
 import { Badge } from "@/components/ui/badge"
 import { saveTransaction, updateTransaction, deleteTransaction } from "@/app/actions/transactions"
-import { getPaymentMethods, getPayees, getCategories, getSubcategories } from "@/app/actions/transaction-data"
-import { PaymentMethod, Payee, Category, Subcategory } from "@/types/transaction"
-import type { Transaction } from "@/app/(authenticated)/financeiro/transacoes/components/columns"
+import { getPaymentMethods, getPayees, getPayers, getCategories, getSubcategories } from "@/app/actions/transaction-data"
+import { PaymentMethod, Payee, Payer, Category, Subcategory } from "@/types/transaction"
+import type { Transaction } from "@/types/transaction"
 import { toast } from "sonner"
 
 const transactionSchema = z.object({
     description: z.string().min(1, "Descrição é obrigatória"),
     amount: z.number().gt(0, "Valor deve ser maior que zero"),
     type: z.enum(["revenue", "expense", "investment"]),
+    wallet_id: z.string().optional(),
     payee_id: z.string().optional(),
-    payment_method_id: z.string().min(1, "Método é obrigatório"),
-    classification: z.enum(["essential", "necessary", "superfluous"]),
+    payer_id: z.string().optional(),
+    payment_method_id: z.string().optional(),
+    classification: z.enum(["essential", "necessary", "superfluous"]).optional(),
     category_id: z.string().min(1, "Categoria é obrigatória"),
     subcategory_id: z.string().optional(),
-    due_date: z.date(),
+    due_date: z.date().optional(),
     payment_date: z.date().optional(),
+    competence_date: z.date().optional(),
+    status: z.string().optional(),
+    observation: z.string().optional(),
     is_installment: z.boolean(),
 }).refine((data) => {
-    if (data.type === 'expense' && !data.payee_id) {
-        return false;
-    }
-    return true;
+    if (data.type === 'expense' && !data.payee_id) return false
+    return true
 }, {
-    message: "Favorecido é obrigatório para despesas",
+    message: "Favorecido é obrigatório",
     path: ["payee_id"],
 })
+
+const MOCK_PAYERS: Payer[] = [
+    {
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        name: "Goapice",
+        created_at: new Date().toISOString()
+    },
+    {
+        id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        name: "Recebee",
+        created_at: new Date().toISOString()
+    }
+]
 
 type TransactionFormValues = z.infer<typeof transactionSchema>
 
@@ -100,8 +119,10 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
     const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
     const [paymentMethods, setPaymentMethods] = React.useState<PaymentMethod[]>([])
     const [payees, setPayees] = React.useState<Payee[]>([])
+    const [payers, setPayers] = React.useState<Payer[]>([])
     const [allCategories, setAllCategories] = React.useState<Category[]>([])
     const [subcategories, setSubcategories] = React.useState<Subcategory[]>([])
+    const [isLoadingData, setIsLoadingData] = React.useState(!!transaction)
 
     const isEditMode = !!transaction
 
@@ -111,13 +132,18 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
             description: "",
             amount: 0,
             type: defaultType,
+            wallet_id: "",
             payee_id: "",
+            payer_id: "",
             payment_method_id: "",
             classification: "necessary",
             category_id: "",
             subcategory_id: "",
             due_date: new Date(),
             payment_date: undefined,
+            competence_date: new Date(),
+            status: "pending",
+            observation: "",
             is_installment: false,
         },
     })
@@ -129,24 +155,32 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
     // Load transaction data when in edit mode
     React.useEffect(() => {
         if (transaction && open) {
-            // Find IDs from names for proper population
             const loadTransactionData = async () => {
-                const [methods, pays, cats] = await Promise.all([
+                const [methods, pays, payersList, cats] = await Promise.all([
                     getPaymentMethods(),
                     getPayees(),
+                    getPayers(),
                     getCategories()
                 ])
+                setPaymentMethods(methods)
+                setPayees(pays)
+                setPayers(payersList && payersList.length > 0 ? payersList : MOCK_PAYERS)
+                setAllCategories(cats)
 
-                // Find matching IDs
-                const payeeId = pays.find(p => p.name === transaction.payees?.name)?.id || ""
-                const methodId = methods.find(m => m.name === transaction.payment_methods?.name)?.id || ""
-                const categoryId = cats.find(c => c.name === transaction.categories?.name)?.id || ""
+                // Hybrid lookup with new separation logic
+                const payeeId = transaction.payee_id || (transaction.payees?.id) || ""
+                const payerId = transaction.payer_id || (transaction.payers?.id) || ""
 
-                // Load subcategories if category exists
-                let subcategoryId = ""
-                if (categoryId && transaction.subcategories?.name) {
+                const methodId = transaction.payment_method_id || methods.find(m => m.name === transaction.payment_methods?.name)?.id || ""
+                const categoryId = transaction.category_id || cats.find(c => c.name === transaction.categories?.name)?.id || ""
+
+                let subcategoryId = transaction.subcategory_id || ""
+                if (categoryId) {
                     const subs = await getSubcategories(categoryId)
-                    subcategoryId = subs.find(s => s.name === transaction.subcategories?.name)?.id || ""
+                    setSubcategories(subs)
+                    if (!subcategoryId && transaction.subcategories?.name) {
+                        subcategoryId = subs.find(s => s.name === transaction.subcategories?.name)?.id || ""
+                    }
                 }
 
                 reset({
@@ -154,14 +188,20 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                     amount: transaction.amount,
                     type: transaction.type,
                     payee_id: payeeId,
+                    payer_id: payerId,
                     payment_method_id: methodId,
-                    classification: "necessary",
+                    classification: transaction.classification || "necessary",
                     category_id: categoryId,
                     subcategory_id: subcategoryId,
                     due_date: parseISO(transaction.due_date),
                     payment_date: transaction.payment_date ? parseISO(transaction.payment_date) : undefined,
                     is_installment: false,
+                    observation: transaction.observation || "",
+                    competence_date: transaction.competence_date ? parseISO(transaction.competence_date) : undefined,
+                    status: transaction.status || "pending",
+                    wallet_id: transaction.wallet_id || "",
                 })
+                setIsLoadingData(false)
             }
 
             loadTransactionData()
@@ -179,6 +219,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                 amount: 0,
                 type: defaultType,
                 payee_id: "",
+                payer_id: "",
                 payment_method_id: "",
                 classification: "necessary",
                 category_id: "",
@@ -186,16 +227,22 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                 due_date: new Date(),
                 payment_date: undefined,
                 is_installment: false,
+                observation: "",
+                competence_date: new Date(),
+                status: "pending",
+                wallet_id: "main",
             })
             // Load initial data
             const loadData = async () => {
-                const [methods, pays, cats] = await Promise.all([
+                const [methods, pays, payersList, cats] = await Promise.all([
                     getPaymentMethods(),
                     getPayees(),
+                    getPayers(),
                     getCategories()
                 ])
                 setPaymentMethods(methods)
                 setPayees(pays)
+                setPayers(payersList && payersList.length > 0 ? payersList : MOCK_PAYERS)
                 setAllCategories(cats)
             }
             loadData()
@@ -218,38 +265,29 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
     const onSubmit = async (data: TransactionFormValues) => {
         startTransition(async () => {
             try {
+                const effectiveDueDate = data.due_date || data.payment_date || new Date()
+
                 const payload = {
                     ...data,
-                    due_date: format(data.due_date, 'yyyy-MM-dd'),
+                    wallet_id: null,
+                    due_date: format(effectiveDueDate, 'yyyy-MM-dd'),
                     payment_date: data.payment_date ? format(data.payment_date, 'yyyy-MM-dd') : null,
+                    competence_date: data.competence_date ? format(data.competence_date, 'yyyy-MM-dd') : null,
                 }
 
-                const result = isEditMode && transaction
-                    ? await updateTransaction(transaction.id, payload)
-                    : await saveTransaction(payload)
-
-                if (result.success) {
-                    toast.success(isEditMode ? "Transação atualizada com sucesso!" : "Transação registrada com sucesso!", {
-                        description: `${data.description} • ${new Intl.NumberFormat("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                        }).format(data.amount)}`,
-                        duration: 4000,
-                    })
-                    reset()
-                    if (onSuccess) onSuccess()
+                if (isEditMode && transaction) {
+                    await updateTransaction(transaction.id, payload)
                 } else {
-                    toast.error(isEditMode ? "Erro ao atualizar transação" : "Erro ao registrar transação", {
-                        description: result.error || "Não foi possível salvar a transação. Tente novamente.",
-                        duration: 5000,
-                    })
+                    await saveTransaction(payload)
                 }
+
+                toast.success(isEditMode ? "Transação salva com sucesso!" : "Transação registrada com sucesso!")
+                reset()
+                if (onSuccess) onSuccess()
+
             } catch (error) {
                 console.error(error)
-                toast.error(isEditMode ? "Erro ao atualizar transação" : "Erro ao registrar transação", {
-                    description: "Ocorreu um erro inesperado. Verifique sua conexão e tente novamente.",
-                    duration: 5000,
-                })
+                toast.error("Erro ao salvar transação")
             }
         })
     }
@@ -262,25 +300,27 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                 const result = await deleteTransaction(transaction.id)
                 if (result.success) {
                     setShowDeleteDialog(false)
-                    toast.success("Transação excluída com sucesso!", {
-                        description: transaction.description,
-                    })
+                    toast.success("Transação excluída com sucesso!")
                     if (onSuccess) onSuccess()
                 } else {
-                    toast.error("Erro ao excluir transação", {
-                        description: result.error || "Não foi possível excluir a transação.",
-                    })
+                    toast.error(result.error || "Erro ao excluir transação")
                 }
             } catch (error) {
                 console.error(error)
-                toast.error("Erro ao excluir transação", {
-                    description: "Ocorreu um erro inesperado.",
-                })
+                toast.error("Erro ao excluir transação")
             }
         })
     }
 
     const currencyDisplay = formatCurrencyBR(watch("amount"))
+
+    if (isLoadingData) {
+        return (
+            <SheetContent className="w-[600px] sm:max-w-[600px] flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+            </SheetContent>
+        )
+    }
 
     return (
         <SheetContent className="w-[600px] sm:max-w-[600px] flex flex-col p-0 gap-0">
@@ -303,10 +343,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
                     <div className="flex-1 overflow-y-auto p-6">
-                        <div className="space-y-6">
-                            {/* Campo de Tipo (Oculto ou Removido da UI, mantido no estado) */}
-                            {/* Tabs Deletadas - O tipo agora vem do Dropdown externo */}
-
+                        <div className="space-y-4">
                             {/* Descrição */}
                             <FormField
                                 control={form.control}
@@ -315,14 +352,14 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                     <FormItem className="space-y-2">
                                         <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Descrição</FormLabel>
                                         <FormControl>
-                                            <Input {...field} placeholder="Ex: Aluguel" className="rounded-xl px-4 py-6 font-sans" />
+                                            <Input {...field} placeholder={type === 'revenue' ? "Ex: Salário Mensal" : "Ex: Aluguel"} className="rounded-xl px-4 py-6 font-sans" />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
 
-                            {/* Valor e Favorecido */}
+                            {/* Valor e Carteira */}
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
@@ -346,73 +383,22 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                     )}
                                 />
 
-                                {type === 'expense' && (
-                                    <FormField
-                                        control={form.control}
-                                        name="payee_id"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-2">
-                                                <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Favorecido</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                            <SelectValue placeholder="Selecione" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent className="bg-white border-zinc-200 max-h-[300px]">
-                                                        {payees.map(payee => (
-                                                            <SelectItem key={payee.id} value={payee.id}>{payee.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
-                            </div>
-
-                            {/* Método e Classificação */}
-                            <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
-                                    name="payment_method_id"
+                                    name="wallet_id"
                                     render={({ field }) => (
                                         <FormItem className="space-y-2">
-                                            <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Método</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Carteira</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                                                 <FormControl>
                                                     <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
                                                         <SelectValue placeholder="Selecione" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent className="bg-white border-zinc-200">
-                                                    {paymentMethods.map(method => (
-                                                        <SelectItem key={method.id} value={method.id}>{method.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="classification"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-2">
-                                            <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Classificação</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent className="bg-white border-zinc-200">
-                                                    <SelectItem value="essential">Essencial</SelectItem>
-                                                    <SelectItem value="necessary">Necessário</SelectItem>
-                                                    <SelectItem value="superfluous">Supérfluo</SelectItem>
+                                                    <SelectItem value="main">Carteira Principal</SelectItem>
+                                                    <SelectItem value="nubank">NuBank</SelectItem>
+                                                    <SelectItem value="itau">Itaú</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -421,111 +407,292 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                 />
                             </div>
 
-                            {/* Categoria e Subcategoria */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="category_id"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-2">
-                                            <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Categoria</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                        <SelectValue placeholder="Selecione" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent className="bg-white border-zinc-200">
-                                                    {allCategories.map(cat => (
-                                                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                            {/* Campos Específicos por Tipo */}
+                            {type === 'expense' && (
+                                <>
+                                    {/* Favorecido e Classificação */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="payee_id"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Favorecido</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
+                                                                <SelectValue placeholder="Selecione" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="bg-white border-zinc-200 max-h-[300px]">
+                                                            {payees?.map(payee => (
+                                                                <SelectItem key={payee.id} value={payee.id}>{payee.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
 
-                                <FormField
-                                    control={form.control}
-                                    name="subcategory_id"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-2">
-                                            <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Subcategoria</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCategoryId}>
-                                                <FormControl>
-                                                    <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                        <SelectValue placeholder="Selecione" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent className="bg-white border-zinc-200">
-                                                    {subcategories.map(sub => (
-                                                        <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            {/* Datas */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="due_date"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-2 flex flex-col">
-                                            <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Data de Vencimento</FormLabel>
-                                            <FormControl>
-                                                <DatePicker
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    className="rounded-xl px-4 py-6 font-sans"
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="payment_date"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-2 flex flex-col">
-                                            <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Data de Pagamento</FormLabel>
-                                            <FormControl>
-                                                <DatePicker
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    className="rounded-xl px-4 py-6 font-sans"
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            {/* Parcelamento */}
-                            <div className="p-5 border border-zinc-200 rounded-2xl bg-zinc-50/50 mt-2">
-                                <div className="flex items-center justify-between mb-1">
-                                    <div className="flex items-center gap-2">
-                                        <FormLabel className="text-base font-bold text-zinc-900 font-sans">Parcelamento</FormLabel>
-                                        <Badge variant="secondary" className="bg-zinc-200 text-zinc-700 font-sans text-[10px] py-0 px-2 uppercase tracking-wider">
-                                            Em breve
-                                        </Badge>
+                                        <FormField
+                                            control={form.control}
+                                            name="classification"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Classificação</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value || "necessary"}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="bg-white border-zinc-200">
+                                                            <SelectItem value="essential">Essencial</SelectItem>
+                                                            <SelectItem value="necessary">Necessário</SelectItem>
+                                                            <SelectItem value="superfluous">Supérfluo</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
-                                    <Switch
-                                        disabled
-                                        checked={false}
-                                        className="data-[state=checked]:bg-zinc-950"
-                                    />
-                                </div>
-                                <p className="text-sm text-zinc-500 font-medium font-sans">Recurso de divisão mensal indisponível.</p>
-                            </div>
+                                    {/* Categoria etc ... */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="category_id"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Categoria</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
+                                                                <SelectValue placeholder="Selecione" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="bg-white border-zinc-200">
+                                                            {allCategories.map(cat => (
+                                                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        {/* Subcat ... */}
+                                        <FormField
+                                            control={form.control}
+                                            name="subcategory_id"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Subcategoria</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCategoryId}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
+                                                                <SelectValue placeholder="Selecione" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="bg-white border-zinc-200">
+                                                            {subcategories?.map(sub => (
+                                                                <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    {/* Dates ... */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="competence_date"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 flex flex-col">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Competência</FormLabel>
+                                                    <FormControl>
+                                                        <MonthPicker value={field.value} onChange={field.onChange} className="w-full rounded-xl h-[50px]" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="due_date"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 flex flex-col">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Vencimento</FormLabel>
+                                                    <FormControl>
+                                                        <DatePicker value={field.value} onChange={field.onChange} className="rounded-xl px-4 py-6 font-sans w-full" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="payment_date"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 flex flex-col">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Pagamento</FormLabel>
+                                                    <FormControl>
+                                                        <DatePicker value={field.value} onChange={field.onChange} className="rounded-xl px-4 py-6 font-sans w-full" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="status"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Status</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value || "pending"}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="bg-white border-zinc-200">
+                                                            <SelectItem value="pending">Pendente</SelectItem>
+                                                            <SelectItem value="paid">Pago</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {type === 'revenue' && (
+                                <>
+                                    {/* Pagador e Categoria */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="payer_id"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Pagador</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
+                                                                <SelectValue placeholder="Selecione" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="bg-white border-zinc-200 max-h-[300px]">
+                                                            {payers?.map(payer => (
+                                                                <SelectItem key={payer.id} value={payer.id}>{payer.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="category_id"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Categoria</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
+                                                                <SelectValue placeholder="Selecione" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="bg-white border-zinc-200">
+                                                            {allCategories.map(cat => (
+                                                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    {/* Dates ... */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="competence_date"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 flex flex-col">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Competência</FormLabel>
+                                                    <FormControl>
+                                                        <MonthPicker value={field.value} onChange={field.onChange} className="w-full rounded-xl h-[50px]" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="payment_date"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 flex flex-col">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Data de Recebimento</FormLabel>
+                                                    <FormControl>
+                                                        <DatePicker value={field.value} onChange={field.onChange} className="rounded-xl px-4 py-6 font-sans w-full" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="status"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Status</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value || "received"}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="bg-white border-zinc-200">
+                                                            <SelectItem value="pending">Pendente</SelectItem>
+                                                            <SelectItem value="received">Recebido</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Observação (Comum) */}
+                            <FormField
+                                control={form.control}
+                                name="observation"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-2">
+                                        <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Observação</FormLabel>
+                                        <FormControl>
+                                            <Textarea {...field} placeholder="Adicione uma observação..." className="resize-none rounded-xl" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                     </div>
 

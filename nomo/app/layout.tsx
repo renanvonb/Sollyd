@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -44,15 +44,8 @@ export default function RootLayout({
                 {children}
                 <Toaster
                     position="bottom-right"
-                    richColors
                     closeButton
                     expand={false}
-                    toastOptions={{
-                        className: 'font-sans',
-                        style: {
-                            fontFamily: 'var(--font-inter)',
-                        }
-                    }}
                 />
             </body>
         </html>

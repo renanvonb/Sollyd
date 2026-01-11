@@ -41,7 +41,7 @@ export function AuthSkeleton() {
 /**
  * TableSkeleton: Mimics the Transactions Data Table structure
  */
-export function TableSkeleton() {
+export function TransactionsTableSkeleton() {
     return (
         <div className="flex flex-col h-screen animate-pulse bg-zinc-50 font-sans">
             <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-6 overflow-hidden">
@@ -121,6 +121,8 @@ export function SidebarSkeleton() {
 /**
  * TopbarSkeleton: Mimics high-level navigation and breadcrumbs
  */
+export const TableSkeleton = TransactionsTableSkeleton
+
 export function TopbarSkeleton() {
     return (
         <div className="h-16 w-full border-b flex items-center px-6 justify-between bg-white">

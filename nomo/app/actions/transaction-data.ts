@@ -1,9 +1,11 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { PaymentMethod, Category, Subcategory, Payee } from '@/types/transaction'
+import { PaymentMethod, Category, Subcategory, Payee, Payer } from '@/types/transaction'
+import { unstable_noStore as noStore } from 'next/cache'
 
 export async function getPaymentMethods() {
+    noStore()
     const supabase = createClient()
     const { data, error } = await supabase
         .from('payment_methods')
@@ -15,10 +17,27 @@ export async function getPaymentMethods() {
         return []
     }
 
-    return data as PaymentMethod[]
+    return (data || []) as PaymentMethod[]
+}
+
+export async function getPayers() {
+    noStore()
+    const supabase = createClient()
+    const { data, error } = await supabase
+        .from('payers')
+        .select('*')
+        .order('name')
+
+    if (error) {
+        console.error('[getPayers] Error:', error)
+        return []
+    }
+
+    return (data || []) as Payer[]
 }
 
 export async function getPayees() {
+    noStore()
     const supabase = createClient()
     const { data, error } = await supabase
         .from('payees')
@@ -30,10 +49,11 @@ export async function getPayees() {
         return []
     }
 
-    return data as Payee[]
+    return (data || []) as Payee[]
 }
 
 export async function getCategories() {
+    noStore()
     const supabase = createClient()
     const { data, error } = await supabase
         .from('categories')
@@ -45,10 +65,11 @@ export async function getCategories() {
         return []
     }
 
-    return data as Category[]
+    return (data || []) as Category[]
 }
 
 export async function getSubcategories(categoryId: string) {
+    noStore()
     if (!categoryId) return []
 
     const supabase = createClient()
@@ -63,5 +84,5 @@ export async function getSubcategories(categoryId: string) {
         return []
     }
 
-    return data as Subcategory[]
+    return (data || []) as Subcategory[]
 }

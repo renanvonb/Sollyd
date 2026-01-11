@@ -103,6 +103,12 @@ export function AppSidebar({ user }: SidebarProps) {
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1 overflow-hidden">
+                    <div className={cn(
+                        "px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider font-inter",
+                        !isOpen && "hidden"
+                    )}>
+                        Financeiro
+                    </div>
                     {menuItems.map((item) => {
                         const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                         const Icon = item.icon

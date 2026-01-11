@@ -11,6 +11,7 @@ const transactionSchema = z.object({
     amount: z.coerce.number().gt(0, "Valor deve ser maior que zero"),
     type: z.enum(["revenue", "expense", "investment"]),
     payee_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
+    payer_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
     payment_method_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
     classification: z.enum(["essential", "necessary", "superfluous"]),
     category_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
@@ -18,16 +19,19 @@ const transactionSchema = z.object({
     due_date: z.string(),
     payment_date: z.preprocess(emptyToNull, z.string().optional().nullable()),
     is_installment: z.boolean().default(false),
-}).refine((data) => {
-    // Payee is required for expenses
+    observation: z.preprocess(emptyToNull, z.string().optional().nullable()),
+    competence_date: z.preprocess(emptyToNull, z.string().optional().nullable()),
+    status: z.preprocess(emptyToNull, z.string().optional().nullable()),
+    wallet_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
+}).superRefine((data, ctx) => {
     if (data.type === 'expense' && !data.payee_id) {
-        return false;
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Favorecido é obrigatório para despesas",
+            path: ["payee_id"],
+        });
     }
-    return true;
-}, {
-    message: "Favorecido é obrigatório para despesas",
-    path: ["payee_id"],
-})
+});
 
 export async function saveTransaction(formData: any) {
     try {
@@ -48,7 +52,8 @@ export async function saveTransaction(formData: any) {
             description: validated.description,
             amount: validated.amount,
             type: validated.type,
-            payee_id: validated.payee_id,
+            payer_id: validated.type === 'revenue' ? validated.payer_id : null,
+            payee_id: validated.type === 'expense' ? validated.payee_id : null,
             payment_method_id: validated.payment_method_id,
             classification: validated.classification,
             category_id: validated.category_id,
@@ -56,6 +61,10 @@ export async function saveTransaction(formData: any) {
             due_date: validated.due_date,
             payment_date: validated.payment_date,
             is_installment: validated.is_installment,
+            observation: validated.observation,
+            competence_date: validated.competence_date,
+            status: validated.status,
+            wallet_id: validated.wallet_id,
         }
 
         const { error: insertError } = await supabase
@@ -132,7 +141,8 @@ export async function updateTransaction(id: string, formData: any) {
             description: validated.description,
             amount: validated.amount,
             type: validated.type,
-            payee_id: validated.payee_id || null,
+            payer_id: validated.type === 'revenue' ? (validated.payer_id || null) : null,
+            payee_id: validated.type === 'expense' ? (validated.payee_id || null) : null,
             payment_method_id: validated.payment_method_id || null,
             classification: validated.classification,
             category_id: validated.category_id || null,
@@ -140,6 +150,10 @@ export async function updateTransaction(id: string, formData: any) {
             due_date: validated.due_date,
             payment_date: validated.payment_date || null,
             is_installment: validated.is_installment,
+            observation: validated.observation || null,
+            competence_date: validated.competence_date || null,
+            status: validated.status || null,
+            wallet_id: validated.wallet_id || null,
         }
 
         const { error: updateError } = await supabase
