@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Plus, Pencil, Trash2, Loader2, Wallet as WalletIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +35,11 @@ import {
     deleteWallet,
 } from '@/lib/supabase/cadastros';
 
-export function WalletsContent() {
+export interface WalletsContentRef {
+    openCreateDialog: () => void;
+}
+
+export const WalletsContent = forwardRef<WalletsContentRef>((props, ref) => {
     const [wallets, setWallets] = useState<Wallet[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -126,6 +130,15 @@ export function WalletsContent() {
             setSubmitting(false);
         }
     };
+
+    // Expor método para abrir dialog de criação
+    useImperativeHandle(ref, () => ({
+        openCreateDialog: () => {
+            setEditingWallet(null);
+            setFormData({ name: '', logo_url: '' });
+            setIsDialogOpen(true);
+        },
+    }));
 
     const openCreateDialog = () => {
         setEditingWallet(null);
@@ -329,4 +342,6 @@ export function WalletsContent() {
             </AlertDialog>
         </>
     );
-}
+});
+
+WalletsContent.displayName = 'WalletsContent';
