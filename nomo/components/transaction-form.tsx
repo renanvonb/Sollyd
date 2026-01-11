@@ -9,6 +9,14 @@ import { Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 
 import {
     Select,
@@ -53,6 +61,8 @@ import { getPaymentMethods, getPayees, getPayers, getCategories, getSubcategorie
 import { PaymentMethod, Payee, Payer, Category, Subcategory } from "@/types/transaction"
 import type { Transaction } from "@/types/transaction"
 import { toast } from "sonner"
+import { createPayer, createPayee } from "@/app/actions/contacts"
+import { Plus } from "lucide-react"
 
 const transactionSchema = z.object({
     description: z.string().min(1, "Descrição é obrigatória"),
@@ -79,18 +89,7 @@ const transactionSchema = z.object({
     path: ["payee_id"],
 })
 
-const MOCK_PAYERS: Payer[] = [
-    {
-        id: "550e8400-e29b-41d4-a716-446655440000",
-        name: "Goapice",
-        created_at: new Date().toISOString()
-    },
-    {
-        id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-        name: "Recebee",
-        created_at: new Date().toISOString()
-    }
-]
+
 
 type TransactionFormValues = z.infer<typeof transactionSchema>
 
@@ -123,6 +122,12 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
     const [allCategories, setAllCategories] = React.useState<Category[]>([])
     const [subcategories, setSubcategories] = React.useState<Subcategory[]>([])
     const [isLoadingData, setIsLoadingData] = React.useState(!!transaction)
+
+    // Quick Create States
+    const [isCreatingPayer, setIsCreatingPayer] = React.useState(false)
+    const [isCreatingPayee, setIsCreatingPayee] = React.useState(false)
+    const [newEntityName, setNewEntityName] = React.useState("")
+    const [isCreatingEntity, setIsCreatingEntity] = React.useState(false)
 
     const isEditMode = !!transaction
 
@@ -164,7 +169,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                 ])
                 setPaymentMethods(methods)
                 setPayees(pays)
-                setPayers(payersList && payersList.length > 0 ? payersList : MOCK_PAYERS)
+                setPayers(payersList || [])
                 setAllCategories(cats)
 
                 // Hybrid lookup with new separation logic
@@ -242,7 +247,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                 ])
                 setPaymentMethods(methods)
                 setPayees(pays)
-                setPayers(payersList && payersList.length > 0 ? payersList : MOCK_PAYERS)
+                setPayers(payersList || [])
                 setAllCategories(cats)
             }
             loadData()
@@ -261,6 +266,48 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
             setSubcategories([])
         }
     }, [selectedCategoryId])
+
+    const handleCreatePayer = async () => {
+        if (!newEntityName.trim()) return
+        setIsCreatingEntity(true)
+        try {
+            const result = await createPayer(newEntityName)
+            if (result.success && result.data) {
+                setPayers(prev => [...prev, result.data].sort((a, b) => a.name.localeCompare(b.name)))
+                form.setValue("payer_id", result.data.id)
+                toast.success("Pagador criado com sucesso!")
+                setIsCreatingPayer(false)
+                setNewEntityName("")
+            } else {
+                toast.error(result.error || "Erro ao criar pagador")
+            }
+        } catch (error) {
+            toast.error("Erro ao criar pagador")
+        } finally {
+            setIsCreatingEntity(false)
+        }
+    }
+
+    const handleCreatePayee = async () => {
+        if (!newEntityName.trim()) return
+        setIsCreatingEntity(true)
+        try {
+            const result = await createPayee(newEntityName)
+            if (result.success && result.data) {
+                setPayees(prev => [...prev, result.data].sort((a, b) => a.name.localeCompare(b.name)))
+                form.setValue("payee_id", result.data.id)
+                toast.success("Favorecido criado com sucesso!")
+                setIsCreatingPayee(false)
+                setNewEntityName("")
+            } else {
+                toast.error(result.error || "Erro ao criar favorecido")
+            }
+        } catch (error) {
+            toast.error("Erro ao criar favorecido")
+        } finally {
+            setIsCreatingEntity(false)
+        }
+    }
 
     const onSubmit = async (data: TransactionFormValues) => {
         startTransition(async () => {
@@ -418,18 +465,32 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                             render={({ field }) => (
                                                 <FormItem className="space-y-2">
                                                     <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Favorecido</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                                <SelectValue placeholder="Selecione" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent className="bg-white border-zinc-200 max-h-[300px]">
-                                                            {payees?.map(payee => (
-                                                                <SelectItem key={payee.id} value={payee.id}>{payee.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <div className="flex gap-2">
+                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                            <FormControl>
+                                                                <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans flex-1">
+                                                                    <SelectValue placeholder="Selecione" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent className="bg-white border-zinc-200 max-h-[300px]">
+                                                                {payees?.map(payee => (
+                                                                    <SelectItem key={payee.id} value={payee.id}>{payee.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-[52px] w-[52px] rounded-xl shrink-0"
+                                                            onClick={() => {
+                                                                setNewEntityName("")
+                                                                setIsCreatingPayee(true)
+                                                            }}
+                                                        >
+                                                            <Plus className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -584,18 +645,32 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                             render={({ field }) => (
                                                 <FormItem className="space-y-2">
                                                     <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Pagador</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                                <SelectValue placeholder="Selecione" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent className="bg-white border-zinc-200 max-h-[300px]">
-                                                            {payers?.map(payer => (
-                                                                <SelectItem key={payer.id} value={payer.id}>{payer.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <div className="flex gap-2">
+                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                            <FormControl>
+                                                                <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans flex-1">
+                                                                    <SelectValue placeholder="Selecione" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent className="bg-white border-zinc-200 max-h-[300px]">
+                                                                {payers?.map(payer => (
+                                                                    <SelectItem key={payer.id} value={payer.id}>{payer.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-[52px] w-[52px] rounded-xl shrink-0"
+                                                            onClick={() => {
+                                                                setNewEntityName("")
+                                                                setIsCreatingPayer(true)
+                                                            }}
+                                                        >
+                                                            <Plus className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -749,6 +824,56 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Create Payer Dialog */}
+            <Dialog open={isCreatingPayer} onOpenChange={setIsCreatingPayer}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Novo Pagador</DialogTitle>
+                        <DialogDescription>
+                            Adicione um novo pagador (fonte de receita).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Input
+                            placeholder="Nome do pagador"
+                            value={newEntityName}
+                            onChange={(e) => setNewEntityName(e.target.value)}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCreatingPayer(false)}>Cancelar</Button>
+                        <Button onClick={handleCreatePayer} disabled={!newEntityName.trim() || isCreatingEntity}>
+                            {isCreatingEntity ? "Criando..." : "Criar"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Create Payee Dialog */}
+            <Dialog open={isCreatingPayee} onOpenChange={setIsCreatingPayee}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Novo Favorecido</DialogTitle>
+                        <DialogDescription>
+                            Adicione um novo favorecido (quem recebe o pagamento).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Input
+                            placeholder="Nome do favorecido"
+                            value={newEntityName}
+                            onChange={(e) => setNewEntityName(e.target.value)}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCreatingPayee(false)}>Cancelar</Button>
+                        <Button onClick={handleCreatePayee} disabled={!newEntityName.trim() || isCreatingEntity}>
+                            {isCreatingEntity ? "Criando..." : "Criar"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </SheetContent>
     )
 }
