@@ -10,6 +10,13 @@ import { signOut } from '@/app/actions/auth'
 import { useSidebar } from '@/hooks/use-sidebar-state'
 import { SidebarSkeleton } from '@/components/ui/skeletons'
 
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
     DropdownMenu,
@@ -63,7 +70,7 @@ export function AppSidebar({ user }: SidebarProps) {
 
 
     return (
-        <>
+        <TooltipProvider delayDuration={0}>
             {/* Mobile Trigger */}
             <button
                 onClick={toggle}
@@ -76,15 +83,29 @@ export function AppSidebar({ user }: SidebarProps) {
                 "fixed left-0 top-0 z-40 h-screen transition-all duration-300 border-r border-white/5 bg-sidebar flex flex-col font-sans",
                 isOpen ? "w-64" : "w-0 -translate-x-full md:w-20 md:translate-x-0"
             )}>
-                <div className="flex items-center h-16 px-6 transition-all duration-300">
+                <div className="flex items-center h-16 px-6 transition-all duration-300 border-b border-white/5">
                     <div className="flex items-center">
                         {/* Symbol */}
-                        <div className="relative h-8 w-8 shrink-0">
+                        <div className="relative h-8 w-8 shrink-0 group cursor-pointer">
                             <Image
                                 src="/brand/symbol.png"
                                 alt="Sollyd Symbol"
                                 fill
-                                className="object-contain" // Original color
+                                className="object-contain relative z-10" // Original color
+                            />
+                            {/* Inner Gradient Hover Effect */}
+                            <div
+                                className="absolute inset-0 z-20 bg-gradient-to-b from-[#00CEB6] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none mix-blend-color-dodge"
+                                style={{
+                                    maskImage: 'url(/brand/symbol.png)',
+                                    WebkitMaskImage: 'url(/brand/symbol.png)',
+                                    maskSize: 'contain',
+                                    WebkitMaskSize: 'contain',
+                                    maskRepeat: 'no-repeat',
+                                    WebkitMaskRepeat: 'no-repeat',
+                                    maskPosition: 'center',
+                                    WebkitMaskPosition: 'center',
+                                }}
                             />
                         </div>
 
@@ -98,7 +119,7 @@ export function AppSidebar({ user }: SidebarProps) {
                     </div>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-1 overflow-hidden">
+                <nav className="flex-1 px-4 py-6 space-y-1 overflow-hidden">
                     <div className={cn(
                         "px-4 mb-2 text-xs font-semibold text-white/40 uppercase tracking-wider font-inter",
                         !isOpen && "hidden"
@@ -109,11 +130,10 @@ export function AppSidebar({ user }: SidebarProps) {
                         const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                         const Icon = item.icon
 
-                        return (
+                        const LinkItem = (
                             <Link
-                                key={item.label}
                                 href={item.disabled ? '#' : item.href}
-                                title={item.label}
+                                title={isOpen ? item.label : undefined} // Native title only if open (or remove completely)
                                 aria-disabled={item.disabled}
                                 className={cn(
                                     'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden',
@@ -123,7 +143,6 @@ export function AppSidebar({ user }: SidebarProps) {
                                     item.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
                                 )}
                             >
-
                                 <Icon className={cn(
                                     "h-5 w-5 min-w-[20px] transition-colors",
                                     isActive ? "text-white" : "text-sidebar-muted group-hover:text-white"
@@ -137,8 +156,29 @@ export function AppSidebar({ user }: SidebarProps) {
                                 </span>
                             </Link>
                         )
+
+                        if (isOpen) {
+                            return (
+                                <div key={item.label}>
+                                    {LinkItem}
+                                </div>
+                            )
+                        }
+
+                        return (
+                            <Tooltip key={item.label}>
+                                <TooltipTrigger asChild>
+                                    {LinkItem}
+                                </TooltipTrigger>
+                                <TooltipContent side="right" className="font-medium bg-sidebar border-white/10 text-white">
+                                    {item.label}
+                                </TooltipContent>
+                            </Tooltip>
+                        )
                     })}
                 </nav>
+
+
 
                 <div className="p-4 border-t border-white/5">
                     <DropdownMenu>
@@ -197,6 +237,6 @@ export function AppSidebar({ user }: SidebarProps) {
                     </DropdownMenu>
                 </div>
             </aside>
-        </>
+        </TooltipProvider>
     )
 }
