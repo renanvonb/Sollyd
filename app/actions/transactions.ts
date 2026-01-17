@@ -9,18 +9,15 @@ const emptyToNull = (val: any) => (val === "" ? null : val);
 const transactionSchema = z.object({
     description: z.string().min(1, "Descrição é obrigatória"),
     amount: z.coerce.number().gt(0, "Valor deve ser maior que zero"),
-    type: z.enum(["revenue", "expense", "investment"]),
+    type: z.enum(["revenue", "expense"]),
     payee_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
-    payment_method_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
-    classification: z.enum(["essential", "necessary", "superfluous"]),
+    payment_method: z.preprocess(emptyToNull, z.enum(["Boleto", "Crédito", "Débito", "Pix", "Dinheiro"]).optional().nullable()),
+    classification_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
     category_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
     subcategory_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
-    due_date: z.string(),
-    payment_date: z.preprocess(emptyToNull, z.string().optional().nullable()),
-    is_installment: z.boolean().default(false),
-    observation: z.preprocess(emptyToNull, z.string().optional().nullable()),
-    competence_date: z.preprocess(emptyToNull, z.string().optional().nullable()),
-    status: z.preprocess(emptyToNull, z.string().optional().nullable()),
+    date: z.preprocess(emptyToNull, z.union([z.string(), z.date()]).optional().nullable()),
+    competence: z.preprocess(emptyToNull, z.union([z.string(), z.date()]).optional().nullable()),
+    status: z.enum(['Realizado', 'Pendente']).optional().nullable(),
     wallet_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
 }).superRefine((data, ctx) => {
     // Payee/Payer validation
@@ -52,17 +49,15 @@ export async function saveTransaction(formData: any) {
             description: validated.description,
             amount: validated.amount,
             type: validated.type,
-            payer_id: null,
             payee_id: validated.payee_id,
-            payment_method_id: validated.payment_method_id,
-            classification: validated.classification,
+            payment_method: validated.payment_method,
+            classification_id: validated.classification_id,
             category_id: validated.category_id,
             subcategory_id: validated.subcategory_id,
-            due_date: validated.due_date,
-            payment_date: validated.payment_date,
-            is_installment: validated.is_installment,
-            observation: validated.observation,
-            competence_date: validated.competence_date,
+            is_installment: false,
+
+            date: validated.date,
+            competence: validated.competence,
             status: validated.status,
             wallet_id: validated.wallet_id,
         }
@@ -77,6 +72,7 @@ export async function saveTransaction(formData: any) {
         }
 
         revalidatePath('/financeiro/transacoes')
+        revalidatePath('/transactions')
         return { success: true }
 
     } catch (error: any) {
@@ -141,17 +137,15 @@ export async function updateTransaction(id: string, formData: any) {
             description: validated.description,
             amount: validated.amount,
             type: validated.type,
-            payer_id: null,
-            payee_id: validated.payee_id || null, // Ensure explicit null if undefined/empty
-            payment_method_id: validated.payment_method_id || null,
-            classification: validated.classification,
-            category_id: validated.category_id || null,
-            subcategory_id: validated.subcategory_id || null,
-            due_date: validated.due_date,
-            payment_date: validated.payment_date || null,
-            is_installment: validated.is_installment,
-            observation: validated.observation || null,
-            competence_date: validated.competence_date || null,
+            payee_id: validated.payee_id,
+            payment_method: validated.payment_method,
+            classification_id: validated.classification_id,
+            category_id: validated.category_id,
+            subcategory_id: validated.subcategory_id,
+            is_installment: false,
+
+            date: validated.date || null,
+            competence: validated.competence || null,
             status: validated.status || null,
             wallet_id: validated.wallet_id || null,
         }
@@ -168,6 +162,7 @@ export async function updateTransaction(id: string, formData: any) {
         }
 
         revalidatePath('/financeiro/transacoes')
+        revalidatePath('/transactions')
         return { success: true }
 
     } catch (error: any) {

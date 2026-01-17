@@ -33,7 +33,7 @@ export default function SignupPage() {
     const [loading, setLoading] = useState(false)
     const [initialLoading, setInitialLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [success, setSuccess] = useState(false)
+
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const supabase = createClient()
@@ -65,19 +65,20 @@ export default function SignupPage() {
                     data: {
                         full_name: data.name,
                     },
-                    emailRedirectTo: `${window.location.origin}/auth/callback`,
                 },
             })
 
             if (signUpError) {
                 setError(signUpError.message)
+                setLoading(false)
                 return
             }
 
-            setSuccess(true)
+            // Cadastro realizado com sucesso, redirecionar para dashboard
+            router.push('/')
+            router.refresh()
         } catch (err) {
             setError('Ocorreu um erro inesperado.')
-        } finally {
             setLoading(false)
         }
     }
@@ -86,32 +87,14 @@ export default function SignupPage() {
         return <AuthSkeleton />
     }
 
-    if (success) {
-        return (
-            <div className="flex h-screen w-screen items-center justify-center bg-white p-8 font-inter">
-                <div className="w-full max-w-[400px] text-center space-y-6">
-                    <div className="space-y-2">
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground font-jakarta">
-                            Verifique seu e-mail <span className="font-['Apple_Color_Emoji',_'Segoe_UI_Emoji',_'Segoe_UI_Symbol',_cursive]">📧</span>
-                        </h1>
-                        <p className="text-muted-foreground font-inter">
-                            Enviamos um link de confirmação para o seu e-mail. Por favor, verifique sua caixa de entrada.
-                        </p>
-                    </div>
-                    <Button asChild variant="outline" className="w-full h-11 rounded-md font-inter">
-                        <Link href="/login">Voltar para o login</Link>
-                    </Button>
-                </div>
-            </div>
-        )
-    }
+
 
     return (
         <div className="flex h-screen w-screen bg-white overflow-hidden font-inter">
             {/* Left Column: Form (Signup Area - 60%) */}
             <div className="flex-1 md:w-[60%] md:flex-none flex flex-col items-center justify-center p-8 md:p-12 lg:p-16 bg-white relative">
                 <div className="w-full flex flex-col items-center">
-                    <div className="w-full max-w-[320px] flex flex-col items-center text-center">
+                    <div className="w-full max-w-[360px] flex flex-col items-center text-center">
                         {/* Brand Symbol */}
                         <div className="relative h-10 w-10 mb-4">
                             <Image
@@ -127,7 +110,7 @@ export default function SignupPage() {
                         <Separator className="mt-[24px] mb-[24px] w-full opacity-50" />
                     </div>
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-[320px] space-y-6">
+                    <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-[360px] space-y-6">
                         {/* Name Field */}
                         <div className="space-y-2">
                             <Label

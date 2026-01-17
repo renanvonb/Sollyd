@@ -10,7 +10,7 @@ import { Transaction } from "@/types/transaction"
 const typeIconMap = {
     revenue: { icon: ArrowUpCircle, color: "text-emerald-600" },
     expense: { icon: ArrowDownCircle, color: "text-rose-600" },
-    investment: { icon: PieChart, color: "text-blue-600" },
+
 }
 
 export const columns: ColumnDef<Transaction>[] = [
@@ -30,13 +30,13 @@ export const columns: ColumnDef<Transaction>[] = [
         },
     },
     {
-        id: "payee",
-        accessorFn: (row) => row.payees?.name,
-        header: () => <div className="min-w-[150px]">Favorecido</div>,
+        id: "contact",
+        accessorFn: (row) => row.payees?.name || row.payers?.name,
+        header: () => <div className="min-w-[150px]">Contato</div>,
         cell: ({ row }) => {
-            const payee = row.original.payees?.name
-            return payee ? (
-                <Badge variant="secondary" className="text-sm font-normal">{payee}</Badge>
+            const name = row.original.payees?.name || row.original.payers?.name
+            return name ? (
+                <Badge variant="secondary" className="text-sm font-normal">{name}</Badge>
             ) : (
                 <span className="text-sm text-muted-foreground">-</span>
             )
@@ -56,10 +56,20 @@ export const columns: ColumnDef<Transaction>[] = [
         },
     },
     {
-        accessorKey: "payment_date",
-        header: () => <div className="min-w-[100px]">Pagamento</div>,
+        accessorKey: "competence",
+        header: () => <div className="min-w-[100px]">Competência</div>,
         cell: ({ row }) => {
-            const date = row.getValue("payment_date") as string | null
+            const comp = row.original.competence as string | null
+            if (!comp) return <span className="text-sm text-muted-foreground">-</span>
+            const [year, month] = comp.split("-")
+            return <div className="text-sm">{`${month}/${year}`}</div>
+        },
+    },
+    {
+        accessorKey: "date",
+        header: () => <div className="min-w-[100px]">Data</div>,
+        cell: ({ row }) => {
+            const date = row.getValue("date") as string | null
             if (!date) return <span className="text-sm text-muted-foreground">-</span>
             const [year, month, day] = date.split("-")
             return <div className="text-sm">{`${day}/${month}/${year}`}</div>
@@ -82,9 +92,7 @@ export const columns: ColumnDef<Transaction>[] = [
 
             const colorClass = type === "revenue"
                 ? "text-emerald-600"
-                : type === "expense"
-                    ? "text-rose-600"
-                    : "text-blue-600"
+                : "text-rose-600"
 
             return (
                 <div className={`text-sm font-semibold min-w-[120px] ${colorClass}`}>
@@ -97,22 +105,20 @@ export const columns: ColumnDef<Transaction>[] = [
         id: "status",
         header: () => <div className="w-[120px]">Status</div>,
         cell: ({ row }) => {
-            const isPaid = !!row.original.payment_date
-            const dueDate = row.original.due_date
+            // Prioritize persisted status, then fallback to payment_date check
+            const statusStr = row.original.status
+            const isPaid = !!row.original.date
 
-            // Simple date comparison using ISO string format (YYYY-MM-DD)
-            const today = new Date().toISOString().split('T')[0]
+            let status: "Pendente" | "Realizado" | "Agendado" | "Atrasado" = "Pendente"
 
-            let status: "Pendente" | "Realizado" | "Agendado" | "Atrasado"
-
-            if (isPaid) {
+            if (statusStr === 'Realizado' || statusStr === 'paid' || isPaid) {
                 status = "Realizado"
-            } else if (dueDate > today) {
-                status = "Agendado"
-            } else if (dueDate < today) {
-                status = "Atrasado"
-            } else {
+            } else if (statusStr === 'Pendente' || statusStr === 'pending') {
                 status = "Pendente"
+            } else if (statusStr === 'Agendado') {
+                status = "Agendado"
+            } else if (statusStr === 'Atrasado') {
+                status = "Atrasado"
             }
 
             return (

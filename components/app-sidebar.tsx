@@ -75,16 +75,16 @@ export function AppSidebar({ user }: SidebarProps) {
             {/* Mobile Trigger */}
             <button
                 onClick={toggle}
-                className="fixed top-4 left-4 z-50 md:hidden p-2 bg-zinc-950 text-white rounded-lg border border-zinc-800"
+                className="fixed top-4 left-4 z-50 md:hidden p-2 bg-primary text-primary-foreground rounded-lg border border-border"
             >
                 <Menu className="h-5 w-5" />
             </button>
 
             <aside id="main-sidebar" className={cn(
-                "fixed left-0 top-0 z-40 h-screen transition-all duration-300 border-r border-white/5 bg-sidebar flex flex-col font-sans group/sidebar",
+                "fixed left-0 top-0 z-40 h-screen transition-all duration-300 border-r border-neutral-800 bg-neutral-950 flex flex-col font-sans group/sidebar",
                 isOpen ? "w-64" : "w-0 -translate-x-full md:w-20 md:translate-x-0"
             )}>
-                <div className="flex items-center h-[72px] px-6 transition-all duration-300 border-b border-white/10">
+                <div className="flex items-center h-[72px] px-6 transition-all duration-300 border-b border-neutral-800">
                     <div className="flex items-center">
                         {/* Symbol */}
                         <div className="relative h-8 w-8 shrink-0 cursor-pointer">
@@ -92,20 +92,9 @@ export function AppSidebar({ user }: SidebarProps) {
                                 src="/brand/symbol.png"
                                 alt="Sollyd Symbol"
                                 fill
-                                className="object-contain relative z-10" // Original color
-                            />
-                            {/* Inner Gradient Hover Effect */}
-                            <div
-                                className="absolute inset-0 z-20 bg-gradient-to-t from-transparent via-[#00CEB6]/60 to-transparent opacity-0 group-hover/sidebar:opacity-100 group-hover/sidebar:animate-logo-sweep transition-opacity duration-300 pointer-events-none mix-blend-color-dodge"
+                                className="object-contain relative z-10"
                                 style={{
-                                    maskImage: 'url(/brand/symbol.png)',
-                                    WebkitMaskImage: 'url(/brand/symbol.png)',
-                                    maskSize: 'contain',
-                                    WebkitMaskSize: 'contain',
-                                    maskRepeat: 'no-repeat',
-                                    WebkitMaskRepeat: 'no-repeat',
-                                    maskPosition: 'center',
-                                    WebkitMaskPosition: 'center',
+                                    filter: 'brightness(0) saturate(100%) invert(93%) sepia(46%) saturate(1272%) hue-rotate(8deg) brightness(104%) contrast(98%)'
                                 }}
                             />
                         </div>
@@ -122,7 +111,7 @@ export function AppSidebar({ user }: SidebarProps) {
 
                 <nav className="flex-1 px-4 py-6 space-y-1 overflow-hidden">
                     <div className={cn(
-                        "px-4 mb-2 text-xs font-semibold text-white/40 uppercase tracking-wider font-inter",
+                        "px-4 mb-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider font-inter",
                         !isOpen && "hidden"
                     )}>
                         Financeiro
@@ -140,14 +129,14 @@ export function AppSidebar({ user }: SidebarProps) {
                                 className={cn(
                                     'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden',
                                     isActive
-                                        ? 'bg-sidebar-active text-white'
-                                        : 'text-sidebar-muted hover:text-white hover:bg-sidebar-hover',
+                                        ? 'bg-neutral-800 text-white'
+                                        : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50',
                                     item.disabled && "opacity-50 cursor-not-allowed" // Removed pointer-events-none
                                 )}
                             >
                                 <Icon className={cn(
                                     "h-5 w-5 min-w-[20px] transition-colors",
-                                    isActive ? "text-white" : "text-sidebar-muted group-hover:text-white"
+                                    isActive ? "text-white" : "text-neutral-400 group-hover:text-white"
                                 )}
                                 />
                                 <span className={cn(
@@ -185,19 +174,19 @@ export function AppSidebar({ user }: SidebarProps) {
 
 
 
-                <div className="p-4 border-t border-white/10">
+                <div className="p-4 border-t border-neutral-800">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
                                 className={cn(
-                                    "w-full flex items-center gap-3 px-2 h-auto py-2 hover:bg-sidebar-hover rounded-xl transition-all duration-300 text-sidebar-muted hover:text-white",
+                                    "w-full flex items-center gap-3 px-2 h-auto py-2 hover:bg-neutral-800/50 rounded-xl transition-all duration-300 text-neutral-400 hover:text-white",
                                     !isOpen && "justify-center px-0"
                                 )}
                             >
-                                <Avatar className="h-9 w-9 shrink-0 border border-white/10">
+                                <Avatar className="h-9 w-9 shrink-0 border border-neutral-700">
                                     {/* <AvatarImage src={user.user_metadata?.avatar_url} /> */}
-                                    <AvatarFallback className="bg-[#00665C] text-white font-medium">
+                                    <AvatarFallback className="bg-[#E0FE56] text-neutral-900 font-medium">
                                         {userName.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
@@ -214,23 +203,23 @@ export function AppSidebar({ user }: SidebarProps) {
                             side="right"
                             align="end"
                             sideOffset={12}
-                            className="w-56 bg-sidebar border-white/10 text-sidebar-muted"
+                            className="w-56 bg-neutral-900 border-neutral-800 text-neutral-300"
                         >
-                            <DropdownMenuLabel className="font-normal border-b border-white/10 mb-1 pb-2">
+                            <DropdownMenuLabel className="font-normal border-b border-neutral-800 mb-1 pb-2">
                                 <div className="flex flex-col space-y-1">
                                     <p className="text-sm font-medium leading-none text-white">{userName}</p>
-                                    <p className="text-xs leading-none text-sidebar-muted/70 truncate">{user.email}</p>
+                                    <p className="text-xs leading-none text-neutral-400 truncate">{user.email}</p>
                                 </div>
                             </DropdownMenuLabel>
-                            <DropdownMenuItem className="cursor-pointer focus:bg-sidebar-hover focus:text-white hover:text-white">
+                            <DropdownMenuItem className="cursor-pointer focus:bg-neutral-800 focus:text-white hover:text-white">
                                 <User className="mr-2 h-4 w-4" />
                                 <span>Perfil</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer focus:bg-sidebar-hover focus:text-white hover:text-white">
+                            <DropdownMenuItem className="cursor-pointer focus:bg-neutral-800 focus:text-white hover:text-white">
                                 <Settings className="mr-2 h-4 w-4" />
                                 <span>Configurações</span>
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-white/10" />
+                            <DropdownMenuSeparator className="bg-neutral-800" />
                             <DropdownMenuItem
                                 className="text-red-400 focus:text-red-400 focus:bg-red-950/20 cursor-pointer"
                                 onClick={() => signOut()}

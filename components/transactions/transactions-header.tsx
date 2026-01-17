@@ -66,22 +66,10 @@ export function TransactionsHeader({
                 </div>
 
                 {/* 3. Add Button -> Dropdown */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button className="font-inter font-medium bg-[#00665C] hover:bg-[#00665C]/90">
-                            Adicionar
-                            <ChevronDown className="h-4 w-4 ml-2" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[160px] bg-white">
-                        <DropdownMenuItem onClick={() => onAddClick('revenue')} className="cursor-pointer">
-                            Receita
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onAddClick('expense')} className="cursor-pointer">
-                            Despesa
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <Button onClick={() => onAddClick('expense')} className="font-inter font-medium">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar
+                </Button>
             </div>
         </div>
     )

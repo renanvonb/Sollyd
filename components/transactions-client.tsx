@@ -8,10 +8,9 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { TransactionFilters } from "@/components/transaction-filters"
 import { TransactionTable } from "@/components/transaction-table"
 import { TransactionSummaryCards } from "@/components/transaction-summary-cards"
-import { TransactionForm } from "@/components/transaction-form"
 import { TransactionDetailsDialog } from "@/components/transaction-details-dialog"
+import { TransactionDialog } from "@/components/transactions/transaction-dialog"
 import { TransactionsTableSkeleton } from "@/components/ui/skeletons"
-import { Sheet } from "@/components/ui/sheet"
 import { EmptyState } from "@/components/ui/empty-state"
 import { TimeRange } from "@/app/actions/transactions-fetch"
 import { Loader2, Plus, Search, ChevronDown, Inbox } from "lucide-react"
@@ -121,7 +120,11 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
             const desc = (t.description || "").toLowerCase()
             const payee = (t.payees?.name || "").toLowerCase()
             const cat = (t.categories?.name || "").toLowerCase()
-            return desc.includes(searchQuery) || payee.includes(searchQuery) || cat.includes(searchQuery)
+            const comp = (t.competence || "").toLowerCase()
+            return desc.includes(searchQuery) ||
+                payee.includes(searchQuery) ||
+                cat.includes(searchQuery) ||
+                comp.includes(searchQuery)
         })
     }, [initialData, searchQuery])
 
@@ -291,18 +294,13 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                         />
                     )}
 
-                    {/* New Transaction Sheet */}
-                    <Sheet open={isNewSheetOpen} onOpenChange={setIsNewSheetOpen}>
-                        <TransactionForm
-                            open={isNewSheetOpen}
-                            defaultType={newTransactionType}
-                            onSuccess={() => {
-                                handleSuccess()
-                                setIsNewSheetOpen(false)
-                            }}
-                            onCancel={() => setIsNewSheetOpen(false)}
-                        />
-                    </Sheet>
+                    {/* New Transaction Dialog */}
+                    <TransactionDialog
+                        open={isNewSheetOpen}
+                        onOpenChange={setIsNewSheetOpen}
+                        defaultType={newTransactionType}
+                        onSuccess={handleSuccess}
+                    />
 
                 </div>
 
@@ -315,16 +313,13 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                     onSuccess={handleSuccess}
                 />
 
-                {/* Edit Sheet */}
-                <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-                    <TransactionForm
-                        key={selectedTransaction?.id}
-                        open={isEditSheetOpen}
-                        transaction={selectedTransaction}
-                        onSuccess={handleSuccess}
-                        onCancel={() => setIsEditSheetOpen(false)}
-                    />
-                </Sheet>
+                {/* Edit Dialog */}
+                <TransactionDialog
+                    open={isEditSheetOpen}
+                    onOpenChange={setIsEditSheetOpen}
+                    transaction={selectedTransaction}
+                    onSuccess={handleSuccess}
+                />
             </div>
         </div>
     )

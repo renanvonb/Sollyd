@@ -56,7 +56,7 @@ export function TransactionsTableSkeleton() {
                     {/* Cards Skeleton */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-none">
                         {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-32 bg-white border border-zinc-200 rounded-2xl p-6">
+                            <div key={i} className="h-32 bg-white border border-zinc-200 rounded-lg p-6">
                                 <Skeleton className="h-4 w-24 mb-4" />
                                 <Skeleton className="h-8 w-32" />
                             </div>
@@ -64,7 +64,7 @@ export function TransactionsTableSkeleton() {
                     </div>
 
                     {/* Table Skeleton */}
-                    <div className="flex-1 bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden flex flex-col relative">
+                    <div className="flex-1 bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden flex flex-col relative">
                         {/* Fake Header */}
                         <div className="h-14 bg-white border-b border-zinc-200 sticky top-0 z-10 flex items-center px-6 gap-4">
                             <Skeleton className="h-4 w-32" /> {/* Descrição */}
@@ -128,7 +128,7 @@ export const TableSkeleton = TransactionsTableSkeleton
  */
 export function TableContentSkeleton() {
     return (
-        <div className="flex-1 bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden flex flex-col relative animate-pulse">
+        <div className="flex-1 bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden flex flex-col relative animate-pulse">
             {/* Fake Header */}
             <div className="h-14 bg-white border-b border-zinc-200 flex items-center px-6 gap-4">
                 <Skeleton className="h-4 w-32 bg-zinc-100" />
@@ -161,9 +161,9 @@ export function ModuleCardsSkeleton() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
             {[...Array(28)].map((_, i) => (
-                <div key={i} className="bg-white border border-zinc-200 rounded-2xl p-6 flex flex-col gap-4">
+                <div key={i} className="bg-white border border-zinc-200 rounded-lg p-6 flex flex-col gap-4">
                     <div className="flex items-center gap-4">
-                        <Skeleton className="h-12 w-12 rounded-2xl bg-zinc-100" />
+                        <Skeleton className="h-12 w-12 rounded-lg bg-zinc-100" />
                         <div className="flex-1 space-y-2">
                             <Skeleton className="h-4 w-3/4 bg-zinc-100" />
                             <Skeleton className="h-3 w-1/2 bg-zinc-50" />

@@ -46,10 +46,15 @@ export function TransactionsContent({
     const totals = React.useMemo(() => {
         return data.reduce((acc, curr) => {
             const amount = parseFloat(curr.amount as any) || 0
-            if (curr.type === 'revenue') acc.income += amount
-            else if (curr.type === 'expense') acc.expense += amount
-            else if (curr.type === 'investment') acc.investment += amount
 
+            // Somar apenas se o status for 'Realizado'
+            if (curr.status === 'Realizado') {
+                if (curr.type === 'revenue') acc.income += amount
+                else if (curr.type === 'expense') acc.expense += amount
+                else if (curr.type === 'investment') acc.investment += amount
+            }
+
+            // O saldo considera apenas o que foi realizado
             acc.balance = acc.income - acc.expense - acc.investment
             return acc
         }, { income: 0, expense: 0, investment: 0, balance: 0 })

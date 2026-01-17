@@ -1,4 +1,4 @@
-export type TransactionType = 'revenue' | 'expense' | 'investment';
+export type TransactionType = 'revenue' | 'expense';
 export type TransactionClassification = 'essential' | 'necessary' | 'superfluous';
 
 export interface Payer {
@@ -33,6 +33,14 @@ export interface Subcategory {
     created_at: string;
 }
 
+export interface Classification {
+    id: string;
+    name: string;
+    description?: string;
+    color: string;
+    created_at: string;
+}
+
 export interface Wallet {
     id: string;
     name: string;
@@ -51,15 +59,14 @@ export interface Transaction {
     type: TransactionType;
     payer_id?: string;
     payee_id?: string;
-    payment_method_id?: string;
-    classification: TransactionClassification;
+    payment_method?: string;
+    classification_id?: string;
     category_id?: string;
     subcategory_id?: string;
-    due_date: string;
-    payment_date?: string;
-    is_installment: boolean;
+
+    date?: string;
     wallet_id?: string;
-    competence_date?: string;
+    competence?: string;
     observation?: string;
     status?: string;
     created_at: string;
@@ -67,7 +74,8 @@ export interface Transaction {
     // Joined relations
     payers?: Payer;
     payees?: Payee;
-    payment_methods?: PaymentMethod;
+
+    classifications?: Classification;
     categories?: Category;
     subcategories?: Subcategory;
     wallets?: Wallet;
@@ -79,15 +87,14 @@ export interface CreateTransactionInput {
     type: TransactionType;
     payer_id?: string;
     payee_id?: string;
-    payment_method_id?: string;
-    classification: TransactionClassification;
+    payment_method?: string;
+    classification_id?: string;
     category_id?: string;
     subcategory_id?: string;
-    due_date: string;
-    payment_date?: string;
-    is_installment: boolean;
+
+    date?: string;
     wallet_id?: string;
-    competence_date?: string;
+    competence?: string;
     observation?: string;
     status?: string;
 }

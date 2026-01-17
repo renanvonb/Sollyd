@@ -9,7 +9,7 @@ const emptyStateVariants = cva(
         variants: {
             variant: {
                 default: "bg-background",
-                outlined: "border border-dashed border-zinc-200 bg-white rounded-2xl",
+                outlined: "border border-dashed border-zinc-200 bg-white rounded-lg",
             },
             size: {
                 sm: "p-6 min-h-[200px]",

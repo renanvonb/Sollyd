@@ -10,7 +10,7 @@ import { TransactionsHeader } from "@/components/transactions/transactions-heade
 import { TransactionsContent } from "@/components/transactions/transactions-content"
 import { TransactionDetailsDialog } from "@/components/transaction-details-dialog"
 import { TransactionForm } from "@/components/transaction-form"
-import { Sheet } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import type { Transaction } from "@/types/transaction"
 import { startOfMonth, endOfMonth } from "date-fns"
@@ -168,14 +168,24 @@ export default function TransactionsPage() {
                 />
 
                 {/* Sheets and Dialogs */}
-                <Sheet open={isNewSheetOpen} onOpenChange={setIsNewSheetOpen}>
-                    <TransactionForm
-                        open={isNewSheetOpen}
-                        defaultType={newTransactionType}
-                        onSuccess={handleSuccess}
-                        onCancel={() => setIsNewSheetOpen(false)}
-                    />
-                </Sheet>
+                <Dialog open={isNewSheetOpen} onOpenChange={setIsNewSheetOpen}>
+                    <DialogContent className="sm:max-w-[480px]">
+                        <DialogHeader>
+                            <DialogTitle className="font-jakarta">
+                                Nova transação
+                            </DialogTitle>
+                            <DialogDescription>
+                                Preencha os dados da nova transação
+                            </DialogDescription>
+                        </DialogHeader>
+                        <TransactionForm
+                            open={isNewSheetOpen}
+                            defaultType={newTransactionType}
+                            onSuccess={handleSuccess}
+                            onCancel={() => setIsNewSheetOpen(false)}
+                        />
+                    </DialogContent>
+                </Dialog>
 
                 <TransactionDetailsDialog
                     transaction={selectedTransaction}
@@ -185,15 +195,23 @@ export default function TransactionsPage() {
                     onSuccess={handleSuccess}
                 />
 
-                <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-                    <TransactionForm
-                        key={selectedTransaction?.id}
-                        open={isEditSheetOpen}
-                        transaction={selectedTransaction}
-                        onSuccess={handleSuccess}
-                        onCancel={() => setIsEditSheetOpen(false)}
-                    />
-                </Sheet>
+                <Dialog open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+                    <DialogContent className="sm:max-w-[480px]">
+                        <DialogHeader>
+                            <DialogTitle className="font-jakarta">Editar transação</DialogTitle>
+                            <DialogDescription>
+                                Atualize os dados da transação
+                            </DialogDescription>
+                        </DialogHeader>
+                        <TransactionForm
+                            key={selectedTransaction?.id}
+                            open={isEditSheetOpen}
+                            transaction={selectedTransaction}
+                            onSuccess={handleSuccess}
+                            onCancel={() => setIsEditSheetOpen(false)}
+                        />
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     )

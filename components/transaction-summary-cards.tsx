@@ -42,36 +42,36 @@ export function TransactionSummaryCards({ totals, isLoading }: TransactionSummar
             label: "Receitas",
             value: totals.income,
             icon: ArrowUpRight,
-            color: "text-emerald-600",
-            bgIcon: "bg-emerald-100",
-            hoverGradient: "from-emerald-500/20",
+            color: "text-neutral-600",
+            bgIcon: "bg-neutral-100",
+            hoverGradient: "from-neutral-500/20",
             hasBadge: false,
         },
         {
             label: "Despesas",
             value: totals.expense,
             icon: ArrowDownRight,
-            color: "text-rose-600",
-            bgIcon: "bg-rose-100",
-            hoverGradient: "from-rose-500/20",
+            color: "text-neutral-600",
+            bgIcon: "bg-neutral-100",
+            hoverGradient: "from-neutral-500/20",
             hasBadge: true,
         },
         {
             label: "Investimentos",
             value: totals.investment,
             icon: TrendingUp,
-            color: "text-blue-600",
-            bgIcon: "bg-blue-100",
-            hoverGradient: "from-blue-500/20",
+            color: "text-neutral-600",
+            bgIcon: "bg-neutral-100",
+            hoverGradient: "from-neutral-500/20",
             hasBadge: true,
         },
         {
             label: "Saldo Total",
             value: totals.balance,
             icon: Wallet,
-            color: "text-[#00685C]", // Sollyd Brand Color
-            bgIcon: "bg-[#00685C]/10",
-            hoverGradient: "from-[#00685C]/20",
+            color: "text-neutral-600",
+            bgIcon: "bg-neutral-100",
+            hoverGradient: "from-neutral-500/20",
             hasBadge: true,
         },
     ]
@@ -82,22 +82,15 @@ export function TransactionSummaryCards({ totals, isLoading }: TransactionSummar
                 <Card
                     key={index}
                     className={cn(
-                        "group relative overflow-hidden border-zinc-200 bg-white rounded-[20px] p-6 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1",
+                        "group relative overflow-hidden border-neutral-200 bg-white rounded-lg p-6 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1",
                         isLoading && "pointer-events-none"
                     )}
                 >
-                    {/* Hover Effect - Radial Gradient Blur */}
-                    <div
-                        className={cn(
-                            "absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br to-transparent blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none",
-                            card.hoverGradient
-                        )}
-                    />
 
                     <div className="relative z-10 flex flex-col gap-4">
                         {/* Header: Label (Left) + Icon (Right) */}
                         <div className="flex items-start justify-between">
-                            <span className="text-zinc-500 font-semibold font-sans tracking-tight text-sm mt-1">
+                            <span className="text-neutral-500 font-semibold font-sans tracking-tight text-sm mt-1">
                                 {card.label}
                             </span>
                             <div className={cn("p-2 rounded-full transition-transform duration-300 group-hover:scale-110", card.bgIcon)}>
@@ -110,7 +103,7 @@ export function TransactionSummaryCards({ totals, isLoading }: TransactionSummar
                             {isLoading ? (
                                 <Skeleton className="h-8 w-32" />
                             ) : (
-                                <div className="text-2xl font-bold tracking-tight font-sans text-zinc-950">
+                                <div className="text-2xl font-bold tracking-tight font-sans text-neutral-950">
                                     {formatValue(card.value)}
                                 </div>
                             )}
@@ -119,7 +112,7 @@ export function TransactionSummaryCards({ totals, isLoading }: TransactionSummar
                             {!isLoading && card.hasBadge && isVisible && (
                                 <Badge
                                     variant="secondary"
-                                    className="mb-1 pointer-events-none bg-zinc-100 text-zinc-600 hover:bg-zinc-100"
+                                    className="mb-1 pointer-events-none bg-neutral-100 text-neutral-600 hover:bg-neutral-100"
                                 >
                                     {getPercentage(card.value)}%
                                 </Badge>

@@ -52,7 +52,7 @@ export function MonthPicker({ value, onChange, className }: MonthPickerProps) {
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {value ? (
-                        format(value, "MMM/yyyy", { locale: ptBR }).replace(/^\w/, (c) => c.toUpperCase())
+                        format(value, "MMMM yyyy", { locale: ptBR }).replace(/^\w/, (c) => c.toUpperCase())
                     ) : (
                         <span>Selecione o mês</span>
                     )}

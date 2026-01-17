@@ -4,21 +4,12 @@ import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { format, parseISO } from "date-fns"
+import { format, parseISO, startOfMonth } from "date-fns"
 import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
-
 import {
     Select,
     SelectContent,
@@ -27,16 +18,11 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 import { MonthPicker } from "@/components/ui/month-picker"
-import {
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetDescription,
-    SheetFooter,
-    SheetClose,
-} from "@/components/ui/sheet"
+import { MoneyInput } from "@/components/ui/money-input"
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -56,45 +42,79 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Badge } from "@/components/ui/badge"
 import { saveTransaction, updateTransaction, deleteTransaction } from "@/app/actions/transactions"
-import { getPaymentMethods, getCategories, getSubcategories, getWallets } from "@/app/actions/transaction-data"
+import { getCategories, getSubcategories, getWallets, getClassifications } from "@/app/actions/transaction-data"
 import { getColorClass } from "@/components/cadastros/color-picker"
 import { usePayees } from "@/hooks/usePayees"
-import { PaymentMethod, Payee, Category, Subcategory, Wallet } from "@/types/transaction"
-import type { Transaction } from "@/types/transaction"
+import type { Transaction, Wallet, Category, Classification, Subcategory } from "@/types/transaction"
 import { toast } from "sonner"
-import { createPayee } from "@/app/actions/contacts"
-import { Plus } from "lucide-react"
 
-const transactionSchema = z.object({
+const transactionBaseSchema = z.object({
     description: z.string().min(1, "Descrição é obrigatória"),
-    amount: z.number().gt(0, "Valor deve ser maior que zero"),
-    type: z.enum(["revenue", "expense", "investment"]),
-    wallet_id: z.string().optional(),
-    payee_id: z.string().optional(), // Validado no superRefine
-    payment_method_id: z.string().optional(),
-    classification: z.enum(["essential", "necessary", "superfluous"]).optional(),
-    category_id: z.string().min(1, "Categoria é obrigatória"),
+    amount: z.coerce.number().gt(0, "Valor deve ser maior que zero"),
+    type: z.enum(["revenue", "expense"]),
+    wallet_id: z.string().min(1, "Carteira é obrigatória"),
+    payee_id: z.string().optional(),
+    payment_method: z.string().optional(),
+    classification_id: z.string().optional(),
+    category_id: z.string().optional(),
     subcategory_id: z.string().optional(),
-    due_date: z.date().optional(),
-    payment_date: z.date().optional(),
-    competence_date: z.date().optional(),
-    status: z.string().optional(),
-    observation: z.string().optional(),
-    is_installment: z.boolean(),
-}).superRefine((data, ctx) => {
-    if ((data.type === 'revenue' || data.type === 'expense') && !data.payee_id) {
+    date: z.date().optional(),
+    competence: z.date().optional(),
+    status: z.enum(["Realizado", "Pendente"]).optional(),
+})
+
+type TransactionFormValues = z.infer<typeof transactionBaseSchema>
+
+const transactionSchema = transactionBaseSchema.superRefine((data, ctx) => {
+    // 1. Pagador / Beneficiário
+    if (!data.payee_id) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: data.type === 'revenue' ? "Pagador é obrigatório" : "Favorecido é obrigatório",
+            message: data.type === 'revenue' ? "Pagador é obrigatório" : "Beneficiário é obrigatório",
             path: ["payee_id"],
         })
     }
+
+    if (data.type === 'expense') {
+        if (!data.payment_method) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Método é obrigatório",
+                path: ["payment_method"],
+            })
+        }
+        if (!data.classification_id) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Classificação é obrigatória",
+                path: ["classification_id"],
+            })
+        }
+        if (!data.category_id) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Categoria é obrigatória",
+                path: ["category_id"],
+            })
+        }
+        if (!data.subcategory_id) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Subcategoria é obrigatória",
+                path: ["subcategory_id"],
+            })
+        }
+    } else {
+        if (!data.category_id) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Categoria é obrigatória",
+                path: ["category_id"],
+            })
+        }
+    }
 })
-
-
-type TransactionFormValues = z.infer<typeof transactionSchema>
 
 export interface TransactionFormProps {
     open?: boolean
@@ -104,349 +124,297 @@ export interface TransactionFormProps {
     onCancel?: () => void
 }
 
-const formatCurrencyBR = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(value)
-}
-
-const parseCurrencyBR = (value: string) => {
-    const cleanValue = value.replace(/\D/g, "")
-    return Number(cleanValue) / 100
-}
-
 export function TransactionForm({ open, transaction, defaultType = "expense", onSuccess, onCancel }: TransactionFormProps) {
     const [isPending, startTransition] = React.useTransition()
     const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
-    const [paymentMethods, setPaymentMethods] = React.useState<PaymentMethod[]>([])
 
     const [allCategories, setAllCategories] = React.useState<Category[]>([])
     const [subcategories, setSubcategories] = React.useState<Subcategory[]>([])
     const [wallets, setWallets] = React.useState<Wallet[]>([])
-    const [isLoadingData, setIsLoadingData] = React.useState(!!transaction)
-
-    // Quick Create States
-    const [isCreatingPayee, setIsCreatingPayee] = React.useState(false)
-    const [newEntityName, setNewEntityName] = React.useState("")
-    const [isCreatingEntity, setIsCreatingEntity] = React.useState(false)
-
-    const isEditMode = !!transaction
+    const [classifications, setClassifications] = React.useState<Classification[]>([])
 
     const form = useForm<TransactionFormValues>({
-        resolver: zodResolver(transactionSchema),
+        resolver: zodResolver(transactionSchema) as any,
         defaultValues: {
             description: "",
             amount: 0,
-            type: defaultType,
+            type: (defaultType === "investment" ? "expense" : defaultType) as any,
             wallet_id: "",
-            payee_id: "", // Unified field for both Payer and Payee
-            payment_method_id: "",
-            classification: "necessary",
+            payee_id: "",
+            payment_method: "",
+            classification_id: "",
             category_id: "",
             subcategory_id: "",
-            due_date: new Date(),
-            payment_date: undefined,
-            competence_date: new Date(),
-            status: "pending",
-            observation: "",
-            is_installment: false,
+            date: new Date(),
+            competence: startOfMonth(new Date()),
+            status: "Pendente",
         },
     })
 
-    const { formState: { isDirty, errors }, reset, watch, setValue } = form
-    const type = watch("type")
-    const { payees, setPayees } = usePayees(type)
-    const selectedCategoryId = watch("category_id")
+    const type = form.watch("type")
+    const selectedCategoryId = form.watch("category_id")
+    const { payees } = usePayees(type)
 
-    // Load transaction data when in edit mode
-    React.useEffect(() => {
-        if (transaction && open) {
-            const loadTransactionData = async () => {
-                const [methods, cats, wals] = await Promise.all([
-                    getPaymentMethods(),
-                    getCategories(),
-                    getWallets()
-                ])
-                setPaymentMethods(methods)
-                setAllCategories(cats)
-                setWallets(wals)
-
-                // Hybrid lookup: try payee_id first, then fallback to payer_id or joined implementations
-                // Since we are migrating, we consolidate everything into payee_id UI field
-                const payeeId = transaction.payee_id || transaction.payer_id || (transaction.payees?.id) || (transaction.payers?.id) || ""
-
-                const methodId = transaction.payment_method_id || methods.find(m => m.name === transaction.payment_methods?.name)?.id || ""
-                const categoryId = transaction.category_id || cats.find(c => c.name === transaction.categories?.name)?.id || ""
-
-                let subcategoryId = transaction.subcategory_id || ""
-                if (categoryId) {
-                    const subs = await getSubcategories(categoryId)
-                    setSubcategories(subs)
-                    if (!subcategoryId && transaction.subcategories?.name) {
-                        subcategoryId = subs.find(s => s.name === transaction.subcategories?.name)?.id || ""
-                    }
-                }
-
-                reset({
-                    description: transaction.description,
-                    amount: transaction.amount,
-                    type: transaction.type,
-                    payee_id: payeeId,
-                    payment_method_id: methodId,
-                    classification: transaction.classification || "necessary",
-                    category_id: categoryId,
-                    subcategory_id: subcategoryId,
-                    due_date: parseISO(transaction.due_date),
-                    payment_date: transaction.payment_date ? parseISO(transaction.payment_date) : undefined,
-                    is_installment: false,
-                    observation: transaction.observation || "",
-                    competence_date: transaction.competence_date ? parseISO(transaction.competence_date) : undefined,
-                    status: transaction.status || "pending",
-                    wallet_id: transaction.wallet_id || "",
-                })
-                setIsLoadingData(false)
-            }
-
-            loadTransactionData()
-        } else if (!open) {
-            reset()
-        }
-    }, [transaction, open, reset])
-
-    // Reset/Initialize form when opening
-    React.useEffect(() => {
-        if (open && !transaction) {
-            // New transaction: Reset to default type
-            reset({
-                description: "",
-                amount: 0,
-                type: defaultType,
-                payee_id: "",
-                payment_method_id: "",
-                classification: "necessary",
-                category_id: "",
-                subcategory_id: "",
-                due_date: new Date(),
-                payment_date: undefined,
-                is_installment: false,
-                observation: "",
-                competence_date: new Date(),
-                status: "pending",
-                wallet_id: "",
-            })
-            // Load initial data
-            const loadData = async () => {
-                const [methods, cats, wals] = await Promise.all([
-                    getPaymentMethods(),
-                    getCategories(),
-                    getWallets()
-                ])
-                setPaymentMethods(methods)
-                setAllCategories(cats)
-
-                const sortedWallets = [...wals].sort((a, b) => {
-                    const aP = a.is_principal ? 1 : 0;
-                    const bP = b.is_principal ? 1 : 0;
-                    if (aP !== bP) return bP - aP;
-                    return a.name.localeCompare(b.name);
-                });
-
-                setWallets(sortedWallets)
-
-                // Set principal wallet as default
-                const principalWallet = wals.find((w: Wallet) => w.is_principal)
-
-                if (principalWallet && !form.getValues("wallet_id")) {
-                    form.setValue("wallet_id", principalWallet.id, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                    })
-                }
-            }
-            loadData()
-        }
-    }, [open, defaultType, transaction, reset, form])
-
-    // Load subcategories when category changes
+    // Sync subcategories
     React.useEffect(() => {
         if (selectedCategoryId) {
-            const loadSubcategories = async () => {
-                const subs = await getSubcategories(selectedCategoryId)
-                setSubcategories(subs)
-            }
-            loadSubcategories()
+            getSubcategories(selectedCategoryId).then(setSubcategories)
         } else {
             setSubcategories([])
         }
     }, [selectedCategoryId])
 
-    // Unified Create Contact
-    const handleCreateContact = async () => {
-        if (!newEntityName.trim()) return
-        setIsCreatingEntity(true)
-        try {
-            const result = await createPayee(newEntityName)
-            if (result.success && result.data) {
-                setPayees(prev => [...prev, result.data!].sort((a, b) => a.name.localeCompare(b.name)))
-                form.setValue("payee_id", result.data.id)
-                toast.success("Contato criado com sucesso!")
-                setIsCreatingPayee(false)
-                setNewEntityName("")
-            } else {
-                toast.error(result.error || "Erro ao criar contato")
+    // Load initial data
+    React.useEffect(() => {
+        if (open) {
+            const loadData = async () => {
+                const [w, c, cl] = await Promise.all([
+                    getWallets(),
+                    getCategories(),
+                    getClassifications(),
+                ])
+                setWallets(w)
+                setAllCategories(c)
+                setClassifications(cl)
+
+                if (transaction) {
+                    const categoryId = transaction.category_id || ""
+                    if (categoryId) {
+                        const subs = await getSubcategories(categoryId)
+                        setSubcategories(subs)
+                    }
+
+                    form.reset({
+                        description: transaction.description,
+                        amount: transaction.amount,
+                        type: transaction.type,
+                        wallet_id: transaction.wallet_id || "",
+                        payee_id: transaction.payee_id || transaction.payer_id || "",
+                        payment_method: transaction.payment_method || "",
+                        classification_id: transaction.classification_id || "",
+                        category_id: transaction.category_id || "",
+                        subcategory_id: transaction.subcategory_id || "",
+                        date: transaction.date ? parseISO(transaction.date) : new Date(),
+                        competence: transaction.competence ? parseISO(transaction.competence) : startOfMonth(new Date()),
+                        status: transaction.status === 'Realizado' ? 'Realizado' : 'Pendente',
+                    })
+                } else {
+                    const principal = w.find(wallet => wallet.is_principal)
+                    if (principal && !form.getValues("wallet_id")) {
+                        form.setValue("wallet_id", principal.id)
+                    }
+                }
             }
-        } catch (error) {
-            toast.error("Erro ao criar contato")
-        } finally {
-            setIsCreatingEntity(false)
+            loadData()
+        } else {
+            form.reset()
         }
-    }
+    }, [open, transaction, form])
 
     const onSubmit = async (data: TransactionFormValues) => {
-        startTransition(async () => {
-            try {
-                const effectiveDueDate = data.due_date || data.payment_date || new Date()
+        startTransition(() => {
+            const run = async () => {
+                try {
+                    const payload = {
+                        ...data,
+                        date: data.date ? format(data.date, 'yyyy-MM-dd') : null,
+                        competence: data.competence ? format(data.competence, 'yyyy-MM-dd') : null,
+                    }
 
-                const payload = {
-                    ...data,
-                    due_date: format(effectiveDueDate, 'yyyy-MM-dd'),
-                    payment_date: data.payment_date ? format(data.payment_date, 'yyyy-MM-dd') : null,
-                    competence_date: data.competence_date ? format(data.competence_date, 'yyyy-MM-dd') : null,
+                    const isEditMode = !!transaction?.id
+                    const result = isEditMode
+                        ? await updateTransaction(transaction.id, payload)
+                        : await saveTransaction(payload)
+
+                    if (result.success) {
+                        toast.success(isEditMode ? "Transação atualizada!" : "Transação registrada!")
+                        form.reset()
+                        if (onSuccess) onSuccess()
+                    } else {
+                        toast.error(result.error || "Erro ao salvar")
+                    }
+                } catch (error) {
+                    console.error(error)
+                    toast.error("Erro inesperado")
                 }
-
-                if (isEditMode && transaction) {
-                    await updateTransaction(transaction.id, payload)
-                } else {
-                    await saveTransaction(payload)
-                }
-
-                toast.success(isEditMode ? "Transação salva com sucesso!" : "Transação registrada com sucesso!")
-                reset()
-                if (onSuccess) onSuccess()
-
-            } catch (error) {
-                console.error(error)
-                toast.error("Erro ao salvar transação")
             }
+            run()
         })
     }
 
     const handleDelete = async () => {
-        if (!transaction) return
-
+        if (!transaction?.id) return
         startTransition(async () => {
-            try {
-                const result = await deleteTransaction(transaction.id)
-                if (result.success) {
-                    setShowDeleteDialog(false)
-                    toast.success("Transação excluída com sucesso!")
-                    if (onSuccess) onSuccess()
-                } else {
-                    toast.error(result.error || "Erro ao excluir transação")
-                }
-            } catch (error) {
-                console.error(error)
-                toast.error("Erro ao excluir transação")
+            const result = await deleteTransaction(transaction.id)
+            if (result.success) {
+                toast.success("Transação excluída")
+                if (onSuccess) onSuccess()
+            } else {
+                toast.error(result.error || "Erro ao excluir")
             }
         })
     }
 
-    const currencyDisplay = formatCurrencyBR(watch("amount"))
-
-    if (isLoadingData) {
-        return (
-            <SheetContent className="w-[600px] sm:max-w-[600px] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
-            </SheetContent>
-        )
-    }
-
     return (
-        <SheetContent className="w-[600px] sm:max-w-[600px] flex flex-col p-0 gap-0">
-            <SheetHeader className="p-6 pb-4 border-b">
-                <SheetTitle className="text-2xl font-bold text-zinc-950 font-jakarta">
-                    {isEditMode
-                        ? "Editar transação"
-                        : type === 'revenue'
-                            ? "Nova receita"
-                            : type === 'expense'
-                                ? "Nova despesa"
-                                : "Novo investimento"
-                    }
-                </SheetTitle>
-                <SheetDescription className="text-zinc-500 font-sans">
-                    {isEditMode ? "Atualize os dados da transação" : "Preencha os dados da nova transação"}
-                </SheetDescription>
-            </SheetHeader>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <Tabs
+                    value={type}
+                    onValueChange={(v) => form.setValue("type", v as any)}
+                    className="w-full bg-zinc-100 p-1 rounded-lg"
+                >
+                    <TabsList className="grid w-full grid-cols-2 bg-transparent">
+                        <TabsTrigger
+                            value="revenue"
+                            className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all font-inter"
+                        >
+                            Receita
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="expense"
+                            className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all font-inter"
+                        >
+                            Despesa
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
 
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-                    <div className="flex-1 overflow-y-auto p-6">
-                        <div className="space-y-4">
-                            {/* Descrição */}
+                <div className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                            <FormItem className="space-y-2">
+                                <RequiredLabel error={!!form.formState.errors.description}>Descrição</RequiredLabel>
+                                <FormControl>
+                                    <Input
+                                        {...field}
+                                        placeholder="Informe uma descrição"
+                                        className="font-inter h-10 border-zinc-200"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="amount"
+                            render={({ field }) => (
+                                <FormItem className="space-y-2">
+                                    <RequiredLabel error={!!form.formState.errors.amount}>Valor</RequiredLabel>
+                                    <FormControl>
+                                        <MoneyInput
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                            placeholder="R$ 0,00"
+                                            className="h-10 border-zinc-200"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="wallet_id"
+                            render={({ field }) => (
+                                <FormItem className="space-y-2">
+                                    <RequiredLabel error={!!form.formState.errors.wallet_id}>Carteira</RequiredLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                <SelectValue placeholder="Selecione" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent className="bg-white border-zinc-200">
+                                            {wallets.map(w => (
+                                                <SelectItem key={w.id} value={w.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(w.color || 'zinc'))} />
+                                                        {w.name}
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
+                    {type === 'expense' ? (
+                        <>
                             <FormField
                                 control={form.control}
-                                name="description"
+                                name="payment_method"
                                 render={({ field }) => (
                                     <FormItem className="space-y-2">
-                                        <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Descrição</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder={type === 'revenue' ? "Ex: Salário Mensal" : "Ex: Aluguel"} className="rounded-xl px-4 py-6 font-sans" />
-                                        </FormControl>
+                                        <RequiredLabel error={!!form.formState.errors.payment_method}>Método</RequiredLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                    <SelectValue placeholder="Selecione" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent className="bg-white border-zinc-200">
+                                                {["Boleto", "Crédito", "Débito", "Pix", "Dinheiro"].map(m => (
+                                                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
 
-                            {/* Valor e Carteira */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
-                                    name="amount"
+                                    name="payee_id"
                                     render={({ field }) => (
                                         <FormItem className="space-y-2">
-                                            <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Valor R$</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    value={currencyDisplay}
-                                                    onChange={(e) => {
-                                                        const parsed = parseCurrencyBR(e.target.value)
-                                                        field.onChange(parsed)
-                                                    }}
-                                                    placeholder="0,00"
-                                                    className="rounded-xl px-4 py-6 font-mono tracking-wider font-sans"
-                                                />
-                                            </FormControl>
+                                            <RequiredLabel error={!!form.formState.errors.payee_id}>Beneficiário</RequiredLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                        <SelectValue placeholder="Selecione" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent className="bg-white border-zinc-200 max-h-[250px]">
+                                                    {payees.map(p => (
+                                                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-
                                 <FormField
                                     control={form.control}
-                                    name="wallet_id"
+                                    name="classification_id"
                                     render={({ field }) => (
                                         <FormItem className="space-y-2">
-                                            <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Carteira</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value} defaultValue="">
+                                            <RequiredLabel error={!!form.formState.errors.classification_id}>Classificação</RequiredLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
-                                                    <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
+                                                    <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
                                                         <SelectValue placeholder="Selecione" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent className="bg-white border-zinc-200">
-                                                    {wallets.map(wallet => {
-                                                        const colorClass = getColorClass(wallet.color || 'zinc');
-                                                        return (
-                                                            <SelectItem key={wallet.id} value={wallet.id}>
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className={cn("h-3 w-3 rounded-full", colorClass)} />
-                                                                    {wallet.name}
-                                                                </div>
-                                                            </SelectItem>
-                                                        )
-                                                    })}
+                                                    {classifications.map(c => (
+                                                        <SelectItem key={c.id} value={c.id}>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />
+                                                                {c.name}
+                                                            </div>
+                                                        </SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -455,407 +423,231 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                 />
                             </div>
 
-                            {/* Campos Específicos por Tipo */}
-                            {type === 'expense' && (
-                                <>
-                                    {/* Favorecido e Classificação */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="payee_id"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Favorecido</FormLabel>
-                                                    <div className="flex gap-2">
-                                                        <Select onValueChange={field.onChange} value={field.value}>
-                                                            <FormControl>
-                                                                <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans flex-1">
-                                                                    <SelectValue placeholder="Selecione" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent className="bg-white border-zinc-200 max-h-[300px]">
-                                                                {payees?.map(payee => (
-                                                                    <SelectItem key={payee.id} value={payee.id}>{payee.name}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-[52px] w-[52px] rounded-xl shrink-0"
-                                                            onClick={() => {
-                                                                setNewEntityName("")
-                                                                setIsCreatingPayee(true)
-                                                            }}
-                                                        >
-                                                            <Plus className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="classification"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Classificação</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value || "necessary"}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent className="bg-white border-zinc-200">
-                                                            <SelectItem value="essential">Essencial</SelectItem>
-                                                            <SelectItem value="necessary">Necessário</SelectItem>
-                                                            <SelectItem value="superfluous">Supérfluo</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                    {/* Categoria etc ... */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="category_id"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Categoria</FormLabel>
-                                                    <Select onValueChange={(val) => {
-                                                        field.onChange(val)
-                                                        form.setValue("subcategory_id", "")
-                                                    }} value={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                                <SelectValue placeholder="Selecione" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent className="bg-white border-zinc-200">
-                                                            {allCategories.map(cat => (
-                                                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        {/* Subcat ... */}
-                                        <FormField
-                                            control={form.control}
-                                            name="subcategory_id"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Subcategoria</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCategoryId}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                                <SelectValue placeholder="Selecione" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent className="bg-white border-zinc-200">
-                                                            {subcategories?.map(sub => (
-                                                                <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                    {/* Dates ... */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="competence_date"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2 flex flex-col">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Competência</FormLabel>
-                                                    <FormControl>
-                                                        <MonthPicker value={field.value} onChange={field.onChange} className="w-full rounded-xl h-[50px]" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="due_date"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2 flex flex-col">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Vencimento</FormLabel>
-                                                    <FormControl>
-                                                        <DatePicker value={field.value} onChange={field.onChange} className="rounded-xl px-4 py-6 font-sans w-full" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="payment_date"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2 flex flex-col">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Pagamento</FormLabel>
-                                                    <FormControl>
-                                                        <DatePicker value={field.value} onChange={field.onChange} className="rounded-xl px-4 py-6 font-sans w-full" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="status"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Status</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value || "pending"}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent className="bg-white border-zinc-200">
-                                                            <SelectItem value="pending">Pendente</SelectItem>
-                                                            <SelectItem value="paid">Pago</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </>
-                            )}
-
-                            {type === 'revenue' && (
-                                <>
-                                    {/* Pagador e Categoria */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="payee_id"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Pagador</FormLabel>
-                                                    <div className="flex gap-2">
-                                                        <Select onValueChange={field.onChange} value={field.value}>
-                                                            <FormControl>
-                                                                <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans flex-1">
-                                                                    <SelectValue placeholder="Selecione" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent className="bg-white border-zinc-200 max-h-[300px]">
-                                                                {payees?.map(payee => (
-                                                                    <SelectItem key={payee.id} value={payee.id}>{payee.name}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-[52px] w-[52px] rounded-xl shrink-0"
-                                                            onClick={() => {
-                                                                setNewEntityName("")
-                                                                setIsCreatingPayee(true)
-                                                            }}
-                                                        >
-                                                            <Plus className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="category_id"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Categoria</FormLabel>
-                                                    <Select onValueChange={(val) => {
-                                                        field.onChange(val)
-                                                        form.setValue("subcategory_id", "")
-                                                    }} value={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                                <SelectValue placeholder="Selecione" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent className="bg-white border-zinc-200">
-                                                            {allCategories.map(cat => (
-                                                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                    {/* Dates ... */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="competence_date"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2 flex flex-col">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Competência</FormLabel>
-                                                    <FormControl>
-                                                        <MonthPicker value={field.value} onChange={field.onChange} className="w-full rounded-xl h-[50px]" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="payment_date"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2 flex flex-col">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Data de Recebimento</FormLabel>
-                                                    <FormControl>
-                                                        <DatePicker value={field.value} onChange={field.onChange} className="rounded-xl px-4 py-6 font-sans w-full" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="status"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2">
-                                                    <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Status</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value || "received"}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="rounded-xl px-4 py-6 border-zinc-200 font-sans">
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent className="bg-white border-zinc-200">
-                                                            <SelectItem value="pending">Pendente</SelectItem>
-                                                            <SelectItem value="received">Recebido</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </>
-                            )}
-
-                            {/* Observação (Comum) */}
+                            <div className="grid grid-cols-2 gap-6">
+                                <FormField
+                                    control={form.control}
+                                    name="category_id"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-2">
+                                            <RequiredLabel error={!!form.formState.errors.category_id}>Categoria</RequiredLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                        <SelectValue placeholder="Selecione" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent className="bg-white border-zinc-200">
+                                                    {allCategories.map(c => (
+                                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="subcategory_id"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-2">
+                                            <RequiredLabel error={!!form.formState.errors.subcategory_id}>Subcategoria</RequiredLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                value={field.value}
+                                                disabled={!selectedCategoryId}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                        <SelectValue placeholder="Selecione" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent className="bg-white border-zinc-200">
+                                                    {subcategories.map(s => (
+                                                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-6">
                             <FormField
                                 control={form.control}
-                                name="observation"
+                                name="payee_id"
                                 render={({ field }) => (
                                     <FormItem className="space-y-2">
-                                        <FormLabel className="text-sm font-semibold text-zinc-900 font-sans">Observação</FormLabel>
-                                        <FormControl>
-                                            <Textarea {...field} placeholder="Adicione uma observação..." className="resize-none rounded-xl" />
-                                        </FormControl>
+                                        <RequiredLabel error={!!form.formState.errors.payee_id}>Pagador</RequiredLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                    <SelectValue placeholder="Selecione" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent className="bg-white border-zinc-200 max-h-[250px]">
+                                                {payees.map(p => (
+                                                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="category_id"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-2">
+                                        <RequiredLabel error={!!form.formState.errors.category_id}>Categoria</RequiredLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                    <SelectValue placeholder="Selecione" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent className="bg-white border-zinc-200">
+                                                {allCategories.map(c => (
+                                                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="competence"
+                            render={({ field }) => (
+                                <FormItem className="space-y-2 flex flex-col">
+                                    <FormLabel className={cn("text-zinc-700", !!form.formState.errors.competence && "text-red-600")}>Competência</FormLabel>
+                                    <FormControl>
+                                        <MonthPicker
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            className="w-full h-10 border-zinc-200"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="date"
+                            render={({ field }) => (
+                                <FormItem className="space-y-2 flex flex-col">
+                                    <FormLabel className={cn("text-zinc-700", !!form.formState.errors.date && "text-red-600")}>Data</FormLabel>
+                                    <FormControl>
+                                        <DatePicker
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            className="w-full h-10 border-zinc-200"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                     </div>
 
-                    {/* Footer */}
-                    <SheetFooter className="p-6 border-t bg-white flex flex-row items-center justify-between flex-none">
-                        <div>
-                            {isEditMode && (
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                    onClick={() => setShowDeleteDialog(true)}
-                                    disabled={isPending}
-                                >
-                                    Excluir
-                                </Button>
-                            )}
-                        </div>
-                        <div className="flex gap-3">
-                            <SheetClose asChild>
-                                <Button type="button" variant="outline" onClick={onCancel}>
-                                    Cancelar
-                                </Button>
-                            </SheetClose>
-                            <Button
-                                type="submit"
-                                disabled={isPending || (isEditMode && !isDirty)}
-                            >
-                                {isPending ? "Salvando..." : "Salvar"}
-                            </Button>
-                        </div>
-                    </SheetFooter>
-                </form>
-            </Form>
+                    <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-zinc-200 p-4 space-y-0 bg-zinc-50/50">
+                                <div className="space-y-0.5">
+                                    <FormLabel className="text-base font-semibold text-zinc-950">
+                                        {type === 'expense' ? 'Pago' : 'Recebido'}
+                                    </FormLabel>
+                                    <p className="text-xs text-zinc-500 font-inter">
+                                        {type === 'expense'
+                                            ? 'Marcar como pagamento realizado'
+                                            : 'Marcar como pagamento recebido'}
+                                    </p>
+                                </div>
+                                <FormControl>
+                                    <Switch
+                                        checked={field.value === 'Realizado'}
+                                        onCheckedChange={(checked) => field.onChange(checked ? 'Realizado' : 'Pendente')}
+                                    />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                </div>
 
-            {/* Delete Confirmation Dialog */}
+                <div className="flex justify-between gap-3 pt-2">
+                    {transaction?.id && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setShowDeleteDialog(true)}
+                            disabled={isPending}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 font-inter"
+                        >
+                            Excluir
+                        </Button>
+                    )}
+                    <div className="flex gap-3 ml-auto">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onCancel}
+                            disabled={isPending}
+                            className="font-inter"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={isPending}
+                            className="min-w-[100px] font-inter bg-[#00665C] hover:bg-[#00665C]/90 text-white"
+                        >
+                            {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                            {transaction?.id ? "Atualizar" : "Salvar"}
+                        </Button>
+                    </div>
+                </div>
+            </form>
+
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <AlertDialogContent className="z-[100]">
+                <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="font-jakarta">Confirmar exclusão</AlertDialogTitle>
+                        <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tem certeza que deseja excluir a transação <strong>{transaction?.description}</strong>?
                             Esta ação não pode ser desfeita.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel>Não, cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            disabled={isPending}
-                            className="bg-rose-600 hover:bg-rose-700"
+                            className="bg-red-600 hover:bg-red-700"
                         >
-                            {isPending ? "Excluindo..." : "Confirmar"}
+                            Sim, excluir
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+        </Form>
+    )
+}
 
-            {/* Create Contact Dialog */}
-            <Dialog open={isCreatingPayee} onOpenChange={setIsCreatingPayee}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Novo Contato</DialogTitle>
-                        <DialogDescription>
-                            Adicione um novo contato para usar como pagador ou favorecido.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <Input
-                            placeholder="Nome do contato"
-                            value={newEntityName}
-                            onChange={(e) => setNewEntityName(e.target.value)}
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsCreatingPayee(false)}>Cancelar</Button>
-                        <Button onClick={handleCreateContact} disabled={!newEntityName.trim() || isCreatingEntity}>
-                            {isCreatingEntity ? "Criando..." : "Criar"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </SheetContent>
+function RequiredLabel({ children, error }: { children: React.ReactNode; error?: boolean }) {
+    return (
+        <FormLabel className={cn("text-zinc-700 flex items-center gap-0.5", error && "text-red-600")}>
+            {children}
+            <span className="text-red-600 ml-0.5">*</span>
+        </FormLabel>
     )
 }

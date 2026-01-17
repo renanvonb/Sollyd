@@ -117,7 +117,7 @@ export function TransactionDetailsDialog({
                         </h2>
 
                         <Badge variant="secondary" className="mt-2 font-inter text-sm font-medium">
-                            {isExpense ? (transaction.payees?.name || "Sem favorecido") : (transaction.payers?.name || "Sem pagador")}
+                            {transaction.payees?.name || (isExpense ? "Sem favorecido" : "Sem pagador")}
                         </Badge>
                     </div>
 
@@ -126,25 +126,20 @@ export function TransactionDetailsDialog({
                     <div className="p-6 grid grid-cols-2 gap-y-6 gap-x-4">
                         {isExpense ? (
                             <>
-                                <DetailItem label="Classificação" value={classificationMap[transaction.classification] || "-"} />
-                                <DetailItem label="Competência" value={transaction.competence_date ? format(new Date(transaction.competence_date), "MMM/yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) : "-"} />
+                                <DetailItem label="Classificação" value={transaction.classifications?.name || "-"} />
+                                <DetailItem label="Competência" value={transaction.competence ? format(new Date(transaction.competence), "MMM/yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) : "-"} />
                                 <DetailItem label="Categoria" value={transaction.categories?.name} />
                                 <DetailItem label="Subcategoria" value={transaction.subcategories?.name} />
-                                <DetailItem label="Data de vencimento" value={formatDate(transaction.due_date)} />
-                                <DetailItem label="Data de pagamento" value={formatDate(transaction.payment_date)} />
+                                <DetailItem label="Data" value={formatDate(transaction.date)} />
                             </>
                         ) : (
                             <>
-                                <DetailItem label="Competência" value={transaction.competence_date ? format(new Date(transaction.competence_date), "MMM/yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) : "-"} />
-                                <DetailItem label="Data de recebimento" value={formatDate(transaction.payment_date || transaction.due_date)} />
+                                <DetailItem label="Competência" value={transaction.competence ? format(new Date(transaction.competence), "MMM/yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase()) : "-"} />
+                                <DetailItem label="Categoria" value={transaction.categories?.name} />
+                                <DetailItem label="Data" value={formatDate(transaction.date)} />
                             </>
                         )}
 
-                        {transaction.observation && (
-                            <div className="col-span-2 bg-muted/50 rounded-lg p-4 mt-2 border border-zinc-100/50">
-                                <p className="text-sm text-zinc-600 font-inter leading-relaxed">{transaction.observation}</p>
-                            </div>
-                        )}
                     </div>
 
                     <Separator className="mb-6" />
@@ -153,7 +148,7 @@ export function TransactionDetailsDialog({
                         <Button
                             variant="ghost"
                             onClick={() => setShowDeleteAlert(true)}
-                            className="text-destructive hover:bg-destructive/10 hover:text-destructive font-inter"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 font-inter"
                         >
                             Excluir
                         </Button>

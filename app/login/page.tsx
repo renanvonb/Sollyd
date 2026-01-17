@@ -15,10 +15,12 @@ import { Separator } from '@/components/ui/separator'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AuthSkeleton } from '@/components/ui/skeletons'
+import { Checkbox } from '@/components/ui/checkbox'
 
 const loginSchema = z.object({
     email: z.string().email('E-mail inválido'),
     password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
+    rememberMe: z.boolean().optional(),
 })
 
 type LoginValues = z.infer<typeof loginSchema>
@@ -47,6 +49,7 @@ export default function LoginPage() {
         defaultValues: {
             email: '',
             password: '',
+            rememberMe: false,
         },
     })
 
@@ -62,6 +65,7 @@ export default function LoginPage() {
 
             if (error) {
                 setError('E-mail ou senha incorretos.')
+                setLoading(false)
                 return
             }
 
@@ -69,7 +73,6 @@ export default function LoginPage() {
             router.refresh()
         } catch (err) {
             setError('Ocorreu um erro inesperado.')
-        } finally {
             setLoading(false)
         }
     }
@@ -83,18 +86,23 @@ export default function LoginPage() {
             {/* Left Column: Form (Login Area - 60%) */}
             <div className="flex-1 md:w-[60%] md:flex-none flex flex-col items-center justify-center p-8 md:p-12 lg:p-16 bg-white relative">
                 <div className="w-full flex flex-col items-center">
-                    <div className="w-full max-w-[320px] flex flex-col items-center text-center">
-                        {/* Brand Symbol */}
-                        <div className="relative h-10 w-10 mb-4">
-                            <Image
-                                src="/brand/symbol.png"
-                                alt="Sollyd"
-                                fill
-                                className="object-contain"
-                            />
+                    <div className="w-full max-w-[360px] flex flex-col items-center text-center">
+                        {/* Brand Symbol Block */}
+                        <div className="bg-[#E0FE56] rounded-xl p-3 mb-4 h-12 w-12 flex items-center justify-center">
+                            <div className="relative h-6 w-6">
+                                <Image
+                                    src="/brand/symbol.png"
+                                    alt="Sollyd"
+                                    fill
+                                    className="object-contain"
+                                    style={{
+                                        filter: 'brightness(0) saturate(100%) invert(4%) sepia(8%) saturate(2456%) hue-rotate(202deg) brightness(96%) contrast(94%)'
+                                    }}
+                                />
+                            </div>
                         </div>
                         <h1 className="text-2xl font-bold tracking-tight text-foreground font-jakarta mb-2">
-                            Bem-vindo! <span className="font-['Apple_Color_Emoji',_'Segoe_UI_Emoji',_'Segoe_UI_Symbol',_cursive]">👋🏻</span>
+                            Bem-vindo!
                         </h1>
                         <p className="text-muted-foreground font-inter">
                             Insira suas credenciais abaixo.
@@ -102,7 +110,7 @@ export default function LoginPage() {
                         <Separator className="mt-[24px] mb-[24px] w-full opacity-50" />
                     </div>
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-[320px] space-y-6">
+                    <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-[360px] space-y-6">
                         <div className="space-y-2">
                             <Label
                                 htmlFor="email"
@@ -116,7 +124,7 @@ export default function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="seu@email.com"
+                                placeholder="Informe seu e-mail"
                                 className={cn(
                                     "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                                     errors.email && "border-destructive focus-visible:ring-destructive"
@@ -142,7 +150,7 @@ export default function LoginPage() {
                                 <Input
                                     id="password"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="Sua senha"
+                                    placeholder="Insira sua senha"
                                     className={cn(
                                         "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10",
                                         errors.password && "border-destructive focus-visible:ring-destructive"
@@ -165,13 +173,36 @@ export default function LoginPage() {
                             </div>
                         </div>
 
+                        {/* Manter conectado + Esqueci minha senha */}
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="rememberMe"
+                                    {...register('rememberMe')}
+                                    disabled={loading}
+                                />
+                                <label
+                                    htmlFor="rememberMe"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                >
+                                    Manter conectado
+                                </label>
+                            </div>
+                            <Link
+                                href="/forgot-password"
+                                className="text-sm font-medium text-muted-foreground hover:underline transition-all whitespace-nowrap"
+                            >
+                                Esqueci minha senha
+                            </Link>
+                        </div>
+
                         {error && (
                             <div className="rounded-lg bg-destructive/10 p-3 border border-destructive/20 text-center">
                                 <p className="text-sm text-destructive font-medium">{error}</p>
                             </div>
                         )}
 
-                        <div className="space-y-4">
+                        <div className="space-y-5">
                             <Button
                                 type="submit"
                                 className="w-full h-11 rounded-lg font-semibold shadow-sm transition-all active:scale-[0.98]"
@@ -188,61 +219,64 @@ export default function LoginPage() {
                             </Button>
 
                             <div className="text-center">
-                                <Link
-                                    href="/forgot-password"
-                                    className="text-sm font-medium text-primary hover:underline transition-all"
-                                >
-                                    Esqueceu a senha?
-                                </Link>
+                                <p className="text-sm text-muted-foreground">
+                                    Não tem uma conta?{' '}
+                                    <Link
+                                        href="/signup"
+                                        className="font-semibold text-primary hover:underline transition-all"
+                                    >
+                                        Crie agora
+                                    </Link>
+                                </p>
                             </div>
                         </div>
                     </form>
                 </div>
 
-                <div className="absolute bottom-8 w-full text-center">
-                    <p className="text-sm text-muted-foreground">
-                        Não tem uma conta?{' '}
-                        <Link
-                            href="/signup"
-                            className="font-semibold text-primary hover:underline transition-all"
-                        >
-                            Crie agora
-                        </Link>
-                    </p>
-                </div>
             </div>
 
-            {/* Right Column: Visual (Brand Area - 40%) */}
-            <div className="hidden md:flex md:w-[40%] relative m-4 rounded-[16px] overflow-hidden p-6">
-                <Image
-                    src="/image_0.png"
-                    alt="Login Visual"
-                    fill
-                    className="object-cover"
-                    priority
-                />
+            {/* Right Column: Branding Area (40%) */}
+            <div className="hidden md:flex md:flex-col md:w-[40%] relative m-4 rounded-[16px] overflow-hidden bg-neutral-950">
+                {/* Glow Effect Top Right */}
+                <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#E0FE56] blur-[128px] opacity-40 z-0 pointer-events-none rounded-full mix-blend-screen" />
 
-                {/* Brand Logo in top-left of the card */}
-                <div className="absolute top-6 left-6 z-20">
+                {/* Background Giant Symbol */}
+                <div className="absolute top-1/2 -right-[120px] -translate-y-[75%] w-[800px] h-[800px] pointer-events-none opacity-100 z-0 select-none">
+                    <Image
+                        src="/brand/symbol.png"
+                        alt="Sollyd Symbol"
+                        fill
+                        className="object-contain"
+                        style={{
+                            filter: 'brightness(0) saturate(100%) invert(93%) sepia(46%) saturate(1272%) hue-rotate(8deg) brightness(104%) contrast(98%)'
+                        }}
+                    />
+                </div>
+
+                {/* Brand Logo in top-left */}
+                <div className="absolute top-8 left-8 z-20">
                     <span className="text-2xl font-bold font-jakarta tracking-tight text-white">Sollyd</span>
                 </div>
 
-                {/* Bottom Gradient Overlay */}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-10" />
+                {/* Content Area - Filling space and aligning bottom */}
+                <div className="flex-1 flex flex-col justify-end px-8 pb-8 z-10 relative">
+                    <div className="mb-12">
+                        <h2 className="text-[40px] font-bold tracking-tight leading-tight text-white font-jakarta">
+                            Gestão financeira<br />
+                            <span className="text-[#E0FE56]">inteligente</span> para um<br />
+                            futuro sólido
+                        </h2>
+                        <p className="text-lg text-neutral-400 mt-4 max-w-md">
+                            Monitore seu presente e planeje seu futuro com inteligência de dados e gestão em tempo real.
+                        </p>
+                    </div>
 
-                {/* Slogan Container (No glassmorphism now) */}
-                <div className="absolute bottom-24 left-12 right-12 text-white z-20 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
-                    <h2 className="text-3xl font-bold mb-3 font-jakarta shadow-2xl">Simplicidade e Eficiência</h2>
-                    <p className="text-white/90 text-lg max-w-md">
-                        Gerencie suas finanças e documentos em um só lugar com a melhor experiência.
-                    </p>
-                </div>
-
-                {/* Footer Info */}
-                <div className="absolute bottom-6 left-6 z-20">
-                    <p className="font-inter text-[14px] text-white/80 font-medium">
-                        © 2025 Sollyd. Todos os direitos reservados
-                    </p>
+                    {/* Footer Info inside the flow */}
+                    <div>
+                        <p className="font-inter text-[14px] text-neutral-500 font-medium">
+                            © 2026 Sollyd. Todos os direitos reservados
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

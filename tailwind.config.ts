@@ -57,10 +57,10 @@ const config: Config = {
 					'5': 'hsl(var(--chart-5))'
 				},
 				sidebar: {
-					DEFAULT: '#000F0D',
-					hover: '#001D1A',
-					active: '#001D1A',
-					muted: 'rgba(255, 255, 255, 0.7)',
+					DEFAULT: 'hsl(var(--primary))',
+					hover: 'hsl(var(--accent))',
+					active: 'hsl(var(--primary))',
+					muted: 'hsl(var(--muted-foreground))',
 				}
 			},
 			borderRadius: {

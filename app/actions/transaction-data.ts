@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { PaymentMethod, Category, Subcategory, Payee, Payer, Wallet } from '@/types/transaction'
+import { Classification } from '@/types/entities' // Assuming entities has Classification, need to check. Actually lib/supabase/cadastros defines it.
 import { unstable_noStore as noStore } from 'next/cache'
 
 export async function getWallets() {
@@ -100,4 +101,20 @@ export async function getSubcategories(categoryId: string) {
     }
 
     return (data || []) as Subcategory[]
+}
+
+export async function getClassifications() {
+    noStore()
+    const supabase = createClient()
+    const { data, error } = await supabase
+        .from('classifications')
+        .select('*')
+        .order('name')
+
+    if (error) {
+        console.error('[getClassifications] Error:', error)
+        return []
+    }
+
+    return (data || []) as Classification[]
 }

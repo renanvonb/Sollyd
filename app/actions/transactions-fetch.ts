@@ -62,16 +62,16 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
         .from('transactions')
         .select(`
             *,
-            payers(id, name),
             payees(id, name),
-            payment_methods(id, name),
+            classifications(id, name, color),
             categories(id, name),
-            subcategories(id, name)
+            subcategories(id, name),
+            wallets(id, name, color)
         `)
         .eq('user_id', userId)
-        .gte('competence_date', format(start, 'yyyy-MM-dd'))
-        .lte('competence_date', format(end, 'yyyy-MM-dd'))
-        .order('competence_date', { ascending: false })
+        .gte('competence', format(start, 'yyyy-MM-dd'))
+        .lte('competence', format(end, 'yyyy-MM-dd'))
+        .order('competence', { ascending: false })
         .order('created_at', { ascending: false })
 
     if (error) {
