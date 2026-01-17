@@ -49,6 +49,7 @@ import { usePayees } from "@/hooks/usePayees"
 import type { Transaction, Wallet, Category, Classification, Subcategory } from "@/types/transaction"
 import { toast } from "sonner"
 
+// Schema limpo - apenas campos que existem no banco
 const transactionBaseSchema = z.object({
     description: z.string().min(1, "Descrição é obrigatória"),
     amount: z.coerce.number().gt(0, "Valor deve ser maior que zero"),
@@ -215,10 +216,20 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
         startTransition(() => {
             const run = async () => {
                 try {
+                    // Payload limpo - apenas campos validados
                     const payload = {
-                        ...data,
+                        description: data.description,
+                        amount: data.amount,
+                        type: data.type,
+                        wallet_id: data.wallet_id,
+                        payee_id: data.payee_id || null,
+                        payment_method: data.payment_method || null,
+                        classification_id: data.classification_id || null,
+                        category_id: data.category_id || null,
+                        subcategory_id: data.subcategory_id || null,
                         date: data.date ? format(data.date, 'yyyy-MM-dd') : null,
                         competence: data.competence ? format(data.competence, 'yyyy-MM-dd') : null,
+                        status: data.status || 'Pendente',
                     }
 
                     const isEditMode = !!transaction?.id
