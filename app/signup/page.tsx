@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -38,11 +38,11 @@ export default function SignupPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const supabase = createClient()
 
-    // Simulate initial loading
-    useState(() => {
+    // Handle initial loading
+    useEffect(() => {
         const timer = setTimeout(() => setInitialLoading(false), 800)
         return () => clearTimeout(timer)
-    })
+    }, [])
 
 
     const {

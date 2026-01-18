@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "type-check": "bun tsc --noEmit",
+    "clean": "bun run rm -rf .next node_modules",
+    "reinstall": "bun run clean && bun install",
+    "verify-supabase": "bun run scripts/verify-supabase.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -46,6 +50,7 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@types/bun": "latest",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -55,7 +60,11 @@
     "eslint-config-next": "14.2.16",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "tsx": "^4.21.0",
     "typescript": "^5"
-  }
+  },
+  "trustedDependencies": [
+    "@next/swc-win32-x64-msvc",
+    "esbuild",
+    "sharp"
+  ]
 }

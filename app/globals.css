@@ -37,7 +37,6 @@
     @apply border-border;
     /* Reset agressivo de tipografia para garantir visual sólido */
     -webkit-text-stroke: 0px !important;
-    text-stroke: 0px !important;
     outline: none !important;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -33,11 +33,11 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false)
     const supabase = createClient()
 
-    // Simulate initial loading or handle auth check
-    useState(() => {
+    // Handle initial loading
+    useEffect(() => {
         const timer = setTimeout(() => setInitialLoading(false), 800)
         return () => clearTimeout(timer)
-    })
+    }, [])
 
 
     const {
@@ -237,22 +237,6 @@ export default function LoginPage() {
 
             {/* Right Column: Branding Area (40%) */}
             <div className="hidden md:flex md:flex-col md:w-[40%] relative m-4 rounded-[16px] overflow-hidden bg-neutral-950">
-                {/* Glow Effect Top Right */}
-                <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#E0FE56] blur-[128px] opacity-40 z-0 pointer-events-none rounded-full mix-blend-screen" />
-
-                {/* Background Giant Symbol */}
-                <div className="absolute top-1/2 -right-[120px] -translate-y-[75%] w-[800px] h-[800px] pointer-events-none opacity-100 z-0 select-none">
-                    <Image
-                        src="/brand/symbol.png"
-                        alt="Sollyd Symbol"
-                        fill
-                        className="object-contain"
-                        style={{
-                            filter: 'brightness(0) saturate(100%) invert(93%) sepia(46%) saturate(1272%) hue-rotate(8deg) brightness(104%) contrast(98%)'
-                        }}
-                    />
-                </div>
-
                 {/* Brand Logo in top-left */}
                 <div className="absolute top-8 left-8 z-20">
                     <span className="text-2xl font-bold font-jakarta tracking-tight text-white">Sollyd</span>
