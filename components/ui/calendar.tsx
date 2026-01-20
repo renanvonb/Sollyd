@@ -8,7 +8,15 @@ import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { Button } from "@/components/ui/button"
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>
+export interface CalendarProps {
+    className?: string
+    classNames?: any
+    showOutsideDays?: boolean
+    mode?: "default" | "single" | "multiple" | "range"
+    selected?: Date | DateRange | undefined | any
+    onSelect?: (date: any) => void
+    [key: string]: any
+}
 
 // Helpers e Constantes Compartilhadas
 const monthNames = [
@@ -247,7 +255,7 @@ function Calendar({
     const handleRangeDayClick = (e: React.MouseEvent, dayInfo: any) => {
         e.preventDefault(); e.stopPropagation()
 
-        let newRange: DateRange = { ...rangeSelected }
+        let newRange: any = { ...rangeSelected }
 
         if (selectingStart) {
             newRange = { from: dayInfo.date, to: undefined }
