@@ -62,7 +62,9 @@ export const columns: ColumnDef<Transaction>[] = [
             const comp = row.original.competence as string | null
             if (!comp) return <span className="text-sm text-muted-foreground">-</span>
             const [year, month] = comp.split("-")
-            return <div className="text-sm">{`${month}/${year}`}</div>
+            const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+            const monthIndex = parseInt(month) - 1
+            return <div className="text-sm">{`${monthNames[monthIndex]}/${year}`}</div>
         },
     },
     {

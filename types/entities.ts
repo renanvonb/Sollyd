@@ -20,8 +20,8 @@ export interface Payer {
     id: string;
     user_id: string;
     name: string;
-    icon: string;
-    color: string;
+    type?: 'Receita' | 'Despesa';
+    color?: string;
     created_at: string;
     updated_at: string;
     transactions?: { count: number }[];
@@ -43,8 +43,7 @@ export interface Category {
     id: string;
     user_id: string;
     name: string;
-    description: string;
-    classification_id?: string;
+    type: 'Receita' | 'Despesa';
     icon: string;
     color: string;
     created_at: string;

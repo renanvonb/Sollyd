@@ -23,6 +23,9 @@ export interface Payee {
 export interface Category {
     id: string;
     name: string;
+    type?: 'Receita' | 'Despesa';
+    color?: string;
+    icon?: string;
     created_at: string;
 }
 

@@ -148,13 +148,32 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
             subcategory_id: "",
             date: new Date(),
             competence: startOfMonth(new Date()),
-            status: "Pendente",
+            status: "Realizado",
         },
     })
 
     const type = form.watch("type")
     const selectedCategoryId = form.watch("category_id")
+    const status = form.watch("status")
     const { payees } = usePayees(type)
+
+    const filteredCategories = React.useMemo(() => {
+        const targetType = type === 'revenue' ? 'Receita' : 'Despesa';
+        return allCategories.filter(c => !c.type || c.type === targetType);
+    }, [allCategories, type]);
+
+    // Clear category if incompatible with type
+    React.useEffect(() => {
+        const currentCatId = form.getValues("category_id");
+        if (currentCatId) {
+            const cat = allCategories.find(c => c.id === currentCatId);
+            const targetType = type === 'revenue' ? 'Receita' : 'Despesa';
+            if (cat && cat.type && cat.type !== targetType) {
+                form.setValue("category_id", "");
+                form.setValue("subcategory_id", "");
+            }
+        }
+    }, [type, allCategories, form]);
 
     // Sync subcategories
     React.useEffect(() => {
@@ -164,6 +183,13 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
             setSubcategories([])
         }
     }, [selectedCategoryId])
+
+    // Clear date when status is Pendente
+    React.useEffect(() => {
+        if (status === 'Pendente') {
+            form.setValue('date', undefined as any)
+        }
+    }, [status])
 
     // Load initial data
     React.useEffect(() => {
@@ -210,7 +236,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
         } else {
             form.reset()
         }
-    }, [open, transaction, form])
+    }, [open, transaction])
 
     const onSubmit = async (data: TransactionFormValues) => {
         startTransition(() => {
@@ -227,9 +253,9 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         classification_id: data.classification_id || null,
                         category_id: data.category_id || null,
                         subcategory_id: data.subcategory_id || null,
-                        date: data.date ? format(data.date, 'yyyy-MM-dd') : null,
+                        date: data.status === 'Realizado' && data.date ? format(data.date, 'yyyy-MM-dd') : null,
                         competence: data.competence ? format(data.competence, 'yyyy-MM-dd') : null,
-                        status: data.status || 'Pendente',
+                        status: data.status || 'Realizado',
                     }
 
                     const isEditMode = !!transaction?.id
@@ -272,25 +298,19 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                 <Tabs
                     value={type}
                     onValueChange={(v) => form.setValue("type", v as any)}
-                    className="w-full bg-zinc-100 p-1 rounded-lg"
+                    className="w-full"
                 >
-                    <TabsList className="grid w-full grid-cols-2 bg-transparent">
-                        <TabsTrigger
-                            value="revenue"
-                            className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all font-inter"
-                        >
-                            Receita
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="expense"
-                            className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all font-inter"
-                        >
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="expense">
                             Despesa
+                        </TabsTrigger>
+                        <TabsTrigger value="revenue">
+                            Receita
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
 
-                <div className="space-y-6">
+                <div className="flex flex-col gap-6 min-h-[600px]">
                     <FormField
                         control={form.control}
                         name="description"
@@ -309,7 +329,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         )}
                     />
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
                             name="amount"
@@ -382,7 +402,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                 )}
                             />
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="payee_id"
@@ -421,7 +441,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                                     {classifications.map(c => (
                                                         <SelectItem key={c.id} value={c.id}>
                                                             <div className="flex items-center gap-2">
-                                                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />
+                                                                <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(c.color || 'zinc'))} />
                                                                 {c.name}
                                                             </div>
                                                         </SelectItem>
@@ -434,7 +454,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="category_id"
@@ -448,8 +468,13 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent className="bg-white border-zinc-200">
-                                                    {allCategories.map(c => (
-                                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                                    {filteredCategories.map(c => (
+                                                        <SelectItem key={c.id} value={c.id}>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(c.color || 'zinc'))} />
+                                                                {c.name}
+                                                            </div>
+                                                        </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
@@ -486,7 +511,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                             </div>
                         </>
                     ) : (
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="payee_id"
@@ -522,8 +547,13 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent className="bg-white border-zinc-200">
-                                                {allCategories.map(c => (
-                                                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                                {filteredCategories.map(c => (
+                                                    <SelectItem key={c.id} value={c.id}>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(c.color || 'zinc'))} />
+                                                            {c.name}
+                                                        </div>
+                                                    </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -534,7 +564,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
                             name="competence"
@@ -563,6 +593,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                             value={field.value}
                                             onChange={field.onChange}
                                             className="w-full h-10 border-zinc-200"
+                                            disabled={status === 'Pendente'}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -575,7 +606,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         control={form.control}
                         name="status"
                         render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-zinc-200 p-4 space-y-0 bg-zinc-50/50">
+                            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-zinc-200 p-4 space-y-0 bg-zinc-50/50 mt-auto">
                                 <div className="space-y-0.5">
                                     <FormLabel className="text-base font-semibold text-zinc-950">
                                         {type === 'expense' ? 'Pago' : 'Recebido'}
@@ -622,7 +653,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         <Button
                             type="submit"
                             disabled={isPending}
-                            className="min-w-[100px] font-inter bg-[#00665C] hover:bg-[#00665C]/90 text-white"
+                            className="font-inter"
                         >
                             {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                             {transaction?.id ? "Atualizar" : "Salvar"}

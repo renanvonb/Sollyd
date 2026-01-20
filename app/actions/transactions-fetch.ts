@@ -58,6 +58,12 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
         end = endOfMonth(referenceDate)
     }
 
+    console.log('[getTransactions] Params:', { range, startDate, endDate })
+    console.log('[getTransactions] Date Range:', {
+        start: format(start, 'yyyy-MM-dd'),
+        end: format(end, 'yyyy-MM-dd')
+    })
+
     const { data, error } = await supabase
         .from('transactions')
         .select(`
@@ -73,6 +79,8 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
         .lte('competence', format(end, 'yyyy-MM-dd'))
         .order('competence', { ascending: false })
         .order('created_at', { ascending: false })
+
+    console.log('[getTransactions] Result:', { count: data?.length || 0, error: error?.message })
 
     if (error) {
         console.error('[getTransactions] Query Error:', error.message)

@@ -1,11 +1,12 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Category, Classification } from '@/types/entities';
+import { Category } from '@/types/entities';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Folder, SearchX } from 'lucide-react';
 import { HighlightText } from '@/components/ui/highlight-text';
 import { toast } from 'sonner';
@@ -30,21 +31,23 @@ interface CategoriesContentProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     searchQuery: string;
+    activeTab?: 'Receita' | 'Despesa';
 }
 
-export function CategoriesContent({ isOpen, onOpenChange, searchQuery }: CategoriesContentProps) {
+export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab = 'Despesa' }: CategoriesContentProps) {
     const [categories, setCategories] = useState<Category[]>([]);
-    const [classifications, setClassifications] = useState<Classification[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingItem, setEditingItem] = useState<Category | null>(null);
     const [deleteItem, setDeleteItem] = useState<Category | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-    const filteredCategories = categories.filter(item => {
-        const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        return normalize(item.name).includes(normalize(searchQuery));
-    });
+    const filteredCategories = categories
+        .filter(item => item.type === activeTab)
+        .filter(item => {
+            const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            return normalize(item.name).includes(normalize(searchQuery));
+        });
 
     const supabase = createClient();
 
@@ -53,7 +56,6 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery }: Categor
     }, []);
 
     const fetchData = async () => {
-        await fetchClassifications();
         await fetchCategories();
     };
 
@@ -69,7 +71,7 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery }: Categor
 
             const { data, error } = await supabase
                 .from('categories')
-                .select('*, classifications(*), transactions(count)')
+                .select('*, transactions(count), subcategories(count)')
                 .eq('user_id', user.id)
                 .order('name', { ascending: true });
 
@@ -89,23 +91,7 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery }: Categor
         }
     };
 
-    const fetchClassifications = async () => {
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
 
-            const { data, error } = await supabase
-                .from('classifications')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('name');
-
-            if (error) throw error;
-            setClassifications(data || []);
-        } catch (error) {
-            console.error('Error fetching classifications:', error);
-        }
-    };
 
     const handleEdit = (item: Category) => {
         setEditingItem(item);
@@ -191,9 +177,10 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery }: Categor
                         return (
                             <Card
                                 key={item.id}
-                                className="group cursor-pointer hover:bg-zinc-50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 border-zinc-200"
+                                className="group cursor-pointer hover:bg-accent/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 border-zinc-200 relative overflow-hidden"
                                 onClick={() => openSheet(item)}
                             >
+
                                 <CardContent className="p-6">
                                     <div className="flex items-center gap-4">
                                         <div
@@ -235,13 +222,13 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery }: Categor
                         </DialogTitle>
                         <DialogDescription>
                             {editingItem
-                                ? 'Atualize as informações da categoria.'
-                                : 'Preencha as informações da categoria.'}
+                                ? 'Atualize as informações da categoria'
+                                : 'Preencha as informações da categoria'}
                         </DialogDescription>
                     </DialogHeader>
 
                     <CategoryForm
-                        classifications={classifications}
+                        classifications={[]}
                         categoryId={editingItem?.id}
                         onSuccess={() => {
                             onOpenChange(false);
@@ -250,11 +237,10 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery }: Categor
                         onCancel={() => onOpenChange(false)}
                         defaultValues={editingItem ? {
                             name: editingItem.name,
-                            description: editingItem.description || '',
-                            classification_id: editingItem.classification_id || '',
+                            type: editingItem.type,
                             color: editingItem.color,
                             icon: editingItem.icon
-                        } : undefined}
+                        } : { type: activeTab }}
                         onDelete={editingItem ? () => {
                             onOpenChange(false);
                             setDeleteItem(editingItem);

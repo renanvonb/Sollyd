@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { DateRange } from "react-day-picker"
 import { TimeRange } from "@/app/actions/transactions-fetch"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 interface TransactionsHeaderProps {
     title: string
@@ -22,6 +29,8 @@ interface TransactionsHeaderProps {
     date: DateRange | undefined
     onDateChange: (date: DateRange | undefined) => void
     onAddClick: (type: "revenue" | "expense" | "investment") => void
+    statusFilter?: string
+    onStatusFilterChange?: (value: string) => void
 }
 
 export function TransactionsHeader({
@@ -33,6 +42,8 @@ export function TransactionsHeader({
     date,
     onDateChange,
     onAddClick,
+    statusFilter = "all",
+    onStatusFilterChange,
 }: TransactionsHeaderProps) {
     return (
         <div className="flex items-center justify-between flex-none">
@@ -65,7 +76,19 @@ export function TransactionsHeader({
                     />
                 </div>
 
-                {/* 3. Add Button -> Dropdown */}
+                {/* 3. Status Filter (140px) */}
+                <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+                    <SelectTrigger className="w-[140px] h-10 font-inter">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="Realizado">Realizadas</SelectItem>
+                        <SelectItem value="Pendente">Pendentes</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                {/* 4. Add Button -> Dropdown */}
                 <Button onClick={() => onAddClick('expense')} className="font-inter font-medium">
                     <Plus className="h-4 w-4 mr-2" />
                     Adicionar

@@ -125,7 +125,7 @@ export function PayeeForm({
                                 Nome <span className="text-red-600">*</span>
                             </FormLabel>
                             <FormControl>
-                                <Input {...field} placeholder="Ex: Mercado Livre, Netflix" className="font-inter" />
+                                <Input {...field} placeholder={type === 'payer' ? "Informe o nome do pagador" : "Informe o nome do beneficiário"} className="font-inter" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -184,7 +184,6 @@ export function PayeeForm({
                         <Button
                             type="submit"
                             disabled={isSubmitting}
-                            className="bg-[#00665C] hover:bg-[#00665C]/90"
                         >
                             {isSubmitting ? (
                                 <>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TopBar } from '@/components/ui/top-bar';
 import { WalletsContent } from '@/components/cadastros/wallets-content';
 import { PayersContent } from '@/components/cadastros/payers-content';
@@ -47,6 +48,7 @@ const tabTitles: Record<TabType, { title: string; description: string }> = {
 export default function CadastrosPage() {
     const [activeTab, setActiveTab] = useState<TabType>('carteiras');
     const [searchValue, setSearchValue] = useState('');
+    const [categoryType, setCategoryType] = useState<'Receita' | 'Despesa'>('Despesa');
     const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
     const [isClassificationDialogOpen, setIsClassificationDialogOpen] = useState(false);
     const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
@@ -101,6 +103,15 @@ export default function CadastrosPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        {activeTab === 'categorias' && (
+                            <Tabs value={categoryType} onValueChange={(v) => setCategoryType(v as any)} className="w-auto">
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="Despesa">Despesa</TabsTrigger>
+                                    <TabsTrigger value="Receita">Receita</TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+                        )}
+
                         {/* Search Bar */}
                         <div className="relative w-[250px]">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -115,7 +126,7 @@ export default function CadastrosPage() {
                         {/* Add Button */}
                         <Button
                             onClick={handleAddClick}
-                            className="font-inter font-medium bg-[#00665C] hover:bg-[#00665C]/90"
+                            className="font-inter font-medium"
                         >
                             <Plus className="h-4 w-4 mr-2" />
                             Adicionar
@@ -128,7 +139,7 @@ export default function CadastrosPage() {
                     {activeTab === 'carteiras' && <WalletsContent isOpen={isWalletDialogOpen} onOpenChange={setIsWalletDialogOpen} searchQuery={searchValue} />}
                     {activeTab === 'pagadores' && <PayersContent isOpen={isPayerDialogOpen} onOpenChange={setIsPayerDialogOpen} searchQuery={searchValue} />}
                     {activeTab === 'beneficiarios' && <PayeesContent isOpen={isPayeeDialogOpen} onOpenChange={setIsPayeeDialogOpen} searchQuery={searchValue} />}
-                    {activeTab === 'categorias' && <CategoriesContent isOpen={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen} searchQuery={searchValue} />}
+                    {activeTab === 'categorias' && <CategoriesContent isOpen={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen} searchQuery={searchValue} activeTab={categoryType} />}
                     {activeTab === 'classificacoes' && <ClassificationsContent isOpen={isClassificationDialogOpen} onOpenChange={setIsClassificationDialogOpen} searchQuery={searchValue} />}
                 </div>
             </div>

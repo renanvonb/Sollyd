@@ -290,8 +290,8 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                         </DialogTitle>
                         <DialogDescription>
                             {editingPayer
-                                ? 'Atualize as informações do pagador.'
-                                : 'Preencha as informações do pagador.'}
+                                ? 'Atualize as informações do pagador'
+                                : 'Preencha as informações do pagador'}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -326,7 +326,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                             </Label>
                             <Input
                                 id="name"
-                                placeholder="Ex: João Silva, Empresa XYZ"
+                                placeholder="Informe o nome do pagador"
                                 value={formData.name}
                                 onChange={(e) =>
                                     setFormData({ ...formData, name: e.target.value })
@@ -392,7 +392,6 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                             <Button
                                 onClick={handleSubmit}
                                 disabled={submitting}
-                                className="bg-[#00665C] hover:bg-[#00665C]/90"
                             >
                                 {submitting ? (
                                     <>

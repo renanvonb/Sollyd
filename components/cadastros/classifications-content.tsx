@@ -156,7 +156,7 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
                                                 <HighlightText text={item.name} highlight={searchQuery} />
                                             </h3>
                                             <p className="text-sm text-zinc-500 font-inter truncate">
-                                                {item.categories?.[0]?.count || 0} categorias
+                                                {item.transactions?.[0]?.count || 0} transações
                                             </p>
                                         </div>
                                     </div>
@@ -175,31 +175,28 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
                         </DialogTitle>
                         <DialogDescription>
                             {editingItem
-                                ? 'Atualize as informações da classificação.'
-                                : 'Preencha as informações da classificação.'}
+                                ? 'Atualize as informações da classificação'
+                                : 'Preencha as informações da classificação'}
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="pb-4">
-                        <ClassificationForm
-                            classificationId={editingItem?.id}
-                            defaultValues={editingItem ? {
-                                name: editingItem.name,
-                                description: editingItem.description || '',
-                                color: editingItem.color,
-                                icon: editingItem.icon
-                            } : undefined}
-                            onSuccess={() => {
-                                onOpenChange(false);
-                                fetchClassifications();
-                            }}
-                            onCancel={() => onOpenChange(false)}
-                            onDelete={editingItem ? () => {
-                                setDeleteItem(editingItem);
-                                onOpenChange(false);
-                            } : undefined}
-                        />
-                    </div>
+                    <ClassificationForm
+                        classificationId={editingItem?.id}
+                        defaultValues={editingItem ? {
+                            name: editingItem.name,
+                            color: editingItem.color,
+                            icon: editingItem.icon
+                        } : undefined}
+                        onSuccess={() => {
+                            onOpenChange(false);
+                            fetchClassifications();
+                        }}
+                        onCancel={() => onOpenChange(false)}
+                        onDelete={editingItem ? () => {
+                            setDeleteItem(editingItem);
+                            onOpenChange(false);
+                        } : undefined}
+                    />
                 </DialogContent>
             </Dialog>
 

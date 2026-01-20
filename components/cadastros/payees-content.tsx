@@ -186,32 +186,30 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                         </DialogTitle>
                         <DialogDescription>
                             {editingPayee
-                                ? 'Atualize as informações do beneficiário.'
-                                : 'Preencha as informações do beneficiário.'}
+                                ? 'Atualize as informações do beneficiário'
+                                : 'Preencha as informações do beneficiário'}
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="py-4">
-                        <PayeeForm
-                            type="favored"
-                            payeeId={editingPayee?.id}
-                            defaultValues={editingPayee ? {
-                                name: editingPayee.name,
-                                icon: editingPayee.icon,
-                                color: editingPayee.color
-                            } : undefined}
-                            onSuccess={() => {
-                                onOpenChange(false);
-                                fetchPayees();
-                            }}
-                            onCancel={() => onOpenChange(false)}
-                            onDelete={editingPayee ? () => {
-                                setDeletingId(editingPayee.id);
-                                onOpenChange(false);
-                                setIsDeleteDialogOpen(true);
-                            } : undefined}
-                        />
-                    </div>
+                    <PayeeForm
+                        type="favored"
+                        payeeId={editingPayee?.id}
+                        defaultValues={editingPayee ? {
+                            name: editingPayee.name,
+                            icon: editingPayee.icon,
+                            color: editingPayee.color
+                        } : undefined}
+                        onSuccess={() => {
+                            onOpenChange(false);
+                            fetchPayees();
+                        }}
+                        onCancel={() => onOpenChange(false)}
+                        onDelete={editingPayee ? () => {
+                            setDeletingId(editingPayee.id);
+                            onOpenChange(false);
+                            setIsDeleteDialogOpen(true);
+                        } : undefined}
+                    />
                 </DialogContent>
             </Dialog>
 

@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2 } from "lucide-react"
 import { ColorPicker, getColorClass } from "./color-picker"
 import { IconPicker, getIconByName } from "./icon-picker"
@@ -27,8 +28,7 @@ import { cn } from "@/lib/utils"
 
 const formSchema = z.object({
     name: z.string().min(1, "Nome é obrigatório").max(50, "Máximo 50 caracteres"),
-    description: z.string().max(200, "Máximo 200 caracteres").optional(),
-    classification_id: z.string().optional(),
+    type: z.enum(['Receita', 'Despesa']),
     icon: z.string().min(1, "Ícone é obrigatório"),
     color: z.string().min(1, "Cor é obrigatória"),
 })
@@ -57,8 +57,7 @@ export function CategoryForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: '',
-            description: '',
-            classification_id: '',
+            type: 'Despesa',
             icon: 'cart',
             color: 'zinc',
             ...defaultValues
@@ -75,8 +74,7 @@ export function CategoryForm({
         if (defaultValues) {
             form.reset({
                 name: '',
-                description: '',
-                classification_id: '',
+                type: 'Despesa',
                 icon: 'cart',
                 color: 'zinc',
                 ...defaultValues
@@ -91,8 +89,6 @@ export function CategoryForm({
             // Sanitize payload: convert empty strings to undefined to avoid UUID errors or empty text
             const payload = {
                 ...values,
-                description: values.description || undefined,
-                classification_id: values.classification_id || undefined,
             };
 
             // Helper functions handle user_id injection via auth.getUser() implicitly/explicitly
@@ -135,6 +131,24 @@ export function CategoryForm({
 
                 <FormField
                     control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <Tabs value={field.value} onValueChange={field.onChange} className="w-full">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="Despesa">Despesa</TabsTrigger>
+                                        <TabsTrigger value="Receita">Receita</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
                     name="name"
                     render={({ field }) => (
                         <FormItem>
@@ -142,54 +156,16 @@ export function CategoryForm({
                                 Nome <span className="text-red-600">*</span>
                             </FormLabel>
                             <FormControl>
-                                <Input {...field} placeholder="Ex: Alimentação, Lazer" className="font-inter" />
+                                <Input {...field} placeholder="Informe o nome da categoria" className="font-inter" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
 
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Descrição</FormLabel>
-                            <FormControl>
-                                <Textarea {...field} placeholder="Descrição opcional" className="font-inter" />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
 
-                <FormField
-                    control={form.control}
-                    name="classification_id"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Classificação</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                                <FormControl>
-                                    <SelectTrigger className="font-inter text-zinc-600">
-                                        <SelectValue placeholder="Selecione uma classificação" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {classifications.map((item) => (
-                                        <SelectItem key={item.id} value={item.id}>
-                                            {item.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormDescription>
-                                Opcional, usado para agrupamento.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+
+
 
                 <FormField
                     control={form.control}
@@ -243,7 +219,6 @@ export function CategoryForm({
                         <Button
                             type="submit"
                             disabled={isSubmitting}
-                            className="bg-[#00665C] hover:bg-[#00665C]/90"
                         >
                             {isSubmitting ? (
                                 <>

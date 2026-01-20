@@ -8,7 +8,6 @@ import { getTransactions, TimeRange } from "@/app/actions/transactions-fetch"
 import { TopBar } from "@/components/ui/top-bar"
 import { TransactionsHeader } from "@/components/transactions/transactions-header"
 import { TransactionsContent } from "@/components/transactions/transactions-content"
-import { TransactionDetailsDialog } from "@/components/transaction-details-dialog"
 import { TransactionForm } from "@/components/transaction-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { toast } from "sonner"
@@ -32,8 +31,8 @@ export default function TransactionsPage() {
     const [data, setData] = React.useState<any[]>([])
     const [loading, setLoading] = React.useState(true)
     const [searchValue, setSearchValue] = React.useState(searchParams.get('q') || "")
+    const [statusFilter, setStatusFilter] = React.useState(searchParams.get('status') || "all")
     const [selectedTransaction, setSelectedTransaction] = React.useState<Transaction | null>(null)
-    const [isDetailsDialogOpen, setIsDetailsDialogOpen] = React.useState(false)
     const [isEditSheetOpen, setIsEditSheetOpen] = React.useState(false)
     const [isNewSheetOpen, setIsNewSheetOpen] = React.useState(false)
     const [newTransactionType, setNewTransactionType] = React.useState<"revenue" | "expense" | "investment">("expense")
@@ -102,30 +101,36 @@ export default function TransactionsPage() {
 
     const handleRowClick = (transaction: Transaction) => {
         setSelectedTransaction(transaction)
-        setIsDetailsDialogOpen(true)
-    }
-
-    const handleEdit = (transaction: Transaction) => {
-        setSelectedTransaction(transaction)
         setIsEditSheetOpen(true)
     }
+
 
     const handleSuccess = () => {
         fetchData()
         setIsNewSheetOpen(false)
         setIsEditSheetOpen(false)
-        setIsDetailsDialogOpen(false)
     }
 
     const filteredData = React.useMemo(() => {
-        if (!searchQuery) return data
-        return data.filter(t => {
-            const desc = (t.description || "").toLowerCase()
-            const payee = (t.payees?.name || "").toLowerCase()
-            const cat = (t.categories?.name || "").toLowerCase()
-            return desc.includes(searchQuery) || payee.includes(searchQuery) || cat.includes(searchQuery)
-        })
-    }, [data, searchQuery])
+        let filtered = data
+
+        // Filter by status
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(t => t.status === statusFilter)
+        }
+
+        // Filter by search query
+        if (searchQuery) {
+            filtered = filtered.filter(t => {
+                const desc = (t.description || "").toLowerCase()
+                const payee = (t.payees?.name || "").toLowerCase()
+                const cat = (t.categories?.name || "").toLowerCase()
+                return desc.includes(searchQuery) || payee.includes(searchQuery) || cat.includes(searchQuery)
+            })
+        }
+
+        return filtered
+    }, [data, searchQuery, statusFilter])
 
     const dateRange: DateRange | undefined = React.useMemo(() => {
         if (from && to) return { from: new Date(from), to: new Date(to) }
@@ -144,7 +149,7 @@ export default function TransactionsPage() {
             />
 
             {/* Main Content Wrapper */}
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-6 overflow-hidden">
+            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-4 overflow-hidden">
 
                 <TransactionsHeader
                     title="Transações"
@@ -155,6 +160,8 @@ export default function TransactionsPage() {
                     date={dateRange}
                     onDateChange={handleDateChange}
                     onAddClick={handleAddClick}
+                    statusFilter={statusFilter}
+                    onStatusFilterChange={setStatusFilter}
                 />
 
                 <TransactionsContent
@@ -187,15 +194,10 @@ export default function TransactionsPage() {
                     </DialogContent>
                 </Dialog>
 
-                <TransactionDetailsDialog
-                    transaction={selectedTransaction}
-                    open={isDetailsDialogOpen}
-                    onOpenChange={setIsDetailsDialogOpen}
-                    onEdit={handleEdit}
-                    onSuccess={handleSuccess}
-                />
-
-                <Dialog open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+                <Dialog open={isEditSheetOpen} onOpenChange={(open) => {
+                    setIsEditSheetOpen(open)
+                    if (!open) setSelectedTransaction(null)
+                }}>
                     <DialogContent className="sm:max-w-[480px]">
                         <DialogHeader>
                             <DialogTitle className="font-jakarta">Editar transação</DialogTitle>

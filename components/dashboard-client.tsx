@@ -199,7 +199,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 variant="simple"
             />
 
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-6 overflow-y-auto">
+            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-4 overflow-y-auto">
                 {/* Page Header */}
                 <div className="flex items-center justify-between flex-none">
                     <div className="ml-2">
@@ -234,7 +234,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 </div>
 
                 {/* Dashboard Content */}
-                <div className="flex flex-col flex-1 min-h-0 gap-8">
+                <div className="flex flex-col flex-1 min-h-0 gap-4">
                     {/* Row 1: Summary Cards */}
                     <TransactionSummaryCards totals={totals} isLoading={isPending} />
 

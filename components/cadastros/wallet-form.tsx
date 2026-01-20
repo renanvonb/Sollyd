@@ -215,7 +215,6 @@ export function WalletForm({
                         <Button
                             type="submit"
                             disabled={isSubmitting}
-                            className="bg-[#00665C] hover:bg-[#00665C]/90"
                         >
                             {isSubmitting ? (
                                 <>

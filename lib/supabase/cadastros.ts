@@ -26,12 +26,11 @@ export interface Category {
     user_id: string;
     name: string;
     description?: string;
-    classification_id?: string;
+    type: 'Receita' | 'Despesa';
     color: string;
     icon: string;
     created_at: string;
     updated_at: string;
-    classifications?: Classification;
     transactions?: { count: number }[];
     subcategories?: { count: number }[];
 }
@@ -58,7 +57,7 @@ export interface Classification {
     updated_at: string;
     transactions_count?: number;
     transactions?: { count: number }[];
-    categories?: { count: number }[];
+
 }
 
 // Pagadores (para Receitas) - com ícone
@@ -181,7 +180,7 @@ export async function getCategories(): Promise<Category[]> {
 
     const { data, error } = await supabase
         .from('categories')
-        .select('*, classifications(*), transactions(count), subcategories(count)')
+        .select('*, transactions(count), subcategories(count)')
         .eq('user_id', user.id)
         .order('name', { ascending: true });
 
@@ -189,7 +188,7 @@ export async function getCategories(): Promise<Category[]> {
     return data || [];
 }
 
-export async function createCategory(category: Omit<Category, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'classifications'>): Promise<Category> {
+export async function createCategory(category: Omit<Category, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<Category> {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -334,7 +333,7 @@ export async function getClassifications(): Promise<Classification[]> {
 
     const { data, error } = await supabase
         .from('classifications')
-        .select('*, categories(count)')
+        .select('*, transactions(count)')
         .eq('user_id', user.id)
         .order('name', { ascending: true });
 

@@ -65,7 +65,7 @@ export function TransactionsContent({
         : (emptyMessages[range] || "Nenhuma transação cadastrada")
 
     return (
-        <div className="flex-1 flex flex-col gap-8 overflow-hidden">
+        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
             {/* Grid de Totalizadores (KPIs) - SEMPRE VISÍVEL */}
             <div className="flex-none font-sans">
                 <TransactionSummaryCards totals={totals} isLoading={isPending && data.length === 0} />

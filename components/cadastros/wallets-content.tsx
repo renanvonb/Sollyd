@@ -204,32 +204,30 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
                         <DialogTitle className="font-jakarta">{editingWallet ? 'Editar carteira' : 'Nova carteira'}</DialogTitle>
                         <DialogDescription>
                             {editingWallet
-                                ? 'Atualize as informações da carteira.'
-                                : 'Preencha as informações da carteira.'}
+                                ? 'Atualize as informações da carteira'
+                                : 'Preencha as informações da carteira'}
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="pb-4">
-                        <WalletForm
-                            walletId={editingWallet?.id}
-                            defaultValues={editingWallet ? {
-                                name: editingWallet.name,
-                                color: editingWallet.color,
-                                icon: editingWallet.icon,
-                                is_principal: editingWallet.is_principal
-                            } : undefined}
-                            onSuccess={() => {
-                                onOpenChange(false);
-                                fetchWallets();
-                            }}
-                            onCancel={() => onOpenChange(false)}
-                            onDelete={editingWallet ? () => {
-                                setDeletingId(editingWallet.id);
-                                onOpenChange(false);
-                                setIsDeleteDialogOpen(true);
-                            } : undefined}
-                        />
-                    </div>
+                    <WalletForm
+                        walletId={editingWallet?.id}
+                        defaultValues={editingWallet ? {
+                            name: editingWallet.name,
+                            color: editingWallet.color,
+                            icon: editingWallet.icon,
+                            is_principal: editingWallet.is_principal
+                        } : undefined}
+                        onSuccess={() => {
+                            onOpenChange(false);
+                            fetchWallets();
+                        }}
+                        onCancel={() => onOpenChange(false)}
+                        onDelete={editingWallet ? () => {
+                            setDeletingId(editingWallet.id);
+                            onOpenChange(false);
+                            setIsDeleteDialogOpen(true);
+                        } : undefined}
+                    />
                 </DialogContent>
             </Dialog>
 

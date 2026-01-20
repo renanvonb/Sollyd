@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2 } from "lucide-react"
+import { Loader2, Flag } from "lucide-react"
 import { ColorPicker, getColorClass } from "./color-picker"
 import { getIconByName } from "./icon-picker"
 import { useEffect, useState } from "react"
@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils"
 
 const formSchema = z.object({
     name: z.string().min(1, "Nome é obrigatório").max(50, "Máximo 50 caracteres"),
-    description: z.string().max(150, "Máximo 150 caracteres").optional().or(z.literal('')),
+
     icon: z.string().min(1, "Ícone é obrigatório"),
     color: z.string().min(1, "Cor é obrigatória"),
     updated_at: z.string().optional(),
@@ -54,7 +54,6 @@ export function ClassificationForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: '',
-            description: '',
             ...defaultValues,
             icon: 'flag',
             color: defaultValues?.color || 'zinc',
@@ -70,7 +69,7 @@ export function ClassificationForm({
         if (defaultValues) {
             form.reset({
                 name: '',
-                description: '',
+
                 ...defaultValues,
                 icon: 'flag',
             });
@@ -119,7 +118,7 @@ export function ClassificationForm({
     };
 
     const PreviewBadge = () => {
-        const IconComp = getIconByName(watchIcon);
+        const IconComp = getIconByName(watchIcon, Flag);
         const colorClass = getColorClass(watchColor);
 
         return (
@@ -155,26 +154,7 @@ export function ClassificationForm({
                     )}
                 />
 
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className={form.formState.errors.description ? "text-red-600" : ""}>
-                                Descrição
-                            </FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    {...field}
-                                    placeholder="Informe uma breve descrição"
-                                    className="font-inter resize-none"
-                                    maxLength={150}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+
 
                 <FormField
                     control={form.control}
@@ -214,7 +194,6 @@ export function ClassificationForm({
                         <Button
                             type="submit"
                             disabled={isSubmitting}
-                            className="bg-[#00665C] hover:bg-[#00665C]/90"
                         >
                             {isSubmitting ? (
                                 <>

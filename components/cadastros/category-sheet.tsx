@@ -6,16 +6,30 @@ import {
     SheetContent,
     SheetHeader,
     SheetTitle,
+    SheetFooter,
 } from "@/components/ui/sheet";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Category, Subcategory } from "@/types/entities";
 import { getIconByName } from "./icon-picker";
-import { getColorClass } from "./color-picker";
+import { getColorClass, getColorHex } from "./color-picker";
 import { cn } from "@/lib/utils";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Loader2, FolderOpen, Plus } from "lucide-react";
 import { getSubcategoriesByCategoryId, createSubcategory, deleteSubcategory } from "@/lib/supabase/cadastros";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SubcategoryDialog } from "./subcategory-dialog";
 
 interface CategorySheetProps {
     category: Category | null;
@@ -38,6 +52,9 @@ export function CategorySheet({
     const [loading, setLoading] = useState(false);
     const [newSubName, setNewSubName] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [isAddSubOpen, setIsAddSubOpen] = useState(false);
+    const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(null);
+    const [subToDelete, setSubToDelete] = useState<Subcategory | null>(null);
 
     useEffect(() => {
         if (isOpen && category) {
@@ -83,113 +100,174 @@ export function CategorySheet({
         }
     };
 
-    const handleDeleteSub = async (sub: Subcategory) => {
+    const handleDeleteSub = (sub: Subcategory) => {
+        setSubToDelete(sub);
+    };
+
+    const confirmDeleteSub = async () => {
+        if (!subToDelete) return;
         try {
-            await deleteSubcategory(sub.id);
-            setSubcategories(prev => prev.filter(s => s.id !== sub.id));
+            await deleteSubcategory(subToDelete.id);
+            setSubcategories(prev => prev.filter(s => s.id !== subToDelete.id));
             onRefresh();
             toast.success('Subcategoria removida');
         } catch (error) {
             console.error('Error deleting subcategory:', error);
             toast.error('Erro ao remover subcategoria');
+        } finally {
+            setSubToDelete(null);
         }
+    };
+
+    const handleEditSub = (sub: Subcategory) => {
+        setEditingSubcategory(sub);
+        setIsAddSubOpen(true);
+    };
+
+    const handleAddSub = () => {
+        setEditingSubcategory(null);
+        setIsAddSubOpen(true);
     };
 
     if (!category) return null;
 
     const Icon = getIconByName(category.icon || 'cart');
     const colorClass = getColorClass(category.color || 'zinc');
+    const hexColor = getColorHex(category.color || 'zinc');
 
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
-            <SheetContent className="sm:max-w-md overflow-y-auto">
-                <SheetHeader className="text-left border-b pb-6 mb-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className={cn("h-12 w-12 rounded-full flex items-center justify-center", colorClass)}>
-                                <Icon className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                                <SheetTitle className="font-jakarta text-xl">{category.name}</SheetTitle>
-                                <p className="text-sm text-zinc-500 font-inter">
-                                    {category.transactions?.[0]?.count || 0} transações
-                                </p>
-                            </div>
+            <SheetContent className="sm:max-w-md flex flex-col h-full w-full">
+                <SheetHeader className="text-left px-1 border-b pb-6 mb-4">
+                    <div className="flex items-center gap-4">
+                        <div className={cn("h-10 w-10 rounded-full flex items-center justify-center", colorClass)}>
+                            <Icon className="h-5 w-5 text-white" />
                         </div>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-9 w-9"
-                                onClick={() => onEdit(category)}
-                            >
-                                <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => onDelete(category)}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
+                        <div className="flex items-center gap-3">
+                            <SheetTitle className="font-jakarta text-xl">{category.name}</SheetTitle>
+                            {category.type && (
+                                <Badge variant="secondary">
+                                    {category.type}
+                                </Badge>
+                            )}
                         </div>
                     </div>
                 </SheetHeader>
 
-                <div className="space-y-6">
-                    <div>
-                        <h4 className="text-sm font-medium text-zinc-900 mb-4 font-jakarta uppercase tracking-wider">Subcategorias</h4>
-
-                        <form onSubmit={handleAddSubcategory} className="flex gap-2 mb-4">
-                            <Input
-                                placeholder="Nova subcategoria..."
-                                value={newSubName}
-                                onChange={(e) => setNewSubName(e.target.value)}
-                                className="font-inter"
-                                disabled={submitting}
-                            />
-                            <Button
-                                type="submit"
-                                size="icon"
-                                disabled={submitting || !newSubName.trim()}
-                                className="bg-[#00665C] hover:bg-[#00665C]/90 h-10 w-10 shrink-0"
-                            >
-                                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                            </Button>
-                        </form>
-
-                        <div className="space-y-2">
-                            {loading ? (
-                                <div className="flex justify-center py-4">
-                                    <Loader2 className="h-6 w-6 animate-spin text-zinc-300" />
-                                </div>
-                            ) : subcategories.length === 0 ? (
-                                <p className="text-sm text-zinc-500 font-inter py-4 text-center border border-dashed rounded-lg">
-                                    Nenhuma subcategoria cadastrada.
-                                </p>
-                            ) : (
-                                subcategories.map((sub) => (
-                                    <div
-                                        key={sub.id}
-                                        className="flex items-center justify-between p-3 rounded-lg border border-zinc-100 bg-zinc-50/50 group hover:border-zinc-200 transition-colors"
-                                    >
-                                        <span className="text-sm font-medium font-inter text-zinc-700">{sub.name}</span>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-zinc-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => handleDeleteSub(sub)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ))
-                            )}
+                <div className="flex-1 flex flex-col min-h-0">
+                    {loading ? (
+                        <div className="flex flex-1 items-center justify-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-zinc-300" />
                         </div>
-                    </div>
+                    ) : subcategories.length === 0 ? (
+                        <div className="flex flex-1 items-center justify-center">
+                            <EmptyState
+                                title="Nenhuma subcategoria"
+                                description="Esta categoria não possui subcategorias vinculadas."
+                                icon={FolderOpen}
+                                variant="default"
+                                className="w-full"
+                                action={
+                                    <Button onClick={handleAddSub}>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Adicionar
+                                    </Button>
+                                }
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex-1 overflow-y-auto pr-2">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-base font-semibold text-zinc-900 font-inter">Subcategorias</h3>
+                            </div>
+                            <div className="space-y-3">
+                                {subcategories.map((sub) => (
+                                    <Card
+                                        key={sub.id}
+                                        className="group hover:bg-zinc-50 hover:shadow-sm transition-all border-zinc-200 relative overflow-hidden border-l-4 cursor-pointer"
+                                        style={{ borderLeftColor: hexColor }}
+                                        onClick={() => handleEditSub(sub)}
+                                    >
+                                        <CardContent className="p-4 flex items-center justify-between">
+                                            <div className="flex flex-col flex-1 min-w-0">
+                                                <h4 className="font-semibold text-zinc-900 truncate font-jakarta text-base">
+                                                    {sub.name}
+                                                </h4>
+                                                <p className="text-sm text-zinc-500 font-inter truncate">
+                                                    {sub.transactions?.[0]?.count || 0} transações
+                                                </p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                            <Button
+                                variant="secondary"
+                                className="w-full mt-4 font-inter"
+                                onClick={handleAddSub}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Adicionar
+                            </Button>
+                        </div>
+                    )}
                 </div>
+
+                <SheetFooter className="mt-auto flex flex-row items-center justify-between sm:justify-between">
+                    <Button
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 px-2"
+                        onClick={() => onDelete(category)}
+                    >
+                        Excluir
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        onClick={() => onEdit(category)}
+                    >
+                        Editar
+                    </Button>
+                </SheetFooter>
             </SheetContent>
+
+            <SubcategoryDialog
+                category={category}
+                subcategory={editingSubcategory}
+                isOpen={isAddSubOpen}
+                onOpenChange={setIsAddSubOpen}
+                onSuccess={() => {
+                    fetchSubcategories();
+                    onRefresh();
+                }}
+                onDelete={() => {
+                    setIsAddSubOpen(false);
+                    if (editingSubcategory) {
+                        setSubToDelete(editingSubcategory);
+                    }
+                }}
+            />
+
+            <AlertDialog open={!!subToDelete} onOpenChange={() => setSubToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="font-jakarta">Excluir subcategoria</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tem certeza que deseja excluir a subcategoria <strong>{subToDelete?.name}</strong>?
+                            Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDeleteSub}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Excluir
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Sheet>
     );
 }

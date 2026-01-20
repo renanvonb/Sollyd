@@ -28,9 +28,6 @@ export const ICONS = [
     { name: 'plane', label: 'Viagem', Icon: Plane },
     { name: 'gamepad', label: 'Lazer', Icon: Gamepad2 },
     { name: 'book', label: 'Educação', Icon: Book },
-    { name: 'flag', label: 'Bandeira', Icon: Flag },
-    { name: 'user-round', label: 'Usuário', Icon: UserRound },
-    { name: 'building-2', label: 'Empresa', Icon: Building2 },
 ];
 
 interface IconPickerProps {

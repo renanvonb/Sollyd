@@ -19,26 +19,28 @@ export interface DatePickerProps {
     onChange?: (date?: Date) => void
     placeholder?: string
     className?: string
+    disabled?: boolean
 }
 
-export function DatePicker({ value, onChange, placeholder = "Selecione", className }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder = "Selecione", className, disabled }: DatePickerProps) {
     return (
         <Popover>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
+                    disabled={disabled}
                     className={cn(
                         "w-full justify-start text-left font-normal",
-                        !value && "text-muted-foreground",
+                        (disabled || !value) && "text-muted-foreground",
                         "aria-invalid:border-red-600 aria-invalid:focus-visible:ring-red-600",
                         className
                     )}
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {value ? (
-                        format(value, "dd/MM/yyyy", { locale: ptBR })
-                    ) : (
+                    {disabled || !value ? (
                         <span>{placeholder}</span>
+                    ) : (
+                        format(value, "dd/MM/yyyy", { locale: ptBR })
                     )}
                 </Button>
             </PopoverTrigger>
