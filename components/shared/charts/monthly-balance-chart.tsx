@@ -1,39 +1,42 @@
 "use client"
 
 import * as React from "react"
-import { Line } from "react-chartjs-2"
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-    Filler,
-} from "chart.js"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Area, AreaChart, XAxis, YAxis, CartesianGrid } from "recharts"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useVisibility } from "@/hooks/use-visibility-state"
-
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-    Filler
-)
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+    ChartLegend,
+    ChartLegendContent,
+    type ChartConfig,
+} from "@/components/ui/chart"
 
 interface MonthlyBalanceChartProps {
     data: Array<{ day: string; receitas: number; despesas: number }>
     className?: string
 }
 
+const chartConfig = {
+    receitas: {
+        label: "Receitas",
+        color: "#10b981",
+    },
+    despesas: {
+        label: "Despesas",
+        color: "#ef4444",
+    },
+} satisfies ChartConfig
+
 export function MonthlyBalanceChart({ data, className }: MonthlyBalanceChartProps) {
     const { isVisible } = useVisibility()
+
+    const formatAxisValue = (value: number) => {
+        if (!isVisible) return "••••"
+        if (value === 0) return "R$0"
+        return `R$${(value / 1000).toFixed(0)}k`
+    }
 
     const formatValue = (value: number) => {
         if (!isVisible) return "R$ ••••"
@@ -45,141 +48,8 @@ export function MonthlyBalanceChart({ data, className }: MonthlyBalanceChartProp
         }).format(value)
     }
 
-    const formatAxisValue = (value: number) => {
-        if (!isVisible) return "••••"
-        return `R$${(value / 1000).toFixed(0)}k`
-    }
-
-    const chartConfig = {
-        labels: data.map(item => item.day),
-        datasets: [
-            {
-                label: 'Receitas',
-                data: data.map(item => item.receitas),
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                pointBackgroundColor: '#10b981',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-            },
-            {
-                label: 'Despesas',
-                data: data.map(item => item.despesas),
-                borderColor: '#ef4444',
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                pointBackgroundColor: '#ef4444',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-            },
-        ],
-    }
-
-    const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-            mode: 'index' as const,
-            intersect: false,
-        },
-        plugins: {
-            legend: {
-                display: true,
-                position: 'bottom' as const,
-                labels: {
-                    font: {
-                        family: 'Inter',
-                        size: 12,
-                    },
-                    color: '#71717a',
-                    usePointStyle: true,
-                    pointStyle: 'circle',
-                    padding: 16,
-                },
-            },
-            tooltip: {
-                backgroundColor: '#ffffff',
-                titleColor: '#18181b',
-                bodyColor: '#52525b',
-                borderColor: '#e4e4e7',
-                borderWidth: 1,
-                padding: 12,
-                boxPadding: 6,
-                usePointStyle: true,
-                titleFont: {
-                    family: 'Plus Jakarta Sans',
-                    size: 13,
-                    weight: 600,
-                },
-                bodyFont: {
-                    family: 'Inter',
-                    size: 12,
-                },
-                callbacks: {
-                    label: (context: any) => {
-                        const label = context.dataset.label || ''
-                        const value = context.parsed.y || 0
-                        return `${label}: ${formatValue(value)}`
-                    },
-                },
-            },
-        },
-        scales: {
-            x: {
-                grid: {
-                    display: false,
-                },
-                ticks: {
-                    font: {
-                        family: 'Inter',
-                        size: 12,
-                    },
-                    color: '#71717a',
-                },
-                border: {
-                    display: false,
-                },
-            },
-            y: {
-                grid: {
-                    color: '#f4f4f5',
-                    drawBorder: false,
-                },
-                ticks: {
-                    font: {
-                        family: 'Inter',
-                        size: 12,
-                    },
-                    color: '#71717a',
-                    callback: function (value: any) {
-                        return formatAxisValue(value)
-                    },
-                },
-                border: {
-                    display: false,
-                },
-            },
-        },
-    }
-
-    // Import cn if not imported, or assume it is available if other files use it.
-    // Looking at the view_file, 'cn' is NOT imported in the original file.
-    // I need to add import { cn } from "@/lib/utils" to the imports if I use it.
-    // Wait, the original file did NOT import 'cn'.
-    // I'll assume I should use string interpolation or add the import.
-    // Let's add the import to the top block.
-
     return (
-        <Card className={`rounded-[16px] border-zinc-200 shadow-sm flex flex-col ${className || ''}`}>
+        <Card className={`rounded-lg border-zinc-200 shadow-sm flex flex-col ${className || ''}`}>
             <CardHeader>
                 <CardTitle className="text-zinc-500 font-semibold font-sans tracking-tight text-sm">
                     Balanço
@@ -191,9 +61,62 @@ export function MonthlyBalanceChart({ data, className }: MonthlyBalanceChartProp
                         Nenhum dado encontrado
                     </div>
                 ) : (
-                    <div className="h-full w-full">
-                        <Line data={chartConfig} options={options} />
-                    </div>
+                    <ChartContainer config={chartConfig} className="h-full w-full">
+                        <AreaChart
+                            accessibilityLayer
+                            data={data}
+                            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                        >
+                            <defs>
+                                <linearGradient id="fillReceitas" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="var(--color-receitas)" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="var(--color-receitas)" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="fillDespesas" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="var(--color-despesas)" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="var(--color-despesas)" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f4f4f5" />
+                            <XAxis
+                                dataKey="day"
+                                axisLine={false}
+                                tickLine={false}
+                                tickMargin={10}
+                                tick={{ fill: '#71717a', fontSize: 12, fontFamily: 'Inter' }}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fill: '#71717a', fontSize: 12, fontFamily: 'Inter' }}
+                                tickFormatter={formatAxisValue}
+                                width={60}
+                            />
+                            <ChartTooltip
+                                cursor={false}
+                                content={<ChartTooltipContent formatter={(value) => formatValue(Number(value))} />}
+                            />
+                            <Area
+                                dataKey="despesas"
+                                type="monotone"
+                                fill="url(#fillDespesas)"
+                                fillOpacity={0.4}
+                                stroke="var(--color-despesas)"
+                                stackId="2" // Separate stacks
+                                strokeWidth={2}
+                            />
+                            <Area
+                                dataKey="receitas"
+                                type="monotone"
+                                fill="url(#fillReceitas)"
+                                fillOpacity={0.4}
+                                stroke="var(--color-receitas)"
+                                stackId="1" // Separate stacks
+                                strokeWidth={2}
+                            />
+                            <ChartLegend content={<ChartLegendContent />} />
+                        </AreaChart>
+                    </ChartContainer>
                 )}
             </CardContent>
         </Card>

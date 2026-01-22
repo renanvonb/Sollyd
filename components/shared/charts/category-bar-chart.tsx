@@ -1,32 +1,48 @@
 "use client"
 
 import * as React from "react"
-import { Bar } from "react-chartjs-2"
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend,
-} from "chart.js"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Bar, BarChart, XAxis, YAxis, Cell } from "recharts"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useVisibility } from "@/hooks/use-visibility-state"
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+    type ChartConfig,
+} from "@/components/ui/chart"
 
 interface CategoryBarChartProps {
-    data: Array<{ name: string; value: number }>
+    data: Array<{ name: string; value: number; color: string }>
     subcategoryData: Array<{ name: string; value: number }>
 }
 
 export function CategoryBarChart({ data, subcategoryData }: CategoryBarChartProps) {
-    const [viewMode, setViewMode] = React.useState<'category' | 'subcategory'>('category')
     const { isVisible } = useVisibility()
 
-    const chartData = viewMode === 'category' ? data : subcategoryData
+    // Create a dynamic config for tooltips if needed, mainly for labels
+    // For colors specific to bars, we pass them in the data payload
+    const chartConfig = React.useMemo(() => {
+        const config: ChartConfig = {
+            value: {
+                label: "Valor",
+            },
+        }
+        data.forEach(item => {
+            // Safe key handling
+            config[item.name] = {
+                label: item.name,
+                color: item.color,
+            }
+        })
+        return config
+    }, [data])
+
+    const chartData = React.useMemo(() => {
+        return data.map(item => ({
+            ...item,
+            fill: item.color // Use the color from the database
+        }))
+    }, [data])
 
     const formatValue = (value: number) => {
         if (!isVisible) return "R$ ••••"
@@ -38,86 +54,14 @@ export function CategoryBarChart({ data, subcategoryData }: CategoryBarChartProp
         }).format(value)
     }
 
-    const chartConfig = {
-        labels: chartData.map(item => item.name),
-        datasets: [
-            {
-                label: 'Valor',
-                data: chartData.map(item => item.value),
-                backgroundColor: '#ef4444',
-                borderRadius: 8,
-                barThickness: 32,
-            },
-        ],
-    }
-
-    const options = {
-        indexAxis: 'y' as const,
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false,
-            },
-            tooltip: {
-                backgroundColor: '#ffffff',
-                titleColor: '#18181b',
-                bodyColor: '#52525b',
-                borderColor: '#e4e4e7',
-                borderWidth: 1,
-                padding: 12,
-                boxPadding: 6,
-                usePointStyle: true,
-                titleFont: {
-                    family: 'Plus Jakarta Sans',
-                    size: 13,
-                    weight: 600,
-                },
-                bodyFont: {
-                    family: 'Inter',
-                    size: 12,
-                },
-                callbacks: {
-                    label: (context: any) => {
-                        return formatValue(context.parsed.x)
-                    },
-                },
-            },
-        },
-        scales: {
-            x: {
-                display: false,
-                grid: {
-                    display: false,
-                },
-            },
-            y: {
-                grid: {
-                    display: false,
-                },
-                ticks: {
-                    font: {
-                        family: 'Inter',
-                        size: 12,
-                    },
-                    color: '#71717a',
-                },
-                border: {
-                    display: false,
-                },
-            },
-        },
-    }
-
     return (
-        <Card className="rounded-[16px] border-zinc-200 shadow-sm">
+        <Card className="rounded-lg border-zinc-200 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <div>
                     <CardTitle className="text-zinc-500 font-semibold font-sans tracking-tight text-sm">
                         Categorias
                     </CardTitle>
                 </div>
-
             </CardHeader>
             <CardContent>
                 {chartData.length === 0 ? (
@@ -125,9 +69,50 @@ export function CategoryBarChart({ data, subcategoryData }: CategoryBarChartProp
                         Nenhum dado encontrado
                     </div>
                 ) : (
-                    <div className="h-[300px] w-full">
-                        <Bar data={chartConfig} options={options} />
-                    </div>
+                    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+                        <BarChart
+                            accessibilityLayer
+                            data={chartData}
+                            margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+                        >
+                            <XAxis
+                                dataKey="name"
+                                tickLine={false}
+                                tickMargin={10}
+                                axisLine={false}
+                                tickFormatter={(value) => value.length > 10 ? `${value.slice(0, 10)}...` : value}
+                                interval={0}
+                                style={{
+                                    fontSize: '12px',
+                                    fontFamily: 'Inter',
+                                    fill: '#71717a'
+                                }}
+                            />
+                            <YAxis
+                                tickLine={false}
+                                axisLine={false}
+                                tickFormatter={(value) => `R$${(value / 1000).toFixed(0)}k`}
+                                width={60}
+                                style={{
+                                    fontSize: '12px',
+                                    fontFamily: 'Inter',
+                                    fill: '#71717a'
+                                }}
+                            />
+                            <ChartTooltip
+                                cursor={false}
+                                content={<ChartTooltipContent formatter={(value) => formatValue(Number(value))} />}
+                            />
+                            <Bar
+                                dataKey="value"
+                                radius={[4, 4, 0, 0]}
+                            >
+                                {chartData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ChartContainer>
                 )}
             </CardContent>
         </Card>

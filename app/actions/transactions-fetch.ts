@@ -70,7 +70,7 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
             *,
             payees(id, name),
             classifications(id, name, color),
-            categories(id, name),
+            categories(id, name, color),
             subcategories(id, name),
             wallets(id, name, color)
         `)

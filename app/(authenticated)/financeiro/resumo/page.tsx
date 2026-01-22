@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import { createClient } from "@/lib/supabase/server"
 import DashboardClient from "@/components/dashboard-client"
 import { getTransactions, TimeRange } from "@/app/actions/transactions-fetch"
 import { TableSkeleton } from "@/components/ui/skeletons"
@@ -17,13 +18,17 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
     const from = searchParams.from
     const to = searchParams.to
 
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário'
+
     const initialData = await getTransactions({
         range,
         startDate: from,
         endDate: to,
     })
 
-    return <DashboardClient initialData={initialData} />
+    return <DashboardClient initialData={initialData} userName={userName} />
 }
 
 export default function DashboardPage({ searchParams }: DashboardPageProps) {
