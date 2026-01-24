@@ -138,7 +138,7 @@ export default function TransactionsPage() {
     }, [from, to])
 
     return (
-        <div className="flex-1 flex flex-col overflow-hidden bg-zinc-50">
+        <div className="flex-1 flex flex-col overflow-hidden bg-background">
             {/* Top Bar with Period Tabs */}
             <TopBar
                 moduleName="Transações"
@@ -149,7 +149,7 @@ export default function TransactionsPage() {
             />
 
             {/* Main Content Wrapper */}
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-4 overflow-hidden">
+            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-hidden">
 
                 <TransactionsHeader
                     title="Transações"

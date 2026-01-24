@@ -49,15 +49,15 @@ export function MonthlyBalanceChart({ data, className }: MonthlyBalanceChartProp
     }
 
     return (
-        <Card className={`rounded-lg border-zinc-200 shadow-sm flex flex-col ${className || ''}`}>
+        <Card className={`rounded-lg border-border shadow-sm flex flex-col ${className || ''}`}>
             <CardHeader>
-                <CardTitle className="text-zinc-500 font-semibold font-sans tracking-tight text-sm">
+                <CardTitle className="text-muted-foreground font-semibold font-sans tracking-tight text-sm">
                     Balanço
                 </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 min-h-[300px]">
                 {data.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-zinc-500 font-inter">
+                    <div className="flex items-center justify-center h-full text-muted-foreground font-inter">
                         Nenhum dado encontrado
                     </div>
                 ) : (

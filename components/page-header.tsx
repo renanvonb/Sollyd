@@ -4,10 +4,11 @@ import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { PanelLeftClose, PanelLeftOpen, Bell, Sun, Eye, EyeOff } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen, Bell, Sun, Eye, EyeOff, Moon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useSidebar } from '@/hooks/use-sidebar-state'
 import { useVisibility } from '@/hooks/use-visibility-state'
+import { useTheme } from 'next-themes'
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -34,6 +35,7 @@ export function PageHeader({ links, isLoading }: PageHeaderProps) {
     const pathname = usePathname()
     const { isOpen, toggle } = useSidebar()
     const { isVisible, toggleVisibility } = useVisibility()
+    const { setTheme, theme } = useTheme()
 
     const moduleName = "Transações"
 
@@ -111,10 +113,12 @@ export function PageHeader({ links, isLoading }: PageHeaderProps) {
                     <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                         aria-label="Alternar Tema"
                         className="text-zinc-400 hover:text-zinc-950 rounded-full"
                     >
-                        <Sun className="h-5 w-5" />
+                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                     </Button>
 
                     <Button

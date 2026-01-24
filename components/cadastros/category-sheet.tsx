@@ -178,22 +178,22 @@ export function CategorySheet({
                     ) : (
                         <div className="flex-1 overflow-y-auto pr-2">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-semibold text-zinc-900 font-inter">Subcategorias</h3>
+                                <h3 className="text-base font-semibold text-foreground font-inter">Subcategorias</h3>
                             </div>
                             <div className="space-y-3">
                                 {subcategories.map((sub) => (
                                     <Card
                                         key={sub.id}
-                                        className="group hover:bg-zinc-50 hover:shadow-sm transition-all border-zinc-200 relative overflow-hidden border-l-4 cursor-pointer"
+                                        className="group hover:bg-accent/50 hover:shadow-sm transition-all border-border relative overflow-hidden border-l-4 cursor-pointer"
                                         style={{ borderLeftColor: hexColor }}
                                         onClick={() => handleEditSub(sub)}
                                     >
                                         <CardContent className="p-4 flex items-center justify-between">
                                             <div className="flex flex-col flex-1 min-w-0">
-                                                <h4 className="font-semibold text-zinc-900 truncate font-jakarta text-base">
+                                                <h4 className="font-semibold text-foreground truncate font-jakarta text-base">
                                                     {sub.name}
                                                 </h4>
-                                                <p className="text-sm text-zinc-500 font-inter truncate">
+                                                <p className="text-sm text-muted-foreground font-inter truncate">
                                                     {sub.transactions?.[0]?.count || 0} transações
                                                 </p>
                                             </div>

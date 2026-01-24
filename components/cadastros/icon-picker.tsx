@@ -48,10 +48,10 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
                         type="button"
                         onClick={() => onChange(icon.name)}
                         className={cn(
-                            'p-2 rounded-lg border-2 transition-all hover:border-zinc-400',
+                            'p-2 rounded-lg border-2 transition-all hover:border-foreground/40',
                             isSelected
-                                ? 'border-zinc-950 bg-zinc-100'
-                                : 'border-zinc-200'
+                                ? 'border-primary bg-muted'
+                                : 'border-border'
                         )}
                         title={icon.label}
                     >

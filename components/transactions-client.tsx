@@ -64,6 +64,27 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
         return () => clearTimeout(timer)
     }, [searchValue, router, searchParams])
 
+    // Enforce default params on mount if missing
+    React.useEffect(() => {
+        const hasRange = searchParams.has('range')
+        const hasFrom = searchParams.has('from')
+        const hasTo = searchParams.has('to')
+
+        if (!hasRange || !hasFrom || !hasTo) {
+            const now = new Date()
+            const start = new Date(now.getFullYear(), now.getMonth(), 1)
+            const end = new Date(now.getFullYear(), now.getMonth() + 1, 0) // Last day of month
+
+            const params = new URLSearchParams(searchParams.toString())
+
+            if (!hasRange) params.set('range', 'mes')
+            if (!hasFrom) params.set('from', start.toISOString())
+            if (!hasTo) params.set('to', end.toISOString())
+
+            router.replace(`?${params.toString()}`, { scroll: false })
+        }
+    }, [searchParams, router])
+
     // Filtros sincronizados com a URL
     const range = (searchParams.get('range') as TimeRange) || 'mes'
     const searchQuery = searchParams.get('q')?.toLowerCase() || ""
@@ -158,17 +179,17 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
 
 
     return (
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden bg-background selection:bg-neutral-800">
             {/* Wrapper Principal Sagrado */}
             <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-6 overflow-hidden">
 
                 {/* Header de Página (Área C) */}
                 <div className="flex items-center justify-between flex-none">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-zinc-950 font-jakarta">
+                        <h1 className="text-3xl font-bold tracking-tight text-neutral-50 font-jakarta">
                             Transações
                         </h1>
-                        <p className="text-zinc-500 mt-1 font-sans text-sm font-inter">
+                        <p className="text-neutral-400 mt-1 font-sans text-sm font-inter">
                             Gerencie e acompanhe suas movimentações financeiras.
                         </p>
                     </div>
@@ -176,10 +197,10 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                     <div id="filter-group" className="flex items-center gap-3 font-sans justify-end flex-wrap">
                         {/* 1. Search Bar (200px) */}
                         <div className="relative w-[200px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                             <Input
                                 placeholder="Buscar"
-                                className="pl-9 h-10 font-inter w-full"
+                                className="pl-9 h-10 font-inter w-full bg-neutral-900 border-neutral-800 text-neutral-50 placeholder:text-neutral-500"
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
                             />
@@ -190,10 +211,10 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                             value={range}
                             onValueChange={handleRangeChange}
                         >
-                            <SelectTrigger className="w-[100px] font-inter">
+                            <SelectTrigger className="w-[100px] font-inter bg-neutral-900 border-neutral-800 text-neutral-50">
                                 <SelectValue placeholder="Período" />
                             </SelectTrigger>
-                            <SelectContent className='bg-white'>
+                            <SelectContent className='bg-neutral-900 border-neutral-800 text-neutral-50'>
                                 <SelectItem value="dia">Hoje</SelectItem>
                                 <SelectItem value="semana">Semana</SelectItem>
                                 <SelectItem value="mes">Mês</SelectItem>
@@ -218,11 +239,11 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                                     <ChevronDown className="h-4 w-4 ml-2" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[160px] bg-white">
-                                <DropdownMenuItem onClick={() => handleNewTransaction('revenue')} className="cursor-pointer">
+                            <DropdownMenuContent align="end" className="w-[160px] bg-neutral-900 border-neutral-800 text-neutral-50">
+                                <DropdownMenuItem onClick={() => handleNewTransaction('revenue')} className="cursor-pointer focus:bg-neutral-800 focus:text-neutral-50">
                                     Receita
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleNewTransaction('expense')} className="cursor-pointer">
+                                <DropdownMenuItem onClick={() => handleNewTransaction('expense')} className="cursor-pointer focus:bg-neutral-800 focus:text-neutral-50">
                                     Despesa
                                 </DropdownMenuItem>
 
@@ -241,11 +262,12 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                     </div>
 
                     {/* Container da Tabela (Área E) - Scroll Interno */}
+                    {/* Container da Tabela (Área E) - Scroll Interno */}
                     {filteredData.length > 0 ? (
-                        <div id="data-table-wrapper" className="flex-1 min-h-0 bg-white rounded-[16px] border border-zinc-200 shadow-sm flex flex-col relative overflow-hidden font-sans">
+                        <div id="data-table-wrapper" className="flex-1 min-h-0 bg-neutral-900 rounded-[16px] border border-neutral-800 shadow-sm flex flex-col relative overflow-hidden font-sans">
                             {isPending && (
-                                <div className="absolute inset-0 bg-white/50 z-20 flex items-center justify-center backdrop-blur-[1px]">
-                                    <Loader2 className="h-8 w-8 animate-spin text-zinc-950" />
+                                <div className="absolute inset-0 bg-background/50 z-20 flex items-center justify-center backdrop-blur-[1px]">
+                                    <Loader2 className="h-8 w-8 animate-spin text-neutral-50" />
                                 </div>
                             )}
                             <TransactionTable data={filteredData} onRowClick={handleRowClick} />
@@ -266,31 +288,31 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                                     <Button
                                         variant="outline"
                                         onClick={() => setSearchValue("")}
-                                        className="font-inter"
+                                        className="font-inter border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50"
                                     >
                                         Limpar busca
                                     </Button>
                                 ) : (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" className="font-inter">
+                                            <Button variant="outline" className="font-inter border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50">
                                                 <Plus className="h-4 w-4 mr-2" />
                                                 Adicionar
                                                 <ChevronDown className="h-4 w-4 ml-2" />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="center" className="w-[160px] bg-white">
-                                            <DropdownMenuItem onClick={() => handleNewTransaction('revenue')} className="cursor-pointer">
+                                        <DropdownMenuContent align="center" className="w-[160px] bg-neutral-900 border-neutral-800 text-neutral-50">
+                                            <DropdownMenuItem onClick={() => handleNewTransaction('revenue')} className="cursor-pointer focus:bg-neutral-800 focus:text-neutral-50">
                                                 Receita
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleNewTransaction('expense')} className="cursor-pointer">
+                                            <DropdownMenuItem onClick={() => handleNewTransaction('expense')} className="cursor-pointer focus:bg-neutral-800 focus:text-neutral-50">
                                                 Despesa
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 )
                             }
-                            className="flex-1"
+                            className="flex-1 bg-neutral-900 border-neutral-800 border-dashed"
                         />
                     )}
 

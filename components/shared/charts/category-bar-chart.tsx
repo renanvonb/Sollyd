@@ -55,17 +55,17 @@ export function CategoryBarChart({ data, subcategoryData }: CategoryBarChartProp
     }
 
     return (
-        <Card className="rounded-lg border-zinc-200 shadow-sm">
+        <Card className="rounded-lg border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <div>
-                    <CardTitle className="text-zinc-500 font-semibold font-sans tracking-tight text-sm">
+                    <CardTitle className="text-muted-foreground font-semibold font-sans tracking-tight text-sm">
                         Categorias
                     </CardTitle>
                 </div>
             </CardHeader>
             <CardContent>
                 {chartData.length === 0 ? (
-                    <div className="flex items-center justify-center h-[300px] text-zinc-500 font-inter">
+                    <div className="flex items-center justify-center h-[300px] text-muted-foreground font-inter">
                         Nenhum dado encontrado
                     </div>
                 ) : (

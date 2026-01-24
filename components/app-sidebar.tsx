@@ -81,10 +81,10 @@ export function AppSidebar({ user }: SidebarProps) {
             </button>
 
             <aside id="main-sidebar" className={cn(
-                "fixed left-0 top-0 z-40 h-screen transition-all duration-300 border-r border-neutral-800 bg-neutral-950 flex flex-col font-sans group/sidebar",
+                "fixed left-0 top-0 z-40 h-screen transition-all duration-300 border-r border-[#262626] bg-[#0a0a0a] flex flex-col font-sans group/sidebar",
                 isOpen ? "w-64" : "w-0 -translate-x-full md:w-20 md:translate-x-0"
             )}>
-                <div className="flex items-center h-[72px] px-6 transition-all duration-300 border-b border-neutral-800">
+                <div className="flex items-center h-[72px] px-6 transition-all duration-300 border-b border-[#262626]">
                     <div className="flex items-center">
                         {/* Symbol */}
                         <div className="relative h-8 w-8 shrink-0 cursor-pointer">
@@ -174,7 +174,7 @@ export function AppSidebar({ user }: SidebarProps) {
 
 
 
-                <div className="p-4 border-t border-neutral-800">
+                <div className="p-4 border-t border-[#262626]">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button

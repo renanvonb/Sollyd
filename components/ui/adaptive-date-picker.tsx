@@ -161,7 +161,7 @@ export function AdaptiveDatePicker({ mode, value, onChange, className }: Adaptiv
                     {getDisplayText()}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-white" align="start">
+            <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
                 <Calendar
                     {...({
                         mode: mode === "custom" ? "range" : "single",

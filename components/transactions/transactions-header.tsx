@@ -48,12 +48,9 @@ export function TransactionsHeader({
     return (
         <div className="flex items-center justify-between flex-none">
             <div className="ml-2">
-                <h1 className="text-3xl font-bold tracking-tight text-zinc-950 font-jakarta">
+                <h1 className="text-3xl font-bold tracking-tight text-zinc-50 font-jakarta">
                     {title}
                 </h1>
-                <p className="text-zinc-500 mt-1 font-sans text-sm font-inter">
-                    {description}
-                </p>
             </div>
 
             <div id="filter-group" className="flex items-center gap-3 font-sans justify-end flex-wrap">

@@ -157,7 +157,7 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
                             Adicionar
                         </Button>
                     }
-                    className="flex-1 bg-white border-zinc-200 border-dashed"
+                    className="flex-1 bg-card border-border border-dashed"
                 />
             ) : filteredCategories.length === 0 ? (
                 <EmptyState
@@ -166,10 +166,10 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
                     icon={SearchX}
                     title="Nenhuma categoria encontrada"
                     description="Tente novamente para encontrar o que está buscando"
-                    className="flex-1 bg-white border-zinc-200 border-dashed"
+                    className="flex-1 bg-card border-border border-dashed"
                 />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredCategories.map((item) => {
                         const Icon = getIconByName(item.icon || 'cart');
                         const cardColor = getColorHex(item.color || 'zinc');
@@ -177,23 +177,23 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
                         return (
                             <Card
                                 key={item.id}
-                                className="group cursor-pointer hover:bg-accent/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 border-zinc-200 relative overflow-hidden"
+                                className="group cursor-pointer hover:bg-accent/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 border-border relative overflow-hidden"
                                 onClick={() => openSheet(item)}
                             >
 
                                 <CardContent className="p-6">
                                     <div className="flex items-center gap-4">
                                         <div
-                                            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105"
+                                            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                                             style={{ backgroundColor: cardColor }}
                                         >
                                             <Icon className="w-5 h-5 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-zinc-900 truncate font-jakarta">
+                                            <h3 className="font-semibold text-foreground truncate font-jakarta">
                                                 <HighlightText text={item.name} highlight={searchQuery} />
                                             </h3>
-                                            <p className="text-sm text-zinc-500 font-inter truncate">
+                                            <p className="text-sm text-muted-foreground font-inter truncate">
                                                 {item.subcategories?.[0]?.count || 0} subcategorias
                                             </p>
                                         </div>

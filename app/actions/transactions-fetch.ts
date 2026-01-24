@@ -64,28 +64,41 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
         end: format(end, 'yyyy-MM-dd')
     })
 
-    const { data, error } = await supabase
-        .from('transactions')
-        .select(`
-            *,
-            payees(id, name),
-            classifications(id, name, color),
-            categories(id, name, color),
-            subcategories(id, name),
-            wallets(id, name, color)
-        `)
-        .eq('user_id', userId)
-        .gte('competence', format(start, 'yyyy-MM-dd'))
-        .lte('competence', format(end, 'yyyy-MM-dd'))
-        .order('competence', { ascending: false })
-        .order('created_at', { ascending: false })
+    // Timeout promise
+    const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Query timeout')), 15000)
+    )
 
-    console.log('[getTransactions] Result:', { count: data?.length || 0, error: error?.message })
+    try {
+        const { data, error } = await Promise.race([
+            supabase
+                .from('transactions')
+                .select(`
+                    *,
+                    payees(id, name),
+                    classifications(id, name, color),
+                    categories(id, name, color),
+                    subcategories(id, name),
+                    wallets(id, name, color)
+                `)
+                .eq('user_id', userId)
+                .gte('competence', format(start, 'yyyy-MM-dd'))
+                .lte('competence', format(end, 'yyyy-MM-dd'))
+                .order('competence', { ascending: false })
+                .order('created_at', { ascending: false }),
+            timeout
+        ]) as any
 
-    if (error) {
-        console.error('[getTransactions] Query Error:', error.message)
+        console.log('[getTransactions] Result:', { count: data?.length || 0, error: error?.message })
+
+        if (error) {
+            console.error('[getTransactions] Query Error:', error.message)
+            return []
+        }
+
+        return data as any[]
+    } catch (error) {
+        console.error('[getTransactions] Unexpected error or timeout:', error)
         return []
     }
-
-    return data as any[]
 }

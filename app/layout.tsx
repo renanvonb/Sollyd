@@ -35,6 +35,10 @@ export const viewport: Viewport = {
     initialScale: 1,
 };
 
+import { ThemeProvider } from "@/components/theme-provider";
+
+// ... existing imports
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -44,17 +48,24 @@ export default function RootLayout({
         <html lang="pt-BR" suppressHydrationWarning>
             <body
                 className={cn(
-                    "min-h-screen bg-zinc-50 font-sans antialiased text-zinc-950",
+                    "min-h-screen bg-background font-sans antialiased text-foreground",
                     inter.variable,
                     jakarta.variable
                 )}
             >
-                {children}
-                <Toaster
-                    position="bottom-right"
-                    closeButton
-                    expand={false}
-                />
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="light"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    {children}
+                    <Toaster
+                        position="bottom-right"
+                        closeButton
+                        expand={false}
+                    />
+                </ThemeProvider>
             </body>
         </html>
     );

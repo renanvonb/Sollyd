@@ -1,11 +1,12 @@
 'use client';
 
-import { PanelLeftClose, PanelLeftOpen, Eye, EyeOff, Sun, Bell } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Eye, EyeOff, Sun, Bell, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ReactNode } from 'react';
 import { useSidebar } from '@/hooks/use-sidebar-state';
 import { useVisibility } from '@/hooks/use-visibility-state';
 import { Button } from '@/components/ui/button';
+import { useTheme } from "next-themes";
 
 import {
     Tooltip,
@@ -50,6 +51,7 @@ export function TopBar({
 }: TopBarProps) {
     const { isOpen, toggle } = useSidebar();
     const { isVisible, toggleVisibility } = useVisibility();
+    const { setTheme, theme } = useTheme()
 
     // Encontra o nome da tab ativa
     const activeTabLabel = tabs.find(tab => tab.id === activeTab)?.label || moduleName;
@@ -57,7 +59,7 @@ export function TopBar({
 
     return (
         <TooltipProvider delayDuration={300}>
-            <header className="sticky top-0 z-30 w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md h-[72px] flex-none font-sans">
+            <header className="sticky top-0 z-30 w-full border-b border-border bg-card h-[72px] flex-none font-sans transition-colors duration-200">
                 <div className="max-w-[1440px] mx-auto px-8 h-full flex items-center justify-between w-full">
 
                     {/* Left: Sidebar Toggle + Module/Tab Name */}
@@ -68,7 +70,7 @@ export function TopBar({
                                     variant="ghost"
                                     size="icon"
                                     onClick={toggle}
-                                    className="text-zinc-400 hover:text-zinc-950 transition-all flex-none"
+                                    className="text-muted-foreground hover:text-foreground transition-all flex-none"
                                 >
                                     {isOpen ? (
                                         <PanelLeftClose className="h-5 w-5" />
@@ -82,7 +84,7 @@ export function TopBar({
                             </TooltipContent>
                         </Tooltip>
 
-                        <span className="text-sm font-medium text-zinc-950 font-inter">
+                        <span className="text-sm font-medium text-foreground font-inter">
                             {displayName}
                         </span>
                     </div>
@@ -105,7 +107,7 @@ export function TopBar({
                                                 variant === 'simple' && 'px-3',
                                                 isActive
                                                     ? 'text-primary border-primary'
-                                                    : 'text-zinc-500 border-transparent hover:text-primary/70'
+                                                    : 'text-muted-foreground border-transparent hover:text-primary/70'
                                             )}
                                         >
                                             {tab.label}
@@ -126,7 +128,7 @@ export function TopBar({
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="text-zinc-400 hover:text-zinc-950"
+                                        className="text-muted-foreground hover:text-foreground"
                                         onClick={toggleVisibility}
                                     >
                                         {isVisible ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
@@ -142,9 +144,12 @@ export function TopBar({
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="text-zinc-400 hover:text-zinc-950"
+                                        className="text-muted-foreground hover:text-foreground"
+                                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                                     >
-                                        <Sun className="h-5 w-5" />
+                                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                                        <span className="sr-only">Alternar tema</span>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -157,7 +162,7 @@ export function TopBar({
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="text-zinc-400 hover:text-zinc-950"
+                                        className="text-muted-foreground hover:text-foreground"
                                     >
                                         <Bell className="h-5 w-5" />
                                     </Button>

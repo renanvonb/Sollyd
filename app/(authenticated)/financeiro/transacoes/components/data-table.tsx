@@ -37,7 +37,7 @@ export function DataTable<TData, TValue>({
     return (
         <div className="relative w-full h-full overflow-auto">
             <Table>
-                <TableHeader className="sticky top-0 bg-secondary z-10 shadow-sm">
+                <TableHeader className="sticky top-0 bg-card z-10 shadow-sm">
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => {

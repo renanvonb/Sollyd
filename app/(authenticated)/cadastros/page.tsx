@@ -78,7 +78,7 @@ export default function CadastrosPage() {
     };
 
     return (
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden bg-background">
             {/* Top Bar - Usando componente reutilizável */}
             <TopBar
                 moduleName="Cadastros"
@@ -89,17 +89,14 @@ export default function CadastrosPage() {
             />
 
             {/* Wrapper Principal */}
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-6 overflow-hidden">
+            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-hidden">
 
                 {/* Page Header - Título, descrição, busca e botão no mesmo nível */}
                 <div className="flex items-center justify-between flex-none">
                     <div className="ml-2">
-                        <h1 className="text-3xl font-bold tracking-tight text-zinc-950 font-jakarta">
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground font-jakarta">
                             {currentTab.title}
                         </h1>
-                        <p className="text-zinc-500 mt-1 font-sans text-sm font-inter">
-                            {currentTab.description}
-                        </p>
                     </div>
 
                     <div className="flex items-center gap-3">

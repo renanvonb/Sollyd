@@ -197,11 +197,11 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
         const colorClass = getColorClass(formData.color);
 
         return (
-            <div className="flex items-center gap-2 p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+            <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-border">
                 <div className={cn('rounded-full p-2', colorClass)}>
                     <IconComp className="h-4 w-4 text-white" />
                 </div>
-                <span className="text-sm font-medium text-zinc-900">
+                <span className="text-sm font-medium text-foreground">
                     {formData.name || 'Nome do pagador'}
                 </span>
             </div>
@@ -229,7 +229,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                             Adicionar
                         </Button>
                     }
-                    className="flex-1 bg-white border-zinc-200 border-dashed"
+                    className="flex-1 bg-card border-border border-dashed"
                 />
             ) : filteredPayers.length === 0 ? (
                 <EmptyState
@@ -238,10 +238,10 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                     icon={SearchX}
                     title="Nenhum pagador encontrado"
                     description="Tente novamente para encontrar o que está buscando"
-                    className="flex-1 bg-white border-zinc-200 border-dashed"
+                    className="flex-1 bg-card border-border border-dashed"
                 />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredPayers.map((payer) => {
                         const iconName = (!payer.icon || payer.icon === 'user') ? 'user-round' : payer.icon;
                         const IconComponent = getIconByName(iconName, UserRound);
@@ -250,14 +250,14 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                         return (
                             <Card
                                 key={payer.id}
-                                className="hover:bg-zinc-50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer group border-zinc-200 relative overflow-hidden"
+                                className="hover:bg-accent/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer group border-border relative overflow-hidden"
                                 onClick={() => {
                                     setEditingPayer(payer);
                                     onOpenChange(true);
                                 }}
                             >
                                 <div className="absolute top-4 right-4">
-                                    <Badge variant="secondary" className="font-inter text-[10px] uppercase tracking-wider px-2 py-0 border bg-zinc-100/80 backdrop-blur-sm shadow-sm">
+                                    <Badge variant="secondary" className="font-inter text-[10px] uppercase tracking-wider px-2 py-0 border bg-muted/80 backdrop-blur-sm shadow-sm">
                                         {(payer.icon === 'building-2' || payer.icon === 'building') ? 'Jurídica' : 'Física'}
                                     </Badge>
                                 </div>
@@ -267,10 +267,10 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                                             <IconComponent className="h-5 w-5 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-zinc-900 truncate">
+                                            <h3 className="font-semibold text-foreground truncate">
                                                 <HighlightText text={payer.name} highlight={searchQuery} />
                                             </h3>
-                                            <p className="text-sm text-zinc-500 font-inter">
+                                            <p className="text-sm text-muted-foreground font-inter">
                                                 {payer.transactions?.[0]?.count || 0} transações
                                             </p>
                                         </div>

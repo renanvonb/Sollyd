@@ -118,7 +118,7 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
                             Adicionar
                         </Button>
                     }
-                    className="flex-1 bg-white border-zinc-200 border-dashed"
+                    className="flex-1 bg-card border-border border-dashed"
                 />
             ) : filteredClassifications.length === 0 ? (
                 <EmptyState
@@ -127,17 +127,17 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
                     icon={SearchX}
                     title="Nenhuma classificação encontrada"
                     description="Tente novamente para encontrar o que está buscando"
-                    className="flex-1 bg-white border-zinc-200 border-dashed"
+                    className="flex-1 bg-card border-border border-dashed"
                 />
             ) : (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 p-1">
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filteredClassifications.map((item) => {
                         const Icon = getIconByName(item.icon || 'flag', Flag);
                         const cardColor = getColorHex(item.color || 'zinc');
                         return (
                             <Card
                                 key={item.id}
-                                className="group cursor-pointer hover:bg-zinc-50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 border-zinc-200"
+                                className="group cursor-pointer hover:bg-accent/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 border-border"
                                 onClick={() => {
                                     setEditingItem(item);
                                     onOpenChange(true);
@@ -152,10 +152,10 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
                                             <Icon className="h-5 w-5 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-zinc-900 truncate font-jakarta">
+                                            <h3 className="font-semibold text-foreground truncate font-jakarta">
                                                 <HighlightText text={item.name} highlight={searchQuery} />
                                             </h3>
-                                            <p className="text-sm text-zinc-500 font-inter truncate">
+                                            <p className="text-sm text-muted-foreground font-inter truncate">
                                                 {item.transactions?.[0]?.count || 0} transações
                                             </p>
                                         </div>

@@ -108,11 +108,11 @@ export function WalletForm({
         const colorClass = getColorClass(watchColor);
 
         return (
-            <div className="flex items-center gap-2 p-3 bg-zinc-50 rounded-lg border border-zinc-200 mb-4">
+            <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-border mb-4">
                 <div className={cn('rounded-full p-2', colorClass)}>
                     <IconComp className="h-4 w-4 text-white" />
                 </div>
-                <span className="text-sm font-medium text-zinc-900">
+                <span className="text-sm font-medium text-foreground">
                     {watchName || 'Nome da carteira'}
                 </span>
             </div>
@@ -174,10 +174,10 @@ export function WalletForm({
                     control={form.control}
                     name="is_principal"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 space-y-0 !mt-6 text-zinc-950">
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 space-y-0 !mt-6">
                             <div className="space-y-0.5">
                                 <FormLabel className="text-base">Carteira principal</FormLabel>
-                                <p className="text-sm text-zinc-500 font-inter">
+                                <p className="text-sm text-muted-foreground font-inter">
                                     Definir como padrão para novas transações
                                 </p>
                             </div>

@@ -127,7 +127,7 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                             Adicionar
                         </Button>
                     }
-                    className="flex-1 bg-white border-zinc-200 border-dashed"
+                    className="flex-1 bg-card border-border border-dashed"
                 />
             ) : filteredPayees.length === 0 ? (
                 <EmptyState
@@ -136,10 +136,10 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                     icon={SearchX}
                     title="Nenhum beneficiário encontrado"
                     description="Tente novamente para encontrar o que está buscando"
-                    className="flex-1 bg-white border-zinc-200 border-dashed"
+                    className="flex-1 bg-card border-border border-dashed"
                 />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredPayees.map((payee) => {
                         const IconComponent = getIconByName(payee.icon || 'user');
                         const cardColor = getColorHex(payee.color || 'zinc');
@@ -147,7 +147,7 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                         return (
                             <Card
                                 key={payee.id}
-                                className="hover:bg-zinc-50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer group border-zinc-200"
+                                className="hover:bg-accent/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer group border-border"
                                 onClick={() => {
                                     setEditingPayee(payee);
                                     onOpenChange(true);
@@ -162,10 +162,10 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                                             <IconComponent className="h-5 w-5 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-zinc-900 truncate font-jakarta">
+                                            <h3 className="font-semibold text-foreground truncate font-jakarta">
                                                 <HighlightText text={payee.name} highlight={searchQuery} />
                                             </h3>
-                                            <p className="text-sm text-zinc-500 font-inter">
+                                            <p className="text-sm text-muted-foreground font-inter">
                                                 {payee.transactions?.[0]?.count || 0} transações
                                             </p>
                                         </div>

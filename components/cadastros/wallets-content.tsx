@@ -126,7 +126,7 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
                             Adicionar
                         </Button>
                     }
-                    className="flex-1 bg-white border-zinc-200 border-dashed"
+                    className="flex-1 bg-card border-border border-dashed"
                 />
             ) : filteredWallets.length === 0 ? (
                 <EmptyState
@@ -135,10 +135,10 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
                     icon={SearchX}
                     title="Nenhuma carteira encontrada"
                     description="Tente novamente para encontrar o que está buscando"
-                    className="flex-1 bg-white border-zinc-200 border-dashed"
+                    className="flex-1 bg-card border-border border-dashed"
                 />
             ) : (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 p-1">
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filteredWallets.map((wallet) => {
                         const Icon = getIconByName('dollar-sign');
                         const cardColor = getColorHex(wallet.color || 'zinc');
@@ -146,7 +146,7 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
                         return (
                             <Card
                                 key={wallet.id}
-                                className="group cursor-pointer hover:bg-accent/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 border-zinc-200 relative overflow-hidden"
+                                className="group cursor-pointer hover:bg-accent/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 border-border relative overflow-hidden"
                                 onClick={() => {
                                     setEditingWallet(wallet);
                                     onOpenChange(true);
@@ -154,11 +154,11 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
                             >
                                 <div className="absolute top-4 right-4">
                                     {(wallet.icon === 'building-2' || wallet.icon === 'building') ? (
-                                        <Badge variant="secondary" className="font-inter text-[10px] uppercase tracking-wider px-2 py-0 border bg-zinc-100/80 backdrop-blur-sm shadow-sm">
+                                        <Badge variant="secondary" className="font-inter text-[10px] uppercase tracking-wider px-2 py-0 border bg-muted/80 backdrop-blur-sm shadow-sm">
                                             JURÍDICA
                                         </Badge>
                                     ) : (
-                                        <Badge variant="secondary" className="font-inter text-[10px] uppercase tracking-wider px-2 py-0 border bg-zinc-100/80 backdrop-blur-sm shadow-sm">
+                                        <Badge variant="secondary" className="font-inter text-[10px] uppercase tracking-wider px-2 py-0 border bg-muted/80 backdrop-blur-sm shadow-sm">
                                             FÍSICA
                                         </Badge>
                                     )}
@@ -166,7 +166,7 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
 
                                 {wallet.is_principal && (
                                     <div className="absolute bottom-4 right-4">
-                                        <Badge variant="secondary" className="font-inter text-[10px] uppercase tracking-wider px-2 py-0 border bg-zinc-100/80 backdrop-blur-sm shadow-sm">
+                                        <Badge variant="secondary" className="font-inter text-[10px] uppercase tracking-wider px-2 py-0 border bg-muted/80 backdrop-blur-sm shadow-sm">
                                             Principal
                                         </Badge>
                                     </div>
@@ -182,10 +182,10 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
                                             <Icon className="h-5 w-5 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-zinc-900 truncate font-jakarta">
+                                            <h3 className="font-semibold text-foreground truncate font-jakarta">
                                                 <HighlightText text={wallet.name} highlight={searchQuery} />
                                             </h3>
-                                            <p className="text-sm text-zinc-500 truncate font-inter">
+                                            <p className="text-sm text-muted-foreground truncate font-inter">
                                                 {wallet.transactions?.[0]?.count || 0} transações
                                             </p>
                                         </div>

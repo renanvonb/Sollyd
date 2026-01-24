@@ -240,16 +240,13 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
                 variant="simple"
             />
 
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-4 overflow-y-auto">
+            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-y-auto">
                 {/* Page Header */}
                 <div className="flex items-center justify-between flex-none">
                     <div className="ml-2">
-                        <h1 className="text-3xl font-bold tracking-tight text-zinc-950 font-jakarta">
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground font-jakarta">
                             Olá, {userName.split(' ')[0]}!
                         </h1>
-                        <p className="text-zinc-500 mt-1 font-sans text-sm font-inter">
-                            Visualize o desempenho das suas finanças em tempo real.
-                        </p>
                     </div>
 
                     <div id="standard-filters" className="flex items-center gap-3 font-sans justify-end flex-wrap">
@@ -261,7 +258,7 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
                         />
 
                         <div className="relative w-[250px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Buscar"
                                 className="pl-9 h-10 font-inter w-full"

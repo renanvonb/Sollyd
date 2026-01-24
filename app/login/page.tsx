@@ -78,7 +78,7 @@ export default function LoginPage() {
     }
 
     if (initialLoading) {
-        return <AuthSkeleton />
+        return <AuthSkeleton mode="login" />
     }
 
     return (

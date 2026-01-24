@@ -19,7 +19,10 @@ import { AuthSkeleton } from '@/components/ui/skeletons'
 const signupSchema = z.object({
     name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
     email: z.string().email('E-mail inválido'),
-    password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
+    password: z.string()
+        .min(8, 'A senha deve ter pelo menos 8 caracteres')
+        .regex(/[A-Z]/, 'Precisa de uma letra maiúscula')
+        .regex(/[0-9]/, 'Precisa de um número'),
     confirmPassword: z.string().min(1, 'Confirme sua senha')
 }).refine((data) => data.password === data.confirmPassword, {
     message: "As senhas não coincidem",
@@ -27,6 +30,13 @@ const signupSchema = z.object({
 })
 
 type SignupValues = z.infer<typeof signupSchema>
+
+// Helper requirements for visual display
+const passwordRequirements = [
+    { regex: /.{8,}/, text: "Pelo menos 8 caracteres" },
+    { regex: /[A-Z]/, text: "Uma letra maiúscula" },
+    { regex: /[0-9]/, text: "Um número" },
+]
 
 export default function SignupPage() {
     const router = useRouter()
@@ -48,10 +58,14 @@ export default function SignupPage() {
     const {
         register,
         handleSubmit,
+        watch,
         formState: { errors },
     } = useForm<SignupValues>({
         resolver: zodResolver(signupSchema),
+        mode: "onChange", // Enable real-time validation for visual feedback
     })
+
+    const password = watch("password", "")
 
     async function onSubmit(data: SignupValues) {
         setLoading(true)
@@ -84,29 +98,35 @@ export default function SignupPage() {
     }
 
     if (initialLoading) {
-        return <AuthSkeleton />
+        return <AuthSkeleton mode="signup" />
     }
 
-
-
     return (
-        <div className="flex h-screen w-screen bg-white overflow-hidden font-inter">
+        <div className="flex h-screen font-sans bg-background overflow-hidden">
             {/* Left Column: Form (Signup Area - 60%) */}
             <div className="flex-1 md:w-[60%] md:flex-none flex flex-col items-center justify-center p-8 md:p-12 lg:p-16 bg-white relative">
                 <div className="w-full flex flex-col items-center">
                     <div className="w-full max-w-[360px] flex flex-col items-center text-center">
-                        {/* Brand Symbol */}
-                        <div className="relative h-10 w-10 mb-4">
-                            <Image
-                                src="/brand/symbol.png"
-                                alt="Sollyd"
-                                fill
-                                className="object-contain"
-                            />
+                        {/* Brand Symbol Block */}
+                        <div className="bg-[#E0FE56] rounded-xl p-3 mb-4 h-12 w-12 flex items-center justify-center">
+                            <div className="relative h-6 w-6">
+                                <Image
+                                    src="/brand/symbol.png"
+                                    alt="Sollyd"
+                                    fill
+                                    className="object-contain"
+                                    style={{
+                                        filter: 'brightness(0) saturate(100%) invert(4%) sepia(8%) saturate(2456%) hue-rotate(202deg) brightness(96%) contrast(94%)'
+                                    }}
+                                />
+                            </div>
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground font-jakarta">
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground font-jakarta mb-2">
                             Crie sua conta
                         </h1>
+                        <p className="text-muted-foreground font-inter">
+                            Preencha seus dados abaixo para começar
+                        </p>
                         <Separator className="mt-[24px] mb-[24px] w-full opacity-50" />
                     </div>
 
@@ -115,16 +135,19 @@ export default function SignupPage() {
                         <div className="space-y-2">
                             <Label
                                 htmlFor="name"
-                                className={cn("font-inter text-sm font-medium", errors.name && "text-destructive")}
+                                className={cn(
+                                    "text-sm font-medium transition-colors",
+                                    errors.name && "text-destructive"
+                                )}
                             >
                                 Nome completo
                             </Label>
                             <Input
                                 id="name"
                                 type="text"
-                                placeholder="Seu nome"
+                                placeholder="Informe seu nome completo"
                                 className={cn(
-                                    "h-11 px-4 rounded-md border-input bg-background font-inter focus:ring-1 focus:ring-ring",
+                                    "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                                     errors.name && "border-destructive focus-visible:ring-destructive"
                                 )}
                                 {...register('name')}
@@ -136,16 +159,19 @@ export default function SignupPage() {
                         <div className="space-y-2">
                             <Label
                                 htmlFor="email"
-                                className={cn("font-inter text-sm font-medium", errors.email && "text-destructive")}
+                                className={cn(
+                                    "text-sm font-medium transition-colors",
+                                    errors.email && "text-destructive"
+                                )}
                             >
                                 E-mail
                             </Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="nome@exemplo.com"
+                                placeholder="Informe seu e-mail"
                                 className={cn(
-                                    "h-11 px-4 rounded-md border-input bg-background font-inter focus:ring-1 focus:ring-ring",
+                                    "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                                     errors.email && "border-destructive focus-visible:ring-destructive"
                                 )}
                                 {...register('email')}
@@ -157,7 +183,10 @@ export default function SignupPage() {
                         <div className="space-y-2">
                             <Label
                                 htmlFor="password"
-                                className={cn("font-inter text-sm font-medium", errors.password && "text-destructive")}
+                                className={cn(
+                                    "text-sm font-medium transition-colors",
+                                    errors.password && "text-destructive"
+                                )}
                             >
                                 Senha
                             </Label>
@@ -165,9 +194,9 @@ export default function SignupPage() {
                                 <Input
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
-                                    placeholder="••••••••"
+                                    placeholder="Defina uma senha"
                                     className={cn(
-                                        "h-11 pl-4 pr-10 rounded-md border-input bg-background font-inter focus:ring-1 focus:ring-ring",
+                                        "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10",
                                         errors.password && "border-destructive focus-visible:ring-destructive"
                                     )}
                                     {...register('password')}
@@ -176,10 +205,32 @@ export default function SignupPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-all"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    tabIndex={-1}
                                 >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
+                            </div>
+
+                            {/* Password Requirements List */}
+                            <div className="space-y-1.5 pt-1">
+                                {passwordRequirements.map((req, index) => {
+                                    const isMet = req.regex.test(password)
+                                    return (
+                                        <div key={index} className="flex items-center gap-2">
+                                            <div className={cn(
+                                                "h-1.5 w-1.5 rounded-full transition-colors",
+                                                isMet ? "bg-emerald-500" : "bg-neutral-300"
+                                            )} />
+                                            <span className={cn(
+                                                "text-xs transition-colors",
+                                                isMet ? "text-emerald-600 font-medium" : "text-muted-foreground"
+                                            )}>
+                                                {req.text}
+                                            </span>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
 
@@ -187,7 +238,10 @@ export default function SignupPage() {
                         <div className="space-y-2">
                             <Label
                                 htmlFor="confirmPassword"
-                                className={cn("font-inter text-sm font-medium", errors.confirmPassword && "text-destructive")}
+                                className={cn(
+                                    "text-sm font-medium transition-colors",
+                                    errors.confirmPassword && "text-destructive"
+                                )}
                             >
                                 Confirmar senha
                             </Label>
@@ -195,9 +249,9 @@ export default function SignupPage() {
                                 <Input
                                     id="confirmPassword"
                                     type={showConfirmPassword ? 'text' : 'password'}
-                                    placeholder="••••••••"
+                                    placeholder="Confirme sua senha"
                                     className={cn(
-                                        "h-11 pl-4 pr-10 rounded-md border-input bg-background font-inter focus:ring-1 focus:ring-ring",
+                                        "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10",
                                         errors.confirmPassword && "border-destructive focus-visible:ring-destructive"
                                     )}
                                     {...register('confirmPassword')}
@@ -206,67 +260,78 @@ export default function SignupPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-all"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    tabIndex={-1}
                                 >
-                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
                         </div>
 
                         {error && (
-                            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                                <p className="text-xs text-destructive font-medium text-center">{error}</p>
+                            <div className="rounded-lg bg-destructive/10 p-3 border border-destructive/20 text-center">
+                                <p className="text-sm text-destructive font-medium">{error}</p>
                             </div>
                         )}
 
-                        <Button
-                            type="submit"
-                            className="w-full h-11 rounded-md font-bold font-inter bg-black text-white hover:bg-black/90 transition-all shadow-lg"
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                'Criar conta'
-                            )}
-                        </Button>
-                    </form>
-                </div>
+                        <div className="space-y-5">
+                            <Button
+                                type="submit"
+                                className="w-full h-11 rounded-lg font-semibold shadow-sm transition-all active:scale-[0.98]"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Criando conta...
+                                    </>
+                                ) : (
+                                    'Criar conta'
+                                )}
+                            </Button>
 
-                {/* Absolute Footer Navigation */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center w-full">
-                    <p className="text-sm font-inter text-muted-foreground">
-                        Já tem uma conta?{' '}
-                        <Link href="/login" className="text-foreground font-semibold hover:underline decoration-2 underline-offset-4">
-                            Entrar
-                        </Link>
-                    </p>
+                            <div className="text-center">
+                                <p className="text-sm text-muted-foreground">
+                                    Já tem uma conta?{' '}
+                                    <Link
+                                        href="/login"
+                                        className="font-semibold text-primary hover:underline transition-all"
+                                    >
+                                        Entrar
+                                    </Link>
+                                </p>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
 
-            {/* Right Column: Visual (Brand Area - 40%) */}
-            <div className="hidden md:flex md:w-[40%] relative m-4 rounded-[16px] overflow-hidden p-6">
-                <Image
-                    src="/image_0.png"
-                    alt="Signup Visual"
-                    fill
-                    className="object-cover"
-                    priority
-                />
-
-                {/* Brand Logo in top-left of the card */}
-                <div className="absolute top-6 left-6 z-20">
+            {/* Right Column: Branding Area (40%) */}
+            <div className="hidden md:flex md:flex-col md:w-[40%] relative m-4 rounded-[16px] overflow-hidden bg-neutral-950">
+                {/* Brand Logo in top-left */}
+                <div className="absolute top-8 left-8 z-20">
                     <span className="text-2xl font-bold font-jakarta tracking-tight text-white">Sollyd</span>
                 </div>
 
-                {/* Bottom Gradient Overlay */}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-10" />
+                {/* Content Area - Filling space and aligning bottom */}
+                <div className="flex-1 flex flex-col justify-end px-8 pb-8 z-10 relative">
+                    <div className="mb-12">
+                        <h2 className="text-[40px] font-bold tracking-tight leading-tight text-white font-jakarta">
+                            Comece sua<br />
+                            jornada <span className="text-[#E0FE56]">financeira</span><br />
+                            hoje mesmo
+                        </h2>
+                        <p className="text-lg text-neutral-400 mt-4 max-w-md">
+                            Junte-se a milhares de usuários que já transformaram sua gestão financeira com a Sollyd.
+                        </p>
+                    </div>
 
-                {/* Footer Info */}
-                <div className="absolute bottom-6 left-6 z-20">
-                    <p className="font-inter text-[14px] text-white/80 font-medium">
-                        © 2025 Sollyd. Todos os direitos reservados
-                    </p>
+                    {/* Footer Info inside the flow */}
+                    <div>
+                        <p className="font-inter text-[14px] text-neutral-500 font-medium">
+                            © 2026 Sollyd. Todos os direitos reservados
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

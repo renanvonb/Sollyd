@@ -50,15 +50,15 @@ export function ClassificationPieChart({ data }: ClassificationPieChartProps) {
     const total = data.reduce((sum, item) => sum + item.value, 0)
 
     return (
-        <Card className="rounded-lg border-zinc-200 shadow-sm">
+        <Card className="rounded-lg border-border shadow-sm">
             <CardHeader>
-                <CardTitle className="text-zinc-500 font-semibold font-sans tracking-tight text-sm">
+                <CardTitle className="text-muted-foreground font-semibold font-sans tracking-tight text-sm">
                     Classificações
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 {chartData.length === 0 ? (
-                    <div className="flex items-center justify-center h-[300px] text-zinc-500 font-inter">
+                    <div className="flex items-center justify-center h-[300px] text-muted-foreground font-inter">
                         Nenhum dado encontrado
                     </div>
                 ) : (
@@ -95,12 +95,12 @@ export function ClassificationPieChart({ data }: ClassificationPieChartProps) {
                                                 className="h-3 w-3 rounded-full shrink-0"
                                                 style={{ backgroundColor: entry.fill }}
                                             />
-                                            <span className="text-zinc-600 font-inter text-xs truncate">{entry.name}</span>
+                                            <span className="text-muted-foreground font-inter text-xs truncate">{entry.name}</span>
                                         </div>
-                                        <div className="text-zinc-950 font-semibold font-inter ml-5">
+                                        <div className="text-foreground font-semibold font-inter ml-5">
                                             {formatValue(entry.value)}
                                         </div>
-                                        <div className="text-zinc-500 text-xs font-inter ml-5">
+                                        <div className="text-muted-foreground text-xs font-inter ml-5">
                                             {percentage}%
                                         </div>
                                     </div>

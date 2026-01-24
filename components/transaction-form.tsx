@@ -321,7 +321,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                     <Input
                                         {...field}
                                         placeholder="Informe uma descrição"
-                                        className="font-inter h-10 border-zinc-200"
+                                        className="font-inter"
                                     />
                                 </FormControl>
                                 <FormMessage />
@@ -341,7 +341,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                             value={field.value}
                                             onValueChange={field.onChange}
                                             placeholder="R$ 0,00"
-                                            className="h-10 border-zinc-200"
+                                            className="font-inter"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -356,11 +356,11 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                     <RequiredLabel error={!!form.formState.errors.wallet_id}>Carteira</RequiredLabel>
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
-                                            <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                            <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
                                                 <SelectValue placeholder="Selecione" />
                                             </SelectTrigger>
                                         </FormControl>
-                                        <SelectContent className="bg-white border-zinc-200">
+                                        <SelectContent>
                                             {wallets.map(w => (
                                                 <SelectItem key={w.id} value={w.id}>
                                                     <div className="flex items-center gap-2">
@@ -387,11 +387,11 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                         <RequiredLabel error={!!form.formState.errors.payment_method}>Método</RequiredLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
                                                     <SelectValue placeholder="Selecione" />
                                                 </SelectTrigger>
                                             </FormControl>
-                                            <SelectContent className="bg-white border-zinc-200">
+                                            <SelectContent>
                                                 {["Boleto", "Crédito", "Débito", "Pix", "Dinheiro"].map(m => (
                                                     <SelectItem key={m} value={m}>{m}</SelectItem>
                                                 ))}
@@ -411,11 +411,11 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                             <RequiredLabel error={!!form.formState.errors.payee_id}>Beneficiário</RequiredLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
-                                                    <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                    <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
                                                         <SelectValue placeholder="Selecione" />
                                                     </SelectTrigger>
                                                 </FormControl>
-                                                <SelectContent className="bg-white border-zinc-200 max-h-[250px]">
+                                                <SelectContent className="max-h-[250px]">
                                                     {payees.map(p => (
                                                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                                                     ))}
@@ -433,11 +433,11 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                             <RequiredLabel error={!!form.formState.errors.classification_id}>Classificação</RequiredLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
-                                                    <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                    <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
                                                         <SelectValue placeholder="Selecione" />
                                                     </SelectTrigger>
                                                 </FormControl>
-                                                <SelectContent className="bg-white border-zinc-200">
+                                                <SelectContent>
                                                     {classifications.map(c => (
                                                         <SelectItem key={c.id} value={c.id}>
                                                             <div className="flex items-center gap-2">
@@ -463,11 +463,11 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                             <RequiredLabel error={!!form.formState.errors.category_id}>Categoria</RequiredLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
-                                                    <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                    <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
                                                         <SelectValue placeholder="Selecione" />
                                                     </SelectTrigger>
                                                 </FormControl>
-                                                <SelectContent className="bg-white border-zinc-200">
+                                                <SelectContent>
                                                     {filteredCategories.map(c => (
                                                         <SelectItem key={c.id} value={c.id}>
                                                             <div className="flex items-center gap-2">
@@ -494,11 +494,11 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                                 disabled={!selectedCategoryId}
                                             >
                                                 <FormControl>
-                                                    <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                    <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
                                                         <SelectValue placeholder="Selecione" />
                                                     </SelectTrigger>
                                                 </FormControl>
-                                                <SelectContent className="bg-white border-zinc-200">
+                                                <SelectContent>
                                                     {subcategories.map(s => (
                                                         <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                                     ))}
@@ -520,11 +520,11 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                         <RequiredLabel error={!!form.formState.errors.payee_id}>Pagador</RequiredLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
                                                     <SelectValue placeholder="Selecione" />
                                                 </SelectTrigger>
                                             </FormControl>
-                                            <SelectContent className="bg-white border-zinc-200 max-h-[250px]">
+                                            <SelectContent className="max-h-[250px]">
                                                 {payees.map(p => (
                                                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                                                 ))}
@@ -542,11 +542,11 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                         <RequiredLabel error={!!form.formState.errors.category_id}>Categoria</RequiredLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger className="h-10 border-zinc-200 font-inter text-zinc-600">
+                                                <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
                                                     <SelectValue placeholder="Selecione" />
                                                 </SelectTrigger>
                                             </FormControl>
-                                            <SelectContent className="bg-white border-zinc-200">
+                                            <SelectContent>
                                                 {filteredCategories.map(c => (
                                                     <SelectItem key={c.id} value={c.id}>
                                                         <div className="flex items-center gap-2">
@@ -570,12 +570,12 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                             name="competence"
                             render={({ field }) => (
                                 <FormItem className="space-y-2 flex flex-col">
-                                    <FormLabel className={cn("text-zinc-700", !!form.formState.errors.competence && "text-red-600")}>Competência</FormLabel>
+                                    <FormLabel className={cn("text-muted-foreground", !!form.formState.errors.competence && "text-destructive")}>Competência</FormLabel>
                                     <FormControl>
                                         <MonthPicker
                                             value={field.value}
                                             onChange={field.onChange}
-                                            className="w-full h-10 border-zinc-200"
+                                            className="w-full font-inter"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -587,12 +587,12 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                             name="date"
                             render={({ field }) => (
                                 <FormItem className="space-y-2 flex flex-col">
-                                    <FormLabel className={cn("text-zinc-700", !!form.formState.errors.date && "text-red-600")}>Data</FormLabel>
+                                    <FormLabel className={cn("text-muted-foreground", !!form.formState.errors.date && "text-destructive")}>Data</FormLabel>
                                     <FormControl>
                                         <DatePicker
                                             value={field.value}
                                             onChange={field.onChange}
-                                            className="w-full h-10 border-zinc-200"
+                                            className="w-full font-inter"
                                             disabled={status === 'Pendente'}
                                         />
                                     </FormControl>
@@ -606,12 +606,12 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         control={form.control}
                         name="status"
                         render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-zinc-200 p-4 space-y-0 bg-zinc-50/50 mt-auto">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 space-y-0 mt-auto">
                                 <div className="space-y-0.5">
-                                    <FormLabel className="text-base font-semibold text-zinc-950">
+                                    <FormLabel className="text-base">
                                         {type === 'expense' ? 'Pago' : 'Recebido'}
                                     </FormLabel>
-                                    <p className="text-xs text-zinc-500 font-inter">
+                                    <p className="text-sm text-muted-foreground font-inter">
                                         {type === 'expense'
                                             ? 'Marcar como pagamento realizado'
                                             : 'Marcar como pagamento recebido'}
@@ -635,7 +635,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                             variant="ghost"
                             onClick={() => setShowDeleteDialog(true)}
                             disabled={isPending}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 font-inter"
+                            className="text-destructive hover:text-destructive/90 hover:bg-destructive/10 font-inter"
                         >
                             Excluir
                         </Button>
@@ -674,7 +674,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         <AlertDialogCancel>Não, cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            className="bg-red-600 hover:bg-red-700"
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                         >
                             Sim, excluir
                         </AlertDialogAction>
@@ -687,9 +687,9 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
 
 function RequiredLabel({ children, error }: { children: React.ReactNode; error?: boolean }) {
     return (
-        <FormLabel className={cn("text-zinc-700 flex items-center gap-0.5", error && "text-red-600")}>
+        <FormLabel className={cn("text-muted-foreground flex items-center gap-0.5", error && "text-destructive")}>
             {children}
-            <span className="text-red-600 ml-0.5">*</span>
+            <span className={cn("ml-0.5", error ? "text-destructive" : "text-destructive")}>*</span>
         </FormLabel>
     )
 }

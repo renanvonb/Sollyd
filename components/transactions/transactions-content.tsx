@@ -90,36 +90,36 @@ export function TransactionsContent({
                             <Button
                                 variant="outline"
                                 onClick={onResetSearch}
-                                className="font-inter"
+                                className="font-inter border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50"
                             >
                                 Limpar busca
                             </Button>
                         ) : (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="font-inter">
+                                    <Button variant="outline" className="font-inter border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50">
                                         Adicionar
                                         <ChevronDown className="h-4 w-4 ml-2" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="center" className="w-[160px] bg-white border-zinc-200 shadow-md">
-                                    <DropdownMenuItem onClick={() => onAddClick('revenue')} className="cursor-pointer">
+                                <DropdownMenuContent align="center" className="w-[160px] bg-neutral-900 border-neutral-800 shadow-md">
+                                    <DropdownMenuItem onClick={() => onAddClick('revenue')} className="cursor-pointer text-neutral-300 focus:bg-neutral-800 focus:text-neutral-50">
                                         Receita
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onAddClick('expense')} className="cursor-pointer">
+                                    <DropdownMenuItem onClick={() => onAddClick('expense')} className="cursor-pointer text-neutral-300 focus:bg-neutral-800 focus:text-neutral-50">
                                         Despesa
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )
                     }
-                    className="flex-1"
+                    className="flex-1 bg-neutral-900 border-neutral-800 border-dashed"
                 />
             ) : (
-                <div id="data-table-wrapper" className="flex-1 min-h-0 bg-white rounded-[16px] border border-zinc-200 shadow-sm flex flex-col relative overflow-hidden font-sans">
+                <div id="data-table-wrapper" className="flex-1 min-h-0 bg-card rounded-lg border border-border shadow-sm flex flex-col relative overflow-hidden font-sans">
                     {isPending && (
-                        <div className="absolute inset-0 bg-white/50 z-20 flex items-center justify-center backdrop-blur-[1px]">
-                            <Loader2 className="h-8 w-8 animate-spin text-zinc-950" />
+                        <div className="absolute inset-0 bg-background/50 z-20 flex items-center justify-center backdrop-blur-[1px]">
+                            <Loader2 className="h-8 w-8 animate-spin text-foreground" />
                         </div>
                     )}
                     <TransactionTable data={data} onRowClick={onRowClick} />

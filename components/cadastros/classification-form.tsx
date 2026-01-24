@@ -122,11 +122,11 @@ export function ClassificationForm({
         const colorClass = getColorClass(watchColor);
 
         return (
-            <div className="flex items-center gap-2 p-3 bg-zinc-50 rounded-lg border border-zinc-200 mb-4">
+            <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-border mb-4">
                 <div className={cn('rounded-full p-2', colorClass)}>
                     <IconComp className="h-4 w-4 text-white" />
                 </div>
-                <span className="text-sm font-medium text-zinc-900">
+                <span className="text-sm font-medium text-foreground">
                     {watchName || 'Nome da classificação'}
                 </span>
             </div>

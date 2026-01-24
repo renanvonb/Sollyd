@@ -21,7 +21,7 @@ export default async function AuthenticatedLayout({
     return (
         <SidebarProvider>
             <VisibilityProvider>
-                <div className="flex h-screen overflow-hidden bg-zinc-50">
+                <div className="flex h-screen overflow-hidden bg-background">
                     <AppSidebar user={user} />
                     <MainContentWrapper>
                         {children}
