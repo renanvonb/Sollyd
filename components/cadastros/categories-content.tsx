@@ -157,7 +157,7 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
                             Adicionar
                         </Button>
                     }
-                    className="flex-1 bg-card border-border border-dashed"
+                    className="flex-1 border-border border-dashed"
                 />
             ) : filteredCategories.length === 0 ? (
                 <EmptyState
@@ -166,10 +166,10 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
                     icon={SearchX}
                     title="Nenhuma categoria encontrada"
                     description="Tente novamente para encontrar o que está buscando"
-                    className="flex-1 bg-card border-border border-dashed"
+                    className="flex-1 border-border border-dashed"
                 />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                     {filteredCategories.map((item) => {
                         const Icon = getIconByName(item.icon || 'cart');
                         const cardColor = getColorHex(item.color || 'zinc');
@@ -262,7 +262,7 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            className="bg-red-600 hover:bg-red-700"
+                            variant="destructive"
                         >
                             Excluir
                         </AlertDialogAction>

@@ -35,13 +35,13 @@ export function PageShell({
             <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-6 overflow-hidden">
 
                 {/* Header de Página (Área C) */}
-                <div className="flex items-center justify-between flex-none font-sans">
+                <div className="flex items-center justify-between flex-none font-sans px-1">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-zinc-950 font-jakarta">
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground font-jakarta">
                             {title}
                         </h1>
                         {description && (
-                            <p className="text-zinc-500 mt-1 font-sans">
+                            <p className="text-muted-foreground mt-1 font-sans">
                                 {description}
                             </p>
                         )}

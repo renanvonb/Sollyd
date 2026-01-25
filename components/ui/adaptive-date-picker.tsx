@@ -163,13 +163,12 @@ export function AdaptiveDatePicker({ mode, value, onChange, className }: Adaptiv
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
                 <Calendar
-                    {...({
-                        mode: mode === "custom" ? "range" : "single",
-                        selected: mode === "custom" ? (value as any) : date,
-                        onSelect: mode === "custom" ? (handleRangeSelect as any) : (handleDateSelect as any),
-                        locale: ptBR,
-                        initialFocus: true
-                    } as any)}
+                    mode={mode === "custom" ? "range" : "single"}
+                    selected={mode === "custom" ? (value as any) : date}
+                    onSelect={mode === "custom" ? (handleRangeSelect as any) : (handleDateSelect as any)}
+                    numberOfMonths={mode === "custom" ? 2 : 1}
+                    locale={ptBR}
+                    initialFocus
                 />
             </PopoverContent>
         </Popover>

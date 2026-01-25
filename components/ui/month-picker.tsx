@@ -58,7 +58,7 @@ export function MonthPicker({ value, onChange, className }: MonthPickerProps) {
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 p-3 bg-white" align="start">
+            <PopoverContent className="w-64 p-3 bg-popover border-border text-popover-foreground" align="start">
                 <div className="flex items-center justify-between mb-4">
                     <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => handleYearChange(-1)}>
                         <ChevronLeft className="h-4 w-4" />

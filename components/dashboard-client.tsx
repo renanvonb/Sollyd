@@ -4,7 +4,7 @@ import * as React from "react"
 import { useTransition } from "react"
 import { DateRange } from "react-day-picker"
 import { useRouter, useSearchParams } from "next/navigation"
-import { format, startOfMonth, endOfMonth, parseISO } from "date-fns"
+import { format, startOfMonth, endOfMonth, parseISO, eachDayOfInterval, eachMonthOfInterval, startOfYear, endOfYear, differenceInMonths, getYear } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 import { TransactionSummaryCards } from "@/components/transaction-summary-cards"
@@ -14,27 +14,28 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { AdaptiveDatePicker } from "@/components/ui/adaptive-date-picker"
 import { useVisibility } from "@/hooks/use-visibility-state"
-import { CategoryBarChart } from "@/components/shared/charts/category-bar-chart"
-import { ClassificationPieChart } from "@/components/shared/charts/classification-pie-chart"
-import { MonthlyBalanceChart } from "@/components/shared/charts/monthly-balance-chart"
+
 import { TopBar } from "@/components/ui/top-bar"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+
+import { Transaction } from "@/types/transaction"
+import { ExpensesByCategoryChart } from "@/components/charts/expenses-by-category"
+import { ExpensesBySubcategoryChart } from "@/components/charts/expenses-by-subcategory"
+import { ExpensesByClassificationChart } from "@/components/charts/expenses-by-classification"
+import { TransactionsHistoryChart } from "@/components/charts/transactions-history"
+import { ExpensesByPayeeChart } from "@/components/charts/expenses-by-payee"
+import { RevenueByPayerChart } from "@/components/charts/revenue-by-payer"
 
 interface DashboardClientProps {
-    initialData: any[]
+    initialData: Transaction[]
     userName: string
-    metrics?: {
-        summary: {
-            income: number
-            expense: number
-            balance: number
-            investment: number
-        }
-        categoryData: Array<{
-            name: string
-            value: number
-            color: string
-        }>
-    }
+    metrics?: any
 }
 
 const periodTabs = [
@@ -65,6 +66,23 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
 
     const range = (searchParams.get('range') as TimeRange) || 'mes'
     const searchQuery = searchParams.get('q')?.toLowerCase() || ""
+    const statusFilter = searchParams.get('status') || "Realizado"
+
+    // Lista de anos disponíveis calculada a partir dos dados (apenas anos com transações)
+    const availableYears = React.useMemo(() => {
+        const yearsSet = new Set<string>()
+        initialData.forEach(t => {
+            if (t.date) {
+                yearsSet.add(getYear(parseISO(t.date)).toString())
+            }
+        })
+        const currentYear = new Date().getFullYear().toString()
+        yearsSet.add(currentYear) // Garantir que o ano atual sempre esteja lá
+        return Array.from(yearsSet).sort((a, b) => parseInt(b) - parseInt(a))
+    }, [initialData])
+
+    const currentYear = new Date().getFullYear()
+    const selectedYear = parseInt(searchParams.get('year') || currentYear.toString())
 
     const date: DateRange | undefined = React.useMemo(() => {
         const from = searchParams.get('from')
@@ -79,8 +97,15 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
                 to: endOfMonth(now)
             }
         }
+        if (range === 'ano') {
+            const yearDate = new Date(selectedYear, 0, 1)
+            return {
+                from: startOfYear(yearDate),
+                to: endOfYear(yearDate)
+            }
+        }
         return undefined
-    }, [searchParams, range])
+    }, [searchParams, range, selectedYear])
 
     const handleRangeChange = (newRange: TimeRange) => {
         startTransition(() => {
@@ -103,20 +128,53 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
         })
     }
 
-    const filteredData = React.useMemo(() => {
-        if (!searchQuery) return initialData
-        return initialData.filter(t => {
-            const desc = (t.description || "").toLowerCase()
-            const payee = (t.payees?.name || "").toLowerCase()
-            const cat = (t.categories?.name || "").toLowerCase()
-            return desc.includes(searchQuery) || payee.includes(searchQuery) || cat.includes(searchQuery)
+    const handleYearChange = (year: string) => {
+        startTransition(() => {
+            const params = new URLSearchParams(searchParams.toString())
+            params.set('year', year)
+            params.delete('from')
+            params.delete('to')
+            router.push(`?${params.toString()}`, { scroll: false })
         })
-    }, [initialData, searchQuery])
+    }
+
+    const handleStatusFilterChange = (value: string) => {
+        startTransition(() => {
+            const params = new URLSearchParams(searchParams.toString())
+            if (value) params.set('status', value)
+            router.push(`?${params.toString()}`, { scroll: false })
+        })
+    }
+
+    const filteredData = React.useMemo(() => {
+        let data = initialData
+
+        // 1. Filter by Search
+        if (searchQuery) {
+            data = data.filter(t => {
+                const desc = (t.description || "").toLowerCase()
+                const payee = (t.payees?.name || "").toLowerCase()
+                const cat = (t.categories?.name || "").toLowerCase()
+                return desc.includes(searchQuery) || payee.includes(searchQuery) || cat.includes(searchQuery)
+            })
+        }
+
+        // 2. Filter by Status
+        if (statusFilter && statusFilter !== 'all') {
+            data = data.filter(t => t.status === statusFilter)
+        }
+
+        return data
+    }, [initialData, searchQuery, statusFilter])
 
     const totals = React.useMemo(() => {
-        if (metrics?.summary) return metrics.summary
+        const dataInRange = date?.from && date?.to ? filteredData.filter(t => {
+            if (!t.date) return false;
+            const tDate = parseISO(t.date);
+            return tDate >= date.from! && tDate <= date.to!;
+        }) : filteredData;
 
-        return filteredData.reduce((acc, curr) => {
+        return dataInRange.reduce((acc, curr) => {
             const amount = parseFloat(curr.amount as any) || 0
             if (curr.type === 'revenue') acc.income += amount
             else if (curr.type === 'expense') acc.expense += amount
@@ -124,114 +182,136 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
             acc.balance = acc.income - acc.expense - acc.investment
             return acc
         }, { income: 0, expense: 0, investment: 0, balance: 0 })
-    }, [filteredData, metrics])
+    }, [filteredData, date])
 
-    // Category data (expenses only)
-    const categoryData = React.useMemo(() => {
-        // Aggregating directly from initialData to ensure strict consistency with table/cards
-        const categories: Record<string, { value: number; color?: string }> = {}
+    const chartsData = React.useMemo(() => {
+        const dataInRange = date?.from && date?.to ? filteredData.filter(t => {
+            if (!t.date) return false;
+            const tDate = parseISO(t.date);
+            return tDate >= date.from! && tDate <= date.to!;
+        }) : filteredData;
 
-        initialData.forEach(t => {
-            const type = (t.type || '').toLowerCase()
-            const isExpense = type === 'expense' || type === 'despesa'
+        const expenses = dataInRange.filter(t => t.type === 'expense');
 
-            if (isExpense && t.status === 'Realizado') {
-                const name = t.categories?.name || 'Outros'
-                const color = t.categories?.color
-                const amount = Number(t.amount) || 0
+        // 1. By Category
+        const byCategoryMap = new Map<string, { amount: number, color: string }>();
+        expenses.forEach(t => {
+            const name = t.categories?.name || "Sem Categoria";
+            const color = t.categories?.color || "#94a3b8";
+            const current = byCategoryMap.get(name) || { amount: 0, color };
+            current.amount += parseFloat(t.amount as any);
+            byCategoryMap.set(name, current);
+        });
+        const byCategory = Array.from(byCategoryMap.entries()).map(([name, val]) => ({
+            category: name,
+            amount: val.amount,
+            fill: val.color
+        })).sort((a, b) => b.amount - a.amount);
 
-                if (!categories[name]) {
-                    categories[name] = { value: 0, color }
-                } else {
-                    categories[name].value += amount
-                }
+        // 2. By Subcategory
+        const bySubMap = new Map<string, { amount: number, color: string }>();
+        expenses.forEach(t => {
+            if (t.subcategories?.name) {
+                const name = t.subcategories.name;
+                const color = t.categories?.color || "#94a3b8"; // Inherit category color
+                const current = bySubMap.get(name) || { amount: 0, color };
+                current.amount += parseFloat(t.amount as any);
+                bySubMap.set(name, current);
             }
-        })
-        return Object.entries(categories)
-            .map(([name, data]) => ({ name, value: data.value, color: data.color || '#71717a' }))
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 10) // Top 10
-    }, [initialData])
+        });
+        const bySubcategory = Array.from(bySubMap.entries()).map(([name, val]) => ({
+            subcategory: name,
+            amount: val.amount,
+            fill: val.color
+        })).sort((a, b) => b.amount - a.amount).slice(0, 10);
 
-    // Subcategory data (expenses only)
-    const subcategoryData = React.useMemo(() => {
-        const subcategories: Record<string, number> = {}
-        initialData.forEach(t => {
-            const type = (t.type || '').toLowerCase()
-            const isExpense = type === 'expense' || type === 'despesa'
-
-            if (isExpense && t.status === 'Realizado') {
-                const name = t.subcategories?.name || t.categories?.name || 'Outros'
-                const amount = Number(t.amount) || 0
-                subcategories[name] = (subcategories[name] || 0) + amount
+        // 3. By Classification
+        const byClassMap = new Map<string, { amount: number, color: string }>();
+        expenses.forEach(t => {
+            if (t.classifications) {
+                const name = t.classifications.name;
+                const color = t.classifications.color;
+                const current = byClassMap.get(name) || { amount: 0, color };
+                current.amount += parseFloat(t.amount as any);
+                byClassMap.set(name, current);
             }
-        })
-        return Object.entries(subcategories)
-            .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 10) // Top 10
-    }, [initialData])
+        });
+        const byClassification = Array.from(byClassMap.entries()).map(([name, val]) => ({
+            classification: name,
+            amount: val.amount,
+            fill: val.color
+        })).sort((a, b) => b.amount - a.amount);
 
-    // Classification data (expenses only)
-    const classificationData = React.useMemo(() => {
-        const classifications: Record<string, { value: number; color?: string }> = {}
+        // 4. History
+        const isMonthlyRange = range === 'mes';
+        let historyStart = startOfYear(new Date(selectedYear, 0, 1));
+        let historyEnd = endOfYear(new Date(selectedYear, 0, 1));
 
-        initialData.forEach(t => {
-            const type = (t.type || '').toLowerCase()
-            const isExpense = type === 'expense' || type === 'despesa'
+        if (isMonthlyRange && date?.from && date?.to) {
+            historyStart = date.from;
+            historyEnd = date.to;
+        }
 
-            if (isExpense && t.status === 'Realizado') {
-                const classification = t.classifications?.name || 'Outros'
-                const color = t.classifications?.color
-                const amount = Number(t.amount) || 0
-
-                if (!classifications[classification]) {
-                    classifications[classification] = { value: 0, color }
-                } else {
-                    classifications[classification].value += amount
-                }
+        const historyMap = new Map<string, { income: number, expense: number }>();
+        filteredData.forEach(t => {
+            if (!t.date) return;
+            const tDate = parseISO(t.date);
+            if (tDate >= historyStart && tDate <= historyEnd) {
+                const dateKey = isMonthlyRange ? format(tDate, 'yyyy-MM-dd') : format(tDate, 'yyyy-MM');
+                const current = historyMap.get(dateKey) || { income: 0, expense: 0 };
+                const amount = parseFloat(t.amount as any);
+                if (t.type === 'revenue') current.income += amount;
+                if (t.type === 'expense') current.expense += amount;
+                historyMap.set(dateKey, current);
             }
-        })
-        return Object.entries(classifications).map(([classification, data]) => ({
-            classification,
-            value: data.value,
-            color: data.color || '#71717a'
-        }))
-    }, [initialData])
+        });
 
-    // Monthly balance data (daily aggregation)
-    const monthlyBalanceData = React.useMemo(() => {
-        const dailyData: Record<string, { receitas: number; despesas: number }> = {}
+        const intervals = isMonthlyRange
+            ? eachDayOfInterval({ start: historyStart, end: historyEnd })
+            : eachMonthOfInterval({ start: historyStart, end: historyEnd });
 
-        initialData.forEach(t => {
-            if (!t.date) return
-            const date = parseISO(t.date)
-            const day = format(date, 'd', { locale: ptBR })
+        const history = intervals.map(interval => {
+            const dateKey = isMonthlyRange ? format(interval, 'yyyy-MM-dd') : format(interval, 'yyyy-MM');
+            const data = historyMap.get(dateKey) || { income: 0, expense: 0 };
+            return { date: dateKey, ...data };
+        });
 
-            if (!dailyData[day]) {
-                dailyData[day] = { receitas: 0, despesas: 0 }
-            }
+        // 5. By Payee (Expenses)
+        const byPayeeMap = new Map<string, { amount: number, color: string }>();
+        expenses.forEach(t => {
+            const name = t.payees?.name || "Sem Beneficiário";
+            const color = "#94a3b8"; // Default color for payees for now
+            const current = byPayeeMap.get(name) || { amount: 0, color };
+            current.amount += parseFloat(t.amount as any);
+            byPayeeMap.set(name, current);
+        });
+        const byPayee = Array.from(byPayeeMap.entries()).map(([name, val]) => ({
+            payee: name,
+            amount: val.amount,
+            fill: val.color
+        })).sort((a, b) => b.amount - a.amount).slice(0, 5);
 
-            const amount = parseFloat(t.amount as any) || 0
-            if (t.type === 'revenue') {
-                dailyData[day].receitas += amount
-            } else if (t.type === 'expense') {
-                dailyData[day].despesas += amount
-            }
-        })
+        // 6. By Payer (Revenue)
+        const revenues = dataInRange.filter(t => t.type === 'revenue');
+        const byPayerMap = new Map<string, { amount: number, color: string }>();
+        revenues.forEach(t => {
+            const name = t.payees?.name || t.payers?.name || "Sem Pagador";
+            const color = "#10b981"; // Emerald
+            const current = byPayerMap.get(name) || { amount: 0, color };
+            current.amount += parseFloat(t.amount as any);
+            byPayerMap.set(name, current);
+        });
+        const byPayer = Array.from(byPayerMap.entries()).map(([name, val]) => ({
+            payer: name,
+            amount: val.amount,
+            fill: val.color
+        })).sort((a, b) => b.amount - a.amount).slice(0, 5);
 
-        // Convert to array and sort by day
-        return Object.entries(dailyData)
-            .map(([day, values]) => ({
-                day,
-                receitas: values.receitas,
-                despesas: values.despesas
-            }))
-            .sort((a, b) => parseInt(a.day) - parseInt(b.day))
-    }, [initialData])
+        return { byCategory, bySubcategory, byClassification, history, byPayee, byPayer };
+    }, [filteredData, date, range, selectedYear]);
 
     return (
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
             <TopBar
                 moduleName="Dashboard"
                 tabs={periodTabs}
@@ -240,10 +320,10 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
                 variant="simple"
             />
 
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-y-auto">
+            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-hidden">
                 {/* Page Header */}
-                <div className="flex items-center justify-between flex-none">
-                    <div className="ml-2">
+                <div className="flex items-center justify-between flex-none px-1">
+                    <div>
                         <h1 className="text-3xl font-bold tracking-tight text-foreground font-jakarta">
                             Olá, {userName.split(' ')[0]}!
                         </h1>
@@ -267,28 +347,59 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
                             />
                         </div>
 
-
+                        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                            <SelectTrigger className="w-[140px] h-10 font-inter">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas</SelectItem>
+                                <SelectItem value="Realizado">Realizadas</SelectItem>
+                                <SelectItem value="Pendente">Pendentes</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
-                {/* Dashboard Content */}
+                {/* Dashboard Content - Flexible Height */}
                 <div className="flex flex-col flex-1 min-h-0 gap-4">
-                    {/* Row 1: Summary Cards */}
-                    <TransactionSummaryCards totals={totals} isLoading={isPending} />
+                    {/* Row 1: Summary Cards (Fixed Height) */}
+                    <div className="shrink-0">
+                        <TransactionSummaryCards totals={totals} isLoading={isPending} />
+                    </div>
 
-                    {/* Charts Portion */}
-                    <div className="flex flex-col flex-1 min-h-0 gap-4">
-                        {/* Row 2: Category Bar + Classification Pie */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <CategoryBarChart
-                                data={categoryData}
-                                subcategoryData={subcategoryData}
-                            />
-                            <ClassificationPieChart data={classificationData} />
+                    {/* Charts Area (Fills remaining space) */}
+                    <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto pr-1 pb-4 scrollbar-hide">
+                        {/* Row 1 (Top Charts) */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 min-h-[400px]">
+                            <div className="md:col-span-3 h-full">
+                                <TransactionsHistoryChart
+                                    data={chartsData.history}
+                                />
+                            </div>
+                            <div className="md:col-span-1 h-full">
+                                <ExpensesByClassificationChart data={chartsData.byClassification} />
+                            </div>
                         </div>
 
-                        {/* Row 3: Monthly Balance Line Chart */}
-                        <MonthlyBalanceChart data={monthlyBalanceData} className="flex-1" />
+                        {/* Row 2 (Middle Charts) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
+                            <div className="h-full">
+                                <ExpensesByCategoryChart data={chartsData.byCategory} />
+                            </div>
+                            <div className="h-full">
+                                <ExpensesBySubcategoryChart data={chartsData.bySubcategory} />
+                            </div>
+                        </div>
+
+                        {/* Row 3 (Bottom Charts - Contact analysis) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
+                            <div className="h-full">
+                                <ExpensesByPayeeChart data={chartsData.byPayee} />
+                            </div>
+                            <div className="h-full">
+                                <RevenueByPayerChart data={chartsData.byPayer} />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

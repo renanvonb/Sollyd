@@ -13,7 +13,7 @@ import { TransactionDialog } from "@/components/transactions/transaction-dialog"
 import { TransactionsTableSkeleton } from "@/components/ui/skeletons"
 import { EmptyState } from "@/components/ui/empty-state"
 import { TimeRange } from "@/app/actions/transactions-fetch"
-import { Loader2, Plus, Search, ChevronDown, Inbox } from "lucide-react"
+import { Plus, Search, ChevronDown, Inbox } from "lucide-react"
 import type { Transaction } from "@/types/transaction"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -184,12 +184,12 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
             <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-6 overflow-hidden">
 
                 {/* Header de Página (Área C) */}
-                <div className="flex items-center justify-between flex-none">
+                <div className="flex items-center justify-between flex-none px-1">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-neutral-50 font-jakarta">
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground font-jakarta">
                             Transações
                         </h1>
-                        <p className="text-neutral-400 mt-1 font-sans text-sm font-inter">
+                        <p className="text-muted-foreground mt-1 font-sans text-sm font-inter">
                             Gerencie e acompanhe suas movimentações financeiras.
                         </p>
                     </div>
@@ -258,18 +258,13 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                 <div className="flex-1 flex flex-col gap-8 overflow-hidden">
                     {/* Grid de Totalizadores (KPIs) - Área D */}
                     <div className="flex-none font-sans">
-                        <TransactionSummaryCards totals={totals} isLoading={isPending} />
+                        <TransactionSummaryCards totals={totals} />
                     </div>
 
                     {/* Container da Tabela (Área E) - Scroll Interno */}
                     {/* Container da Tabela (Área E) - Scroll Interno */}
                     {filteredData.length > 0 ? (
                         <div id="data-table-wrapper" className="flex-1 min-h-0 bg-neutral-900 rounded-[16px] border border-neutral-800 shadow-sm flex flex-col relative overflow-hidden font-sans">
-                            {isPending && (
-                                <div className="absolute inset-0 bg-background/50 z-20 flex items-center justify-center backdrop-blur-[1px]">
-                                    <Loader2 className="h-8 w-8 animate-spin text-neutral-50" />
-                                </div>
-                            )}
                             <TransactionTable data={filteredData} onRowClick={handleRowClick} />
                         </div>
                     ) : (

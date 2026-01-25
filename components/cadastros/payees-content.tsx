@@ -127,7 +127,7 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                             Adicionar
                         </Button>
                     }
-                    className="flex-1 bg-card border-border border-dashed"
+                    className="flex-1 border-border border-dashed"
                 />
             ) : filteredPayees.length === 0 ? (
                 <EmptyState
@@ -136,10 +136,10 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                     icon={SearchX}
                     title="Nenhum beneficiário encontrado"
                     description="Tente novamente para encontrar o que está buscando"
-                    className="flex-1 bg-card border-border border-dashed"
+                    className="flex-1 border-border border-dashed"
                 />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                     {filteredPayees.map((payee) => {
                         const IconComponent = getIconByName(payee.icon || 'user');
                         const cardColor = getColorHex(payee.color || 'zinc');
@@ -228,7 +228,7 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                         <AlertDialogAction
                             onClick={handleDelete}
                             disabled={submitting}
-                            className="bg-red-600 hover:bg-red-700"
+                            variant="destructive"
                         >
                             {submitting ? 'Excluindo...' : 'Excluir'}
                         </AlertDialogAction>

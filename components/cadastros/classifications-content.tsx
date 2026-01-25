@@ -130,7 +130,7 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
                     className="flex-1 bg-card border-border border-dashed"
                 />
             ) : (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 p-1">
                     {filteredClassifications.map((item) => {
                         const Icon = getIconByName(item.icon || 'flag', Flag);
                         const cardColor = getColorHex(item.color || 'zinc');
@@ -214,7 +214,7 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
                         <AlertDialogCancel disabled={submitting}>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            className="bg-red-600 hover:bg-red-700"
+                            variant="destructive"
                             disabled={submitting}
                         >
                             {submitting ? 'Excluindo...' : 'Excluir'}

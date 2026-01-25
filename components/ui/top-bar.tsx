@@ -59,7 +59,7 @@ export function TopBar({
 
     return (
         <TooltipProvider delayDuration={300}>
-            <header className="sticky top-0 z-30 w-full border-b border-border bg-card h-[72px] flex-none font-sans transition-colors duration-200">
+            <header className="sticky top-0 z-30 w-[calc(100%+16px)] -ml-4 pl-4 border-b border-border bg-card dark:bg-[#0a0a0a] h-[72px] flex-none font-sans transition-colors duration-200">
                 <div className="max-w-[1440px] mx-auto px-8 h-full flex items-center justify-between w-full">
 
                     {/* Left: Sidebar Toggle + Module/Tab Name */}

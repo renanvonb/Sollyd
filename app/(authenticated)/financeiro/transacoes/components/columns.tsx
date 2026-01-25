@@ -2,7 +2,6 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
-import { StatusIndicator } from "@/components/ui/status-indicator"
 import { ArrowUpCircle, ArrowDownCircle, PieChart } from "lucide-react"
 import { useVisibility } from "@/hooks/use-visibility-state"
 import { Transaction } from "@/types/transaction"
@@ -18,14 +17,8 @@ export const columns: ColumnDef<Transaction>[] = [
         accessorKey: "description",
         header: () => <div className="min-w-[200px]">Descrição</div>,
         cell: ({ row }) => {
-            const type = row.original.type as keyof typeof typeIconMap
-            const { icon: Icon, color } = typeIconMap[type]
-
             return (
-                <div className="flex items-center gap-2">
-                    <Icon className={`h-4 w-4 ${color}`} />
-                    <span className="text-sm font-medium">{row.getValue("description")}</span>
-                </div>
+                <span className="text-sm font-medium">{row.getValue("description")}</span>
             )
         },
     },
@@ -36,7 +29,7 @@ export const columns: ColumnDef<Transaction>[] = [
         cell: ({ row }) => {
             const name = row.original.payees?.name || row.original.payers?.name
             return name ? (
-                <Badge variant="secondary" className="text-sm font-normal">{name}</Badge>
+                <Badge variant="secondary">{name}</Badge>
             ) : (
                 <span className="text-sm text-muted-foreground">-</span>
             )
@@ -49,7 +42,7 @@ export const columns: ColumnDef<Transaction>[] = [
         cell: ({ row }) => {
             const category = row.original.categories?.name
             return category ? (
-                <Badge variant="secondary" className="text-sm font-normal">{category}</Badge>
+                <Badge variant="secondary">{category}</Badge>
             ) : (
                 <span className="text-sm text-muted-foreground">-</span>
             )
@@ -105,7 +98,7 @@ export const columns: ColumnDef<Transaction>[] = [
     },
     {
         id: "status",
-        header: () => <div className="w-[120px]">Status</div>,
+        header: () => <div className="w-[80px]">Status</div>,
         cell: ({ row }) => {
             const statusValue = row.original.status || "Pendente"
             const dateStr = row.original.date
@@ -124,9 +117,18 @@ export const columns: ColumnDef<Transaction>[] = [
                 refinedStatus = "Realizado"
             }
 
+            const styles = {
+                Realizado: "border-transparent bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 hover:bg-emerald-500/20",
+                Agendado: "border-transparent bg-blue-500/10 text-blue-600 dark:text-blue-500 hover:bg-blue-500/20",
+                Atrasado: "border-transparent bg-rose-500/10 text-rose-600 dark:text-rose-500 hover:bg-rose-500/20",
+                Pendente: "border-transparent bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-500/20",
+            }
+
             return (
-                <div className="w-[120px]">
-                    <StatusIndicator status={refinedStatus} />
+                <div className="w-[80px]">
+                    <Badge variant="outline" className={styles[refinedStatus]}>
+                        {refinedStatus}
+                    </Badge>
                 </div>
             )
         },

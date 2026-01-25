@@ -128,21 +128,21 @@ function Calendar({
         const calendarDays = generateCalendarDays()
 
         return (
-            <div className={cn("w-[280px] bg-white rounded-lg border shadow-sm p-4", className)}>
+            <div className={cn("w-[280px] bg-popover rounded-lg border border-border shadow-sm p-4", className)}>
                 <div className="flex items-center justify-between mb-4">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-zinc-100" onClick={handlePrevMonth}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent" onClick={handlePrevMonth}>
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <div className="text-sm font-medium capitalize">
                         {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-zinc-100" onClick={handleNextMonth}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent" onClick={handleNextMonth}>
                         <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
                 <div className="grid grid-cols-7 gap-1 mb-2">
                     {daysOfWeek.map((day) => (
-                        <div key={day} className="text-xs text-zinc-500 text-center font-medium h-8 flex items-center justify-center">
+                        <div key={day} className="text-xs text-muted-foreground text-center font-medium h-8 flex items-center justify-center">
                             {day}
                         </div>
                     ))}
@@ -156,10 +156,10 @@ function Calendar({
                                 onClick={(e) => handleDayClick(e, dayInfo)}
                                 className={cn(
                                     "h-8 w-8 text-sm rounded-md flex items-center justify-center transition-colors",
-                                    !dayInfo.isCurrentMonth ? 'text-zinc-300' : 'text-zinc-900',
+                                    !dayInfo.isCurrentMonth ? 'text-muted-foreground/40' : 'text-foreground',
                                     isSelected
-                                        ? 'bg-zinc-900 text-white hover:bg-zinc-800'
-                                        : dayInfo.isCurrentMonth ? 'hover:bg-zinc-100' : ''
+                                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                        : dayInfo.isCurrentMonth ? 'hover:bg-accent' : ''
                                 )}
                             >
                                 {dayInfo.day}
@@ -180,12 +180,20 @@ function Calendar({
     const [currentRangeDate, setCurrentRangeDate] = React.useState<Date>(
         rangeSelected?.from || new Date()
     )
-    const [selectingStart, setSelectingStart] = React.useState<boolean>(!rangeSelected?.to)
 
-    // Sync state with props
+    // Determine initial state based on props: if we have from but no to, we are selecting end (selectingStart = false)
+    const [selectingStart, setSelectingStart] = React.useState<boolean>(
+        !(rangeSelected?.from && !rangeSelected?.to)
+    )
+
+    // Sync state with props to handle re-renders/updates from parent
     React.useEffect(() => {
-        // Opcional: Se selected mudar externamente, atualizamos a visão?
-        // Talvez não seja necessário mudar a visão (mês), apenas o range vizualizado.
+        const r = selected as DateRange | undefined
+        if (r?.from && !r?.to) {
+            setSelectingStart(false)
+        } else {
+            setSelectingStart(true)
+        }
     }, [selected])
 
     const generateRangeCalendarDays = (monthOffset = 0) => {
@@ -281,17 +289,17 @@ function Calendar({
         let classes = "h-8 w-8 text-sm flex items-center justify-center transition-colors relative"
 
         if (!dayInfo.isCurrentMonth) {
-            classes += " text-zinc-300"
+            classes += " text-muted-foreground/40"
         } else {
-            classes += " text-zinc-900"
+            classes += " text-foreground"
         }
 
         if (isStart || isEnd) {
-            classes += " bg-zinc-900 text-white rounded-md z-10 hover:bg-zinc-800"
+            classes += " bg-primary text-primary-foreground rounded-md z-10 hover:bg-primary/90"
         } else if (inRange) {
-            classes += " bg-zinc-100" // Cor do range
+            classes += " bg-accent" // Cor do range
         } else {
-            classes += " hover:bg-zinc-50 rounded-md"
+            classes += " hover:bg-accent/50 rounded-md"
         }
         return classes
     }
@@ -303,11 +311,11 @@ function Calendar({
     const secondMonthDate = new Date(currentRangeDate.getFullYear(), currentRangeDate.getMonth() + 1, 1)
 
     return (
-        <div className={cn("bg-white rounded-lg border shadow-sm p-6 w-[580px]", className)}>
+        <div className={cn("bg-popover rounded-lg border border-border shadow-sm p-6 w-[580px]", className)}>
             {/* Largura ajustada para caber 2 meses */}
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-zinc-100" onClick={handleRangePrevMonth}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent" onClick={handleRangePrevMonth}>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
 
@@ -320,7 +328,7 @@ function Calendar({
                     </div>
                 </div>
 
-                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-zinc-100" onClick={handleRangeNextMonth}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent" onClick={handleRangeNextMonth}>
                     <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
@@ -330,7 +338,7 @@ function Calendar({
                 <div className="flex-1">
                     <div className="grid grid-cols-7 gap-1 mb-2">
                         {daysOfWeek.map((day) => (
-                            <div key={day} className="text-xs text-zinc-500 text-center font-medium h-8 flex items-center justify-center">
+                            <div key={day} className="text-xs text-muted-foreground text-center font-medium h-8 flex items-center justify-center">
                                 {day}
                             </div>
                         ))}
@@ -352,7 +360,7 @@ function Calendar({
                 <div className="flex-1">
                     <div className="grid grid-cols-7 gap-1 mb-2">
                         {daysOfWeek.map((day) => (
-                            <div key={day} className="text-xs text-zinc-500 text-center font-medium h-8 flex items-center justify-center">
+                            <div key={day} className="text-xs text-muted-foreground text-center font-medium h-8 flex items-center justify-center">
                                 {day}
                             </div>
                         ))}

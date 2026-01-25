@@ -127,11 +127,12 @@ export function AppSidebar({ user }: SidebarProps) {
                                 aria-disabled={item.disabled}
                                 onClick={(e) => item.disabled && e.preventDefault()}
                                 className={cn(
-                                    'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden',
+                                    'flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group relative overflow-hidden',
+                                    isOpen ? "gap-3" : "justify-center px-2",
                                     isActive
                                         ? 'bg-neutral-800 text-white'
                                         : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50',
-                                    item.disabled && "opacity-50 cursor-not-allowed" // Removed pointer-events-none
+                                    item.disabled && "opacity-50 cursor-not-allowed"
                                 )}
                             >
                                 <Icon className={cn(
@@ -140,8 +141,8 @@ export function AppSidebar({ user }: SidebarProps) {
                                 )}
                                 />
                                 <span className={cn(
-                                    "transition-all duration-300 whitespace-nowrap",
-                                    !isOpen && "md:opacity-0 md:translate-x-4"
+                                    "transition-all duration-300 whitespace-nowrap overflow-hidden",
+                                    !isOpen && "md:opacity-0 md:translate-x-4 w-0"
                                 )}>
                                     {item.label}
                                 </span>
@@ -180,7 +181,7 @@ export function AppSidebar({ user }: SidebarProps) {
                             <Button
                                 variant="ghost"
                                 className={cn(
-                                    "w-full flex items-center gap-3 px-2 h-auto py-2 hover:bg-neutral-800/50 rounded-xl transition-all duration-300 text-neutral-400 hover:text-white",
+                                    "w-full flex items-center gap-3 px-2 h-auto py-2 hover:bg-neutral-800/50 rounded-lg transition-all duration-300 text-neutral-400 hover:text-white",
                                     !isOpen && "justify-center px-0"
                                 )}
                             >
@@ -231,6 +232,6 @@ export function AppSidebar({ user }: SidebarProps) {
                     </DropdownMenu>
                 </div>
             </aside>
-        </TooltipProvider>
+        </TooltipProvider >
     )
 }

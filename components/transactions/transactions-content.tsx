@@ -4,7 +4,7 @@ import * as React from "react"
 import { TransactionTable } from "@/components/transaction-table"
 import { TransactionSummaryCards } from "@/components/transaction-summary-cards"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Loader2, Inbox, Plus, ChevronDown } from "lucide-react"
+import { Inbox, Plus, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -68,63 +68,52 @@ export function TransactionsContent({
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
             {/* Grid de Totalizadores (KPIs) - SEMPRE VISÍVEL */}
             <div className="flex-none font-sans">
-                <TransactionSummaryCards totals={totals} isLoading={isPending && data.length === 0} />
+                <TransactionSummaryCards totals={totals} />
             </div>
 
             {/* Área de Conteúdo */}
-            {isPending && data.length === 0 ? (
-                <TableContentSkeleton />
-            ) : data.length === 0 ? (
-                <EmptyState
-                    variant="outlined"
-                    size="lg"
-                    icon={Inbox}
-                    title={emptyTitle}
-                    description={
-                        searchQuery
-                            ? "Não encontramos transações com os termos buscados. Tente ajustar sua pesquisa."
-                            : "Comece registrando sua primeira movimentação financeira para acompanhar suas finanças."
-                    }
-                    action={
-                        searchQuery ? (
-                            <Button
-                                variant="outline"
-                                onClick={onResetSearch}
-                                className="font-inter border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50"
-                            >
-                                Limpar busca
-                            </Button>
-                        ) : (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="font-inter border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50">
-                                        Adicionar
-                                        <ChevronDown className="h-4 w-4 ml-2" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="center" className="w-[160px] bg-neutral-900 border-neutral-800 shadow-md">
-                                    <DropdownMenuItem onClick={() => onAddClick('revenue')} className="cursor-pointer text-neutral-300 focus:bg-neutral-800 focus:text-neutral-50">
-                                        Receita
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onAddClick('expense')} className="cursor-pointer text-neutral-300 focus:bg-neutral-800 focus:text-neutral-50">
-                                        Despesa
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )
-                    }
-                    className="flex-1 bg-neutral-900 border-neutral-800 border-dashed"
-                />
-            ) : (
-                <div id="data-table-wrapper" className="flex-1 min-h-0 bg-card rounded-lg border border-border shadow-sm flex flex-col relative overflow-hidden font-sans">
-                    {isPending && (
-                        <div className="absolute inset-0 bg-background/50 z-20 flex items-center justify-center backdrop-blur-[1px]">
-                            <Loader2 className="h-8 w-8 animate-spin text-foreground" />
-                        </div>
-                    )}
-                    <TransactionTable data={data} onRowClick={onRowClick} />
-                </div>
-            )}
+            <div className="flex-1 min-h-0 flex flex-col px-1 pb-1">
+                {isPending && data.length === 0 ? (
+                    <TableContentSkeleton />
+                ) : data.length === 0 ? (
+                    <EmptyState
+                        variant="outlined"
+                        size="lg"
+                        icon={Inbox}
+                        title={emptyTitle}
+                        description={
+                            searchQuery
+                                ? "Não encontramos transações com os termos buscados. Tente ajustar sua pesquisa."
+                                : "Comece registrando sua primeira movimentação financeira para acompanhar suas finanças."
+                        }
+                        action={
+                            searchQuery ? (
+                                <Button
+                                    variant="outline"
+                                    onClick={onResetSearch}
+                                    className="font-inter"
+                                >
+                                    Limpar busca
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => onAddClick('expense')}
+                                    className="font-inter"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Adicionar
+                                </Button>
+                            )
+                        }
+                        className="flex-1"
+                    />
+                ) : (
+                    <div id="data-table-wrapper" className="flex-1 min-h-0 bg-card rounded-lg border border-border shadow-sm flex flex-col relative overflow-hidden font-sans">
+                        <TransactionTable data={data} onRowClick={onRowClick} />
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

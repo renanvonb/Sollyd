@@ -9,7 +9,7 @@ const emptyStateVariants = cva(
         variants: {
             variant: {
                 default: "bg-background",
-                outlined: "border border-dashed border-zinc-200 bg-white rounded-lg",
+                outlined: "border border-dashed !border-border !bg-white dark:!bg-card text-card-foreground shadow-sm rounded-lg",
             },
             size: {
                 sm: "p-6 min-h-[200px]",
@@ -42,13 +42,13 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
             >
                 <div className="flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-500">
                     {Icon && (
-                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100">
-                            <Icon className="h-8 w-8 text-zinc-400" strokeWidth={1.5} />
+                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                            <Icon className="h-8 w-8 text-muted-foreground" strokeWidth={1.5} />
                         </div>
                     )}
-                    <h3 className="text-xl font-bold tracking-tight font-jakarta">{title}</h3>
+                    <h3 className="text-xl font-bold tracking-tight font-jakarta text-foreground">{title}</h3>
                     {description && (
-                        <p className="mt-2 text-zinc-500 font-sans max-w-[400px]">
+                        <p className="mt-2 text-muted-foreground font-sans max-w-[400px]">
                             {description}
                         </p>
                     )}

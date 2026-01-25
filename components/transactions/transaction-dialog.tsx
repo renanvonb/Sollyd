@@ -132,6 +132,7 @@ export function TransactionDialog({
     const [categories, setCategories] = React.useState<Category[]>([])
     const [classifications, setClassifications] = React.useState<Classification[]>([])
     const [subcategories, setSubcategories] = React.useState<Subcategory[]>([])
+    const [dataLoaded, setDataLoaded] = React.useState(false)
 
     const isEditMode = !!transaction
 
@@ -167,17 +168,24 @@ export function TransactionDialog({
     }, [selectedCategoryId])
 
     // Carregar dados iniciais e dados da transação se em modo edição
+    // Carregar dados iniciais e dados da transação se em modo edição
     React.useEffect(() => {
         if (open) {
             const loadData = async () => {
-                const [w, c, cl] = await Promise.all([
-                    getWallets(),
-                    getCategories(),
-                    getClassifications(),
-                ])
-                setWallets(w)
-                setCategories(c)
-                setClassifications(cl)
+                let currentWallets = wallets
+
+                if (!dataLoaded) {
+                    const [w, c, cl] = await Promise.all([
+                        getWallets(),
+                        getCategories(),
+                        getClassifications(),
+                    ])
+                    setWallets(w)
+                    setCategories(c)
+                    setClassifications(cl)
+                    setDataLoaded(true)
+                    currentWallets = w
+                }
 
                 if (transaction) {
                     const categoryId = transaction.category_id || ""
@@ -202,7 +210,7 @@ export function TransactionDialog({
                     })
                 } else {
                     // Novo: Selecionar carteira principal se existir
-                    const principal = w.find(wallet => wallet.is_principal)
+                    const principal = currentWallets.find(wallet => wallet.is_principal)
                     if (principal && !form.getValues("wallet_id")) {
                         form.setValue("wallet_id", principal.id)
                     }
@@ -248,7 +256,10 @@ export function TransactionDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden bg-white border-none shadow-2xl">
+            <DialogContent
+                className="sm:max-w-[480px] p-0 overflow-hidden bg-white border-none shadow-2xl"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+            >
                 <DialogHeader className="p-6 pb-2">
                     <DialogTitle className="text-2xl font-bold font-jakarta text-zinc-950">
                         {isEditMode ? "Editar transação" : "Nova transação"}

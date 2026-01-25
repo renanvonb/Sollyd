@@ -97,21 +97,21 @@ export function TransactionDetailsDialog({
 
     const DetailItem = ({ label, value }: { label: string, value?: string | null }) => (
         <div className="flex flex-col gap-1 items-start text-left">
-            <span className="text-sm font-normal text-zinc-500 font-inter">{label}</span>
-            <span className="text-base font-medium text-zinc-950 font-inter">{value || "-"}</span>
+            <span className="text-sm font-normal text-muted-foreground font-inter">{label}</span>
+            <span className="text-base font-medium text-foreground font-inter">{value || "-"}</span>
         </div>
     )
 
     return (
         <>
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-[440px] bg-white p-0 gap-0 rounded-[16px] overflow-hidden focus:outline-none">
+                <DialogContent className="sm:max-w-[440px] bg-background p-0 gap-0 rounded-[16px] overflow-hidden focus:outline-none border-border">
                     <div className="p-6 pb-4 flex flex-col items-center gap-1 text-center">
-                        <h3 className="text-xl font-bold text-zinc-950 font-inter leading-tight">{transaction.description}</h3>
+                        <h3 className="text-xl font-bold text-foreground font-inter leading-tight">{transaction.description}</h3>
 
                         <h2 className={cn(
                             "text-3xl font-bold font-inter tracking-tight mt-1",
-                            isExpense ? "text-red-600" : "text-emerald-500"
+                            isExpense ? "text-red-500" : "text-emerald-500"
                         )}>
                             {formatValue(transaction.amount)}
                         </h2>
@@ -144,18 +144,19 @@ export function TransactionDetailsDialog({
 
                     <Separator className="mb-6" />
 
-                    <DialogFooter className="px-6 pb-6 pt-0 sm:justify-end gap-3 bg-white">
+                    <DialogFooter className="px-6 pb-6 pt-0 sm:justify-end gap-3 bg-background">
                         <Button
+                            type="button"
                             variant="ghost"
                             onClick={() => setShowDeleteAlert(true)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 font-inter"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 font-inter"
                         >
                             Excluir
                         </Button>
                         <Button
                             onClick={handleEdit}
                             variant="outline"
-                            className="text-zinc-950 font-inter border-zinc-200"
+                            className="text-foreground font-inter border-border"
                         >
                             Editar
                         </Button>
@@ -164,7 +165,7 @@ export function TransactionDetailsDialog({
             </Dialog>
 
             <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-                <AlertDialogContent className="bg-white">
+                <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle className="font-inter">
                             Confirmar Exclusão

@@ -46,9 +46,9 @@ export function TransactionsHeader({
     onStatusFilterChange,
 }: TransactionsHeaderProps) {
     return (
-        <div className="flex items-center justify-between flex-none">
-            <div className="ml-2">
-                <h1 className="text-3xl font-bold tracking-tight text-zinc-50 font-jakarta">
+        <div className="flex items-center justify-between flex-none px-1">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground font-jakarta">
                     {title}
                 </h1>
             </div>
@@ -64,7 +64,7 @@ export function TransactionsHeader({
 
                 {/* 2. Search Bar (250px) */}
                 <div className="relative w-[250px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Buscar"
                         className="pl-9 h-10 font-inter w-full"

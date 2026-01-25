@@ -229,7 +229,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                             Adicionar
                         </Button>
                     }
-                    className="flex-1 bg-card border-border border-dashed"
+                    className="flex-1 border-border border-dashed"
                 />
             ) : filteredPayers.length === 0 ? (
                 <EmptyState
@@ -238,10 +238,10 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                     icon={SearchX}
                     title="Nenhum pagador encontrado"
                     description="Tente novamente para encontrar o que está buscando"
-                    className="flex-1 bg-card border-border border-dashed"
+                    className="flex-1 border-border border-dashed"
                 />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                     {filteredPayers.map((payer) => {
                         const iconName = (!payer.icon || payer.icon === 'user') ? 'user-round' : payer.icon;
                         const IconComponent = getIconByName(iconName, UserRound);
@@ -376,7 +376,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                                     onOpenChange(false);
                                     setIsDeleteDialogOpen(true);
                                 }}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                                 Excluir
                             </Button>
@@ -422,7 +422,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                         <AlertDialogAction
                             onClick={handleDelete}
                             disabled={submitting}
-                            className="bg-red-600 hover:bg-red-700"
+                            variant="destructive"
                         >
                             {submitting ? 'Excluindo...' : 'Excluir'}
                         </AlertDialogAction>

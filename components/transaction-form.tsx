@@ -674,7 +674,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         <AlertDialogCancel>Não, cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                            variant="destructive"
                         >
                             Sim, excluir
                         </AlertDialogAction>

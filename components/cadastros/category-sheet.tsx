@@ -216,7 +216,7 @@ export function CategorySheet({
                 <SheetFooter className="mt-auto flex flex-row items-center justify-between sm:justify-between">
                     <Button
                         variant="ghost"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 px-2"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 px-2"
                         onClick={() => onDelete(category)}
                     >
                         Excluir
@@ -261,7 +261,7 @@ export function CategorySheet({
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmDeleteSub}
-                            className="bg-red-600 hover:bg-red-700"
+                            variant="destructive"
                         >
                             Excluir
                         </AlertDialogAction>

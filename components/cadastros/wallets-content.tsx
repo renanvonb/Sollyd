@@ -126,7 +126,7 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
                             Adicionar
                         </Button>
                     }
-                    className="flex-1 bg-card border-border border-dashed"
+                    className="flex-1 border-border border-dashed"
                 />
             ) : filteredWallets.length === 0 ? (
                 <EmptyState
@@ -135,10 +135,10 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
                     icon={SearchX}
                     title="Nenhuma carteira encontrada"
                     description="Tente novamente para encontrar o que está buscando"
-                    className="flex-1 bg-card border-border border-dashed"
+                    className="flex-1 border-border border-dashed"
                 />
             ) : (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 p-1">
                     {filteredWallets.map((wallet) => {
                         const Icon = getIconByName('dollar-sign');
                         const cardColor = getColorHex(wallet.color || 'zinc');
@@ -244,7 +244,7 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            className="bg-red-600 hover:bg-red-700"
+                            variant="destructive"
                             disabled={submitting}
                         >
                             {submitting ? 'Excluindo...' : 'Excluir'}

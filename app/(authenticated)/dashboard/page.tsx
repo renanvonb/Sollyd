@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import DashboardClient from "@/components/dashboard-client"
 import { getTransactions, TimeRange } from "@/app/actions/transactions-fetch"
 import { getDashboardMetrics } from "@/app/actions/dashboard-metrics"
-import { TableSkeleton } from "@/components/ui/skeletons"
+import { DashboardSkeleton } from "@/components/ui/skeletons"
 
 interface DashboardPageProps {
     searchParams: {
@@ -43,7 +43,7 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
 
 export default function DashboardPage({ searchParams }: DashboardPageProps) {
     return (
-        <Suspense fallback={<div className="p-8"><TableSkeleton /></div>}>
+        <Suspense fallback={<DashboardSkeleton />}>
             <DashboardContent searchParams={searchParams} />
         </Suspense>
     )
