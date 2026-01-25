@@ -19,6 +19,7 @@ export interface PayerData {
     payer: string
     amount: number
     fill: string
+    [key: string]: any
 }
 
 interface RevenueByPayerChartProps {
@@ -68,8 +69,9 @@ export function RevenueByPayerChart({ data, title = "Maiores Pagadores" }: Reven
                         />
                         <ChartTooltip
                             cursor={false}
-                            content={
+                            content={(props) => (
                                 <ChartTooltipContent
+                                    {...props}
                                     className="w-[180px]"
                                     formatter={(value, name, item) => (
                                         <>
@@ -87,8 +89,8 @@ export function RevenueByPayerChart({ data, title = "Maiores Pagadores" }: Reven
                                             </div>
                                         </>
                                     )}
-                                /> as any
-                            }
+                                />
+                            )}
                         />
                         <Bar dataKey="amount" radius={4} barSize={24}>
                             {data.map((entry, index) => (

@@ -19,6 +19,7 @@ export interface SubcategoryData {
     subcategory: string
     amount: number
     fill: string
+    [key: string]: any
 }
 
 interface ExpensesBySubcategoryChartProps {
@@ -73,8 +74,9 @@ export function ExpensesBySubcategoryChart({ data }: ExpensesBySubcategoryChartP
                         />
                         <ChartTooltip
                             cursor={false}
-                            content={
+                            content={(props) => (
                                 <ChartTooltipContent
+                                    {...props}
                                     className="w-[180px]"
                                     formatter={(value, name, item) => (
                                         <>
@@ -92,8 +94,8 @@ export function ExpensesBySubcategoryChart({ data }: ExpensesBySubcategoryChartP
                                             </div>
                                         </>
                                     )}
-                                /> as any
-                            }
+                                />
+                            )}
                         />
                         <Bar dataKey="amount" radius={4}>
                             {data.map((entry, index) => (

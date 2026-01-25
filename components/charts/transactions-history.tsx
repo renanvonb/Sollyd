@@ -28,6 +28,7 @@ export interface HistoryData {
     date: string
     income: number
     expense: number
+    [key: string]: any
 }
 
 interface TransactionsHistoryChartProps {
@@ -128,8 +129,9 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
                         />
                         <ChartTooltip
                             cursor={false}
-                            content={
+                            content={(props) => (
                                 <ChartTooltipContent
+                                    {...props}
                                     className="w-[200px]"
                                     labelFormatter={(value) => {
                                         if (value.length <= 7) {
@@ -173,8 +175,8 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
                                             </>
                                         )
                                     }}
-                                /> as any
-                            }
+                                />
+                            )}
                         />
                         {!hiddenKeys.income && <Bar dataKey="income" fill="var(--color-income)" radius={4} />}
                         {!hiddenKeys.expense && <Bar dataKey="expense" fill="var(--color-expense)" radius={4} />}

@@ -19,6 +19,7 @@ export interface PayeeData {
     payee: string
     amount: number
     fill: string
+    [key: string]: any
 }
 
 interface ExpensesByPayeeChartProps {
@@ -68,8 +69,9 @@ export function ExpensesByPayeeChart({ data, title = "Maiores Beneficiários" }:
                         />
                         <ChartTooltip
                             cursor={false}
-                            content={
+                            content={(props) => (
                                 <ChartTooltipContent
+                                    {...props}
                                     className="w-[180px]"
                                     formatter={(value, name, item) => (
                                         <>
@@ -87,8 +89,8 @@ export function ExpensesByPayeeChart({ data, title = "Maiores Beneficiários" }:
                                             </div>
                                         </>
                                     )}
-                                /> as any
-                            }
+                                />
+                            )}
                         />
                         <Bar dataKey="amount" radius={4} barSize={24}>
                             {data.map((entry, index) => (
