@@ -19,6 +19,7 @@ export interface CategoryData {
     category: string
     amount: number
     fill: string
+    [key: string]: any
 }
 
 interface ExpensesByCategoryChartProps {

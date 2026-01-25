@@ -22,6 +22,7 @@ export interface ClassificationData {
     classification: string
     amount: number
     fill: string
+    [key: string]: any
 }
 
 interface ExpensesByClassificationChartProps {
@@ -48,8 +49,9 @@ export function ExpensesByClassificationChart({ data }: ExpensesByClassification
                     <PieChart>
                         <ChartTooltip
                             cursor={false}
-                            content={
+                            content={(props) => (
                                 <ChartTooltipContent
+                                    {...props}
                                     hideLabel
                                     className="w-[180px]"
                                     formatter={(value, name, item) => (
@@ -68,8 +70,8 @@ export function ExpensesByClassificationChart({ data }: ExpensesByClassification
                                             </div>
                                         </>
                                     )}
-                                /> as any
-                            }
+                                />
+                            )}
                         />
                         <Pie
                             data={data}
