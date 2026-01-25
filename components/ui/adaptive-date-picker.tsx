@@ -15,6 +15,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { MonthPicker } from "@/components/ui/month-picker"
+import { YearPicker } from "@/components/ui/year-picker"
 
 type PeriodMode = "dia" | "semana" | "mes" | "ano" | "custom"
 
@@ -140,6 +141,16 @@ export function AdaptiveDatePicker({ mode, value, onChange, className }: Adaptiv
             <MonthPicker
                 value={date}
                 onChange={handleMonthSelect}
+                className={className}
+            />
+        )
+    }
+
+    if (mode === "ano") {
+        return (
+            <YearPicker
+                value={date}
+                onChange={handleDateSelect}
                 className={className}
             />
         )

@@ -191,6 +191,14 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
         }
     }, [status])
 
+    // Sync competence with date
+    const watchedDate = form.watch("date")
+    React.useEffect(() => {
+        if (watchedDate) {
+            form.setValue("competence", startOfMonth(watchedDate))
+        }
+    }, [watchedDate])
+
     // Load initial data
     React.useEffect(() => {
         if (open) {

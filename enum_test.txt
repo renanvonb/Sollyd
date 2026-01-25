@@ -1,0 +1,13 @@
+﻿[dotenv@17.2.3] injecting env (2) from .env.local -- tip: ­ƒöä add secrets lifecycle management: https://dotenvx.com/ops
+Testing type: revenue
+Error for revenue: new row violates row-level security policy for table "transactions"
+Testing type: income
+Error for income: invalid input value for enum transaction_type: "income"
+Testing type: expense
+Error for expense: new row violates row-level security policy for table "transactions"
+Testing type: investment
+Error for investment: new row violates row-level security policy for table "transactions"
+Testing type: Receita
+Error for Receita: new row violates row-level security policy for table "transactions"
+Testing type: Despesa
+Error for Despesa: new row violates row-level security policy for table "transactions"

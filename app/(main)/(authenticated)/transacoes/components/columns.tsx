@@ -19,7 +19,8 @@ export const columns: ColumnDef<Transaction>[] = [
         header: () => <div className="min-w-[200px]">Descrição</div>,
         cell: ({ row }) => {
             const type = row.original.type as keyof typeof typeIconMap
-            const { icon: Icon, color } = typeIconMap[type]
+            const config = typeIconMap[type] || { icon: PieChart, color: "text-gray-400" }
+            const { icon: Icon, color } = config
 
             return (
                 <div className="flex items-center gap-2">
@@ -53,6 +54,18 @@ export const columns: ColumnDef<Transaction>[] = [
             ) : (
                 <span className="text-sm text-muted-foreground">-</span>
             )
+        },
+    },
+    {
+        accessorKey: "competence",
+        header: () => <div className="min-w-[100px]">Competência</div>,
+        cell: ({ row }) => {
+            const comp = row.original.competence as string | null
+            if (!comp) return <span className="text-sm text-muted-foreground">-</span>
+            const [year, month] = comp.split("-")
+            const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+            const monthIndex = parseInt(month) - 1
+            return <div className="text-sm">{`${monthNames[monthIndex]}/${year}`}</div>
         },
     },
     {

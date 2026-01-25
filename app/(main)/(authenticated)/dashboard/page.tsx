@@ -29,7 +29,12 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
     const competenceDate = from ? from : new Date().toISOString()
 
     // Fetch specifically requested metrics (Server-Side Aggregation)
-    const metrics = await getDashboardMetrics({ competence: competenceDate })
+    const metrics = await getDashboardMetrics({
+        range,
+        startDate: from,
+        endDate: to,
+        competence: competenceDate
+    })
 
     // Keep fetching initialData for other components (like table list if it exists, or other charts)
     const initialData = await getTransactions({

@@ -82,7 +82,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex h-screen font-sans bg-background overflow-hidden">
+        <div className="flex h-screen font-sans bg-zinc-50 overflow-hidden">
             {/* Left Column: Form (Login Area - 60%) */}
             <div className="flex-1 md:w-[60%] md:flex-none flex flex-col items-center justify-center p-8 md:p-12 lg:p-16 bg-white relative">
                 <div className="w-full flex flex-col items-center">
@@ -101,13 +101,13 @@ export default function LoginPage() {
                                 />
                             </div>
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground font-jakarta mb-2">
+                        <h1 className="text-2xl font-bold tracking-tight text-zinc-950 font-jakarta mb-2">
                             Bem-vindo!
                         </h1>
-                        <p className="text-muted-foreground font-inter">
+                        <p className="text-zinc-500 font-inter">
                             Insira suas credenciais abaixo.
                         </p>
-                        <Separator className="mt-[24px] mb-[24px] w-full opacity-50" />
+                        <Separator className="mt-[24px] mb-[24px] w-full opacity-50 bg-zinc-200" />
                     </div>
 
                     <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-[360px] space-y-6">
@@ -115,8 +115,8 @@ export default function LoginPage() {
                             <Label
                                 htmlFor="email"
                                 className={cn(
-                                    "text-sm font-medium transition-colors",
-                                    errors.email && "text-destructive"
+                                    "text-sm font-medium transition-colors text-zinc-900",
+                                    errors.email && "text-red-600"
                                 )}
                             >
                                 E-mail
@@ -126,8 +126,8 @@ export default function LoginPage() {
                                 type="email"
                                 placeholder="Informe seu e-mail"
                                 className={cn(
-                                    "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                                    errors.email && "border-destructive focus-visible:ring-destructive"
+                                    "h-11 rounded-lg border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                                    errors.email && "border-red-600 focus-visible:ring-red-600"
                                 )}
                                 {...register('email')}
                                 disabled={loading}
@@ -152,8 +152,8 @@ export default function LoginPage() {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Insira sua senha"
                                     className={cn(
-                                        "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10",
-                                        errors.password && "border-destructive focus-visible:ring-destructive"
+                                        "h-11 rounded-lg border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10",
+                                        errors.password && "border-red-600 focus-visible:ring-red-600"
                                     )}
                                     {...register('password')}
                                     disabled={loading}
@@ -161,7 +161,7 @@ export default function LoginPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 transition-colors"
                                     tabIndex={-1}
                                 >
                                     {showPassword ? (
@@ -178,19 +178,20 @@ export default function LoginPage() {
                             <div className="flex items-center space-x-2">
                                 <Checkbox
                                     id="rememberMe"
+                                    className="border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900 data-[state=checked]:text-white"
                                     {...register('rememberMe')}
                                     disabled={loading}
                                 />
                                 <label
                                     htmlFor="rememberMe"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-zinc-700"
                                 >
                                     Manter conectado
                                 </label>
                             </div>
                             <Link
                                 href="/forgot-password"
-                                className="text-sm font-medium text-muted-foreground hover:underline transition-all whitespace-nowrap"
+                                className="text-sm font-medium text-zinc-500 hover:text-zinc-900 hover:underline transition-all whitespace-nowrap"
                             >
                                 Esqueci minha senha
                             </Link>
@@ -205,7 +206,7 @@ export default function LoginPage() {
                         <div className="space-y-5">
                             <Button
                                 type="submit"
-                                className="w-full h-11 rounded-lg font-semibold shadow-sm transition-all active:scale-[0.98]"
+                                className="w-full h-11 rounded-lg font-semibold shadow-sm transition-all active:scale-[0.98] bg-zinc-950 text-white hover:bg-zinc-800"
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -219,11 +220,11 @@ export default function LoginPage() {
                             </Button>
 
                             <div className="text-center">
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-zinc-500">
                                     Não tem uma conta?{' '}
                                     <Link
                                         href="/signup"
-                                        className="font-semibold text-primary hover:underline transition-all"
+                                        className="font-semibold text-zinc-900 hover:underline transition-all"
                                     >
                                         Crie agora
                                     </Link>

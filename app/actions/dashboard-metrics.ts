@@ -1,13 +1,16 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { startOfMonth, endOfMonth, format, parseISO } from 'date-fns'
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfYear, endOfYear, startOfMonth, endOfMonth, format, parseISO } from 'date-fns'
 
 interface DashboardMetricsParams {
-    competence: string // Format YYYY-MM-DD (usually 01)
+    range?: 'dia' | 'semana' | 'mes' | 'ano' | 'custom'
+    startDate?: string
+    endDate?: string
+    competence?: string // Legacy fallback
 }
 
-export async function getDashboardMetrics({ competence }: DashboardMetricsParams) {
+export async function getDashboardMetrics({ range, startDate, endDate, competence }: DashboardMetricsParams) {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -15,17 +18,52 @@ export async function getDashboardMetrics({ competence }: DashboardMetricsParams
         return { summary: { income: 0, expense: 0, balance: 0, investment: 0 }, categoryData: [] }
     }
 
-    const date = parseISO(competence)
-    const startDate = format(startOfMonth(date), 'yyyy-MM-dd')
-    const endDate = format(endOfMonth(date), 'yyyy-MM-dd')
+    let effectiveStartDate: string
+    let effectiveEndDate: string
+
+    if (startDate && endDate) {
+        effectiveStartDate = startDate
+        effectiveEndDate = endDate
+    } else {
+        // Fallback or Range logic
+        const referenceCompetence = competence || new Date().toISOString()
+
+        // Prioritize startDate if provided as single ref, else competence
+        // Note: startDate might be undefined here if not passed, parseISO handles valid strings
+        const referenceDate = startDate ? parseISO(startDate) : parseISO(referenceCompetence)
+
+        let start: Date
+        let end: Date
+
+        // If range is undefined but we have competence, default to month of competence (legacy behavior)
+        const effectiveRange = range || 'mes'
+
+        if (effectiveRange === 'dia') {
+            start = startOfDay(referenceDate)
+            end = endOfDay(referenceDate)
+        } else if (effectiveRange === 'semana') {
+            start = startOfWeek(referenceDate, { weekStartsOn: 0 })
+            end = endOfWeek(referenceDate, { weekStartsOn: 0 })
+        } else if (effectiveRange === 'ano') {
+            start = startOfYear(referenceDate)
+            end = endOfYear(referenceDate)
+        } else {
+            // Mes (default)
+            start = startOfMonth(referenceDate)
+            end = endOfMonth(referenceDate)
+        }
+
+        effectiveStartDate = format(start, 'yyyy-MM-dd')
+        effectiveEndDate = format(end, 'yyyy-MM-dd')
+    }
 
     // 1. Fetch Summary Data (All transactions in competence)
     const { data: transactions, error } = await supabase
         .from('transactions')
         .select('amount, type')
         .eq('user_id', user.id)
-        .gte('competence', startDate)
-        .lte('competence', endDate)
+        .gte('competence', effectiveStartDate)
+        .lte('competence', effectiveEndDate)
 
     if (error) {
         console.error('[getDashboardMetrics] Error fetching summary:', error)
@@ -60,8 +98,8 @@ export async function getDashboardMetrics({ competence }: DashboardMetricsParams
         `)
         .eq('user_id', user.id)
         .in('type', ['expense', 'despesa', 'Despesa', 'Expense']) // Check all possible variations
-        .gte('competence', startDate)
-        .lte('competence', endDate)
+        .gte('competence', effectiveStartDate)
+        .lte('competence', effectiveEndDate)
 
     if (catError) {
         console.error('[getDashboardMetrics] Error fetching categories:', catError)
@@ -106,8 +144,8 @@ export async function getDashboardMetrics({ competence }: DashboardMetricsParams
         `)
         .eq('user_id', user.id)
         .in('type', ['expense', 'despesa', 'Despesa', 'Expense'])
-        .gte('competence', startDate)
-        .lte('competence', endDate)
+        .gte('competence', effectiveStartDate)
+        .lte('competence', effectiveEndDate)
 
     if (classError) {
         console.error('[getDashboardMetrics] Error fetching classifications:', classError)

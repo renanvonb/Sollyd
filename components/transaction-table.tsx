@@ -1,7 +1,7 @@
 "use client"
 
-import { DataTable } from "@/app/(authenticated)/financeiro/transacoes/components/data-table"
-import { columns } from "@/app/(authenticated)/financeiro/transacoes/components/columns"
+import { DataTable } from "@/app/(main)/(authenticated)/transacoes/components/data-table"
+import { columns } from "@/app/(main)/(authenticated)/transacoes/components/columns"
 import { Transaction } from "@/types/transaction"
 
 interface TransactionTableProps {

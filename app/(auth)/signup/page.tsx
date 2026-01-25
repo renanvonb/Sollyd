@@ -102,7 +102,7 @@ export default function SignupPage() {
     }
 
     return (
-        <div className="flex h-screen font-sans bg-background overflow-hidden">
+        <div className="flex h-screen font-sans bg-zinc-50 overflow-hidden">
             {/* Left Column: Form (Signup Area - 60%) */}
             <div className="flex-1 md:w-[60%] md:flex-none flex flex-col items-center justify-center p-8 md:p-12 lg:p-16 bg-white relative">
                 <div className="w-full flex flex-col items-center">
@@ -121,13 +121,13 @@ export default function SignupPage() {
                                 />
                             </div>
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground font-jakarta mb-2">
+                        <h1 className="text-2xl font-bold tracking-tight text-zinc-950 font-jakarta mb-2">
                             Crie sua conta
                         </h1>
-                        <p className="text-muted-foreground font-inter">
+                        <p className="text-zinc-500 font-inter">
                             Preencha seus dados abaixo para começar
                         </p>
-                        <Separator className="mt-[24px] mb-[24px] w-full opacity-50" />
+                        <Separator className="mt-[24px] mb-[24px] w-full opacity-50 bg-zinc-200" />
                     </div>
 
                     <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-[360px] space-y-6">
@@ -136,8 +136,8 @@ export default function SignupPage() {
                             <Label
                                 htmlFor="name"
                                 className={cn(
-                                    "text-sm font-medium transition-colors",
-                                    errors.name && "text-destructive"
+                                    "text-sm font-medium transition-colors text-zinc-900",
+                                    errors.name && "text-red-600"
                                 )}
                             >
                                 Nome completo
@@ -147,8 +147,8 @@ export default function SignupPage() {
                                 type="text"
                                 placeholder="Informe seu nome completo"
                                 className={cn(
-                                    "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                                    errors.name && "border-destructive focus-visible:ring-destructive"
+                                    "h-11 rounded-lg border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                                    errors.name && "border-red-600 focus-visible:ring-red-600"
                                 )}
                                 {...register('name')}
                                 disabled={loading}
@@ -160,8 +160,8 @@ export default function SignupPage() {
                             <Label
                                 htmlFor="email"
                                 className={cn(
-                                    "text-sm font-medium transition-colors",
-                                    errors.email && "text-destructive"
+                                    "text-sm font-medium transition-colors text-zinc-900",
+                                    errors.email && "text-red-600"
                                 )}
                             >
                                 E-mail
@@ -171,8 +171,8 @@ export default function SignupPage() {
                                 type="email"
                                 placeholder="Informe seu e-mail"
                                 className={cn(
-                                    "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                                    errors.email && "border-destructive focus-visible:ring-destructive"
+                                    "h-11 rounded-lg border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                                    errors.email && "border-red-600 focus-visible:ring-red-600"
                                 )}
                                 {...register('email')}
                                 disabled={loading}
@@ -184,8 +184,8 @@ export default function SignupPage() {
                             <Label
                                 htmlFor="password"
                                 className={cn(
-                                    "text-sm font-medium transition-colors",
-                                    errors.password && "text-destructive"
+                                    "text-sm font-medium transition-colors text-zinc-900",
+                                    errors.password && "text-red-600"
                                 )}
                             >
                                 Senha
@@ -196,8 +196,8 @@ export default function SignupPage() {
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="Defina uma senha"
                                     className={cn(
-                                        "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10",
-                                        errors.password && "border-destructive focus-visible:ring-destructive"
+                                        "h-11 rounded-lg border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10",
+                                        errors.password && "border-red-600 focus-visible:ring-red-600"
                                     )}
                                     {...register('password')}
                                     disabled={loading}
@@ -205,7 +205,7 @@ export default function SignupPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 transition-colors"
                                     tabIndex={-1}
                                 >
                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -224,7 +224,7 @@ export default function SignupPage() {
                                             )} />
                                             <span className={cn(
                                                 "text-xs transition-colors",
-                                                isMet ? "text-emerald-600 font-medium" : "text-muted-foreground"
+                                                isMet ? "text-emerald-600 font-medium" : "text-zinc-500"
                                             )}>
                                                 {req.text}
                                             </span>
@@ -239,8 +239,8 @@ export default function SignupPage() {
                             <Label
                                 htmlFor="confirmPassword"
                                 className={cn(
-                                    "text-sm font-medium transition-colors",
-                                    errors.confirmPassword && "text-destructive"
+                                    "text-sm font-medium transition-colors text-zinc-900",
+                                    errors.confirmPassword && "text-red-600"
                                 )}
                             >
                                 Confirmar senha
@@ -251,8 +251,8 @@ export default function SignupPage() {
                                     type={showConfirmPassword ? 'text' : 'password'}
                                     placeholder="Confirme sua senha"
                                     className={cn(
-                                        "h-11 rounded-lg border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10",
-                                        errors.confirmPassword && "border-destructive focus-visible:ring-destructive"
+                                        "h-11 rounded-lg border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10",
+                                        errors.confirmPassword && "border-red-600 focus-visible:ring-red-600"
                                     )}
                                     {...register('confirmPassword')}
                                     disabled={loading}
@@ -260,7 +260,7 @@ export default function SignupPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 transition-colors"
                                     tabIndex={-1}
                                 >
                                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -269,15 +269,15 @@ export default function SignupPage() {
                         </div>
 
                         {error && (
-                            <div className="rounded-lg bg-destructive/10 p-3 border border-destructive/20 text-center">
-                                <p className="text-sm text-destructive font-medium">{error}</p>
+                            <div className="rounded-lg bg-red-50 p-3 border border-red-200 text-center">
+                                <p className="text-sm text-red-600 font-medium">{error}</p>
                             </div>
                         )}
 
                         <div className="space-y-5">
                             <Button
                                 type="submit"
-                                className="w-full h-11 rounded-lg font-semibold shadow-sm transition-all active:scale-[0.98]"
+                                className="w-full h-11 rounded-lg font-semibold shadow-sm transition-all active:scale-[0.98] bg-zinc-950 text-white hover:bg-zinc-800"
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -291,11 +291,11 @@ export default function SignupPage() {
                             </Button>
 
                             <div className="text-center">
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-zinc-500">
                                     Já tem uma conta?{' '}
                                     <Link
                                         href="/login"
-                                        className="font-semibold text-primary hover:underline transition-all"
+                                        className="font-semibold text-zinc-900 hover:underline transition-all"
                                     >
                                         Entrar
                                     </Link>
