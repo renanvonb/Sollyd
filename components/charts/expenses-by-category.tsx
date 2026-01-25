@@ -73,8 +73,9 @@ export function ExpensesByCategoryChart({ data }: ExpensesByCategoryChartProps) 
                         />
                         <ChartTooltip
                             cursor={false}
-                            content={
+                            content={(props) => (
                                 <ChartTooltipContent
+                                    {...props}
                                     className="w-[180px]"
                                     formatter={(value, name, item) => (
                                         <>
@@ -92,8 +93,8 @@ export function ExpensesByCategoryChart({ data }: ExpensesByCategoryChartProps) 
                                             </div>
                                         </>
                                     )}
-                                /> as any
-                            }
+                                />
+                            )}
                         />
                         <Bar dataKey="amount" radius={4}>
                             {data.map((entry, index) => (
