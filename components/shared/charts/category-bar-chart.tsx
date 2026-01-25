@@ -101,7 +101,7 @@ export function CategoryBarChart({ data, subcategoryData }: CategoryBarChartProp
                             />
                             <ChartTooltip
                                 cursor={false}
-                                content={<ChartTooltipContent formatter={(value) => formatValue(Number(value))} />}
+                                content={(props) => <ChartTooltipContent {...props} formatter={(value) => formatValue(Number(value))} />}
                             />
                             <Bar
                                 dataKey="value"

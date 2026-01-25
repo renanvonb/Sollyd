@@ -94,7 +94,7 @@ export function MonthlyBalanceChart({ data, className }: MonthlyBalanceChartProp
                             />
                             <ChartTooltip
                                 cursor={false}
-                                content={<ChartTooltipContent formatter={(value) => formatValue(Number(value))} />}
+                                content={(props) => <ChartTooltipContent {...props} formatter={(value) => formatValue(Number(value))} />}
                             />
                             <Area
                                 dataKey="despesas"

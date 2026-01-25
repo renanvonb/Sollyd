@@ -67,7 +67,7 @@ export function ClassificationPieChart({ data }: ClassificationPieChartProps) {
                             <PieChart>
                                 <ChartTooltip
                                     cursor={false}
-                                    content={<ChartTooltipContent hideLabel />}
+                                    content={(props) => <ChartTooltipContent {...props} hideLabel />}
                                 />
                                 <Pie
                                     data={chartData}
