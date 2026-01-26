@@ -76,15 +76,21 @@ export function TransactionDetailsDialog({
         try {
             const result = await deleteTransaction(transaction.id)
             if (result.success) {
-                toast.success("Transação excluída com sucesso")
+                toast.success("Excluída!", {
+                    description: "A transação foi removida com sucesso."
+                })
                 setShowDeleteAlert(false)
                 onOpenChange(false)
                 onSuccess()
             } else {
-                toast.error(result.error || "Erro ao excluir transação")
+                toast.error("Ops, algo deu errado", {
+                    description: result.error || "Não foi possível excluir a transação."
+                })
             }
         } catch (error) {
-            toast.error("Erro ao excluir transação")
+            toast.error("Erro inesperado", {
+                description: "Ocorreu uma falha ao tentar excluir o registro."
+            })
         } finally {
             setIsDeleting(false)
         }
@@ -144,12 +150,12 @@ export function TransactionDetailsDialog({
 
                     <Separator className="mb-6" />
 
-                    <DialogFooter className="px-6 pb-6 pt-0 sm:justify-end gap-3 bg-background">
+                    <DialogFooter className="px-6 pb-6 pt-0 sm:justify-end gap-2 bg-background">
                         <Button
                             type="button"
                             variant="ghost"
                             onClick={() => setShowDeleteAlert(true)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 font-inter"
+                            className="text-red-600 hover:text-red-700 hover:bg-destructive/10 font-inter"
                         >
                             Excluir
                         </Button>
@@ -165,17 +171,15 @@ export function TransactionDetailsDialog({
             </Dialog>
 
             <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-                <AlertDialogContent>
+                <AlertDialogContent className="sm:max-w-[400px]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="font-inter">
-                            Confirmar Exclusão
-                        </AlertDialogTitle>
-                        <AlertDialogDescription className="font-inter">
-                            Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.
+                        <AlertDialogTitle>Excluir</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Você está prestes a realizar uma exclusão permanente que não poderá ser desfeita. Tem certeza que deseja continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="font-inter">Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
                             disabled={isDeleting}

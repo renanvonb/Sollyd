@@ -85,12 +85,12 @@ export function PayeeForm({
                 toast.success(`${type === 'payer' ? 'Pagador' : 'Beneficiário'} atualizado com sucesso!`);
             } else {
                 await createPayee(payload);
-                toast.success(`${type === 'payer' ? 'Pagador' : 'Beneficiário'} criado com sucesso!`);
+                toast.success(`${type === 'payer' ? 'Pagador' : 'Beneficiário'} cadastrado com sucesso!`);
             }
             onSuccess();
         } catch (error: any) {
             console.error('Error saving payee:', error);
-            toast.error(error.message || 'Erro ao salvar registro');
+            toast.error(`Erro ao salvar ${type === 'payer' ? 'pagador' : 'beneficiário'}`);
         } finally {
             setIsSubmitting(false);
         }

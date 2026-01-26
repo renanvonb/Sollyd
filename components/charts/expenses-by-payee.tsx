@@ -42,6 +42,8 @@ interface ExpensesByPayeeChartProps {
     data: PayeeData[]
     title?: string
     periodLabel?: string
+    onPayeeClick?: (payee: string | null) => void
+    selectedPayee?: string | null
 }
 
 const chartConfig = {
@@ -50,7 +52,7 @@ const chartConfig = {
     },
 } satisfies ChartConfig
 
-export function ExpensesByPayeeChart({ data, title = "Beneficiários", periodLabel }: ExpensesByPayeeChartProps) {
+export function ExpensesByPayeeChart({ data, title = "Beneficiários", periodLabel, onPayeeClick, selectedPayee }: ExpensesByPayeeChartProps) {
     const totalAmount = data.reduce((acc, curr) => acc + curr.amount, 0)
 
     const renderChart = (isExpanded = false) => {
@@ -140,10 +142,15 @@ export function ExpensesByPayeeChart({ data, title = "Beneficiários", periodLab
                         dataKey="amount"
                         radius={4}
                         barSize={isExpanded ? 48 : 32}
+                        onClick={(data: any) => onPayeeClick?.(data.payee === selectedPayee ? null : data.payee)}
+                        cursor={onPayeeClick ? "pointer" : "default"}
                         shape={(props: any) => {
-                            const { fill, x, y, width, height } = props;
+                            const { fill, x, y, width, height, payload } = props;
+                            const isSelected = !selectedPayee || (payload as PayeeData).payee === selectedPayee
+                            const opacity = isSelected ? 1 : 0.3
+
                             return (
-                                <g>
+                                <g style={{ opacity, transition: 'opacity 0.3s' }}>
                                     <rect
                                         x={x}
                                         y={y}
@@ -172,7 +179,11 @@ export function ExpensesByPayeeChart({ data, title = "Beneficiários", periodLab
                         <LabelList
                             dataKey="amount"
                             content={(props: any) => {
-                                const { x, y, width, height, value } = props
+                                const { x, y, width, height, value, index } = props
+                                const payee = data[index]?.payee
+                                const isSelected = !selectedPayee || payee === selectedPayee
+                                const opacity = isSelected ? 1 : 0.3
+
                                 const formatted = Number(value).toLocaleString('pt-BR', {
                                     style: "currency",
                                     currency: "BRL",
@@ -195,7 +206,7 @@ export function ExpensesByPayeeChart({ data, title = "Beneficiários", periodLab
                                         dominantBaseline="middle"
                                         fontSize={isExpanded ? 14 : 10}
                                         fontWeight={500}
-                                        style={{ pointerEvents: 'none' }}
+                                        style={{ pointerEvents: 'none', opacity, transition: 'opacity 0.3s' }}
                                     >
                                         {formatted}
                                     </text>

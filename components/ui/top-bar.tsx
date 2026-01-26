@@ -157,20 +157,7 @@ export function TopBar({
                                 </TooltipContent>
                             </Tooltip>
 
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-muted-foreground hover:text-foreground"
-                                    >
-                                        <Bell className="h-5 w-5" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Notificações</p>
-                                </TooltipContent>
-                            </Tooltip>
+
                         </div>
                     )}
                 </div>

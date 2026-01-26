@@ -75,10 +75,14 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
         } catch (error: any) {
             console.error('Erro ao carregar pagadores:', error);
             if (error.message === 'Usuário não autenticado') {
-                toast.error('Sessão expirada. Faça login novamente.');
+                toast.error('Sessão expirada', {
+                    description: 'Faça login novamente para continuar.'
+                });
                 router.push('/login');
             } else {
-                toast.error('Erro ao carregar pagadores');
+                toast.error('Erro de carregamento', {
+                    description: 'Não foi possível carregar os pagadores.'
+                });
             }
         } finally {
             setLoading(false);
@@ -104,7 +108,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                 toast.error('Sessão expirada. Faça login novamente.');
                 router.push('/login');
             } else {
-                toast.error(error.message || 'Erro ao excluir pagador');
+                toast.error('Erro ao excluir pagador');
             }
         } finally {
             setSubmitting(false);
@@ -150,7 +154,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                     {filteredPayers.map((payer) => {
-                        const IconComponent = getIconByName('arrow-down-right');
+                        const IconComponent = getIconByName('arrow-up-right');
                         const colorClass = getColorClass('green');
 
                         return (
@@ -171,7 +175,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                                             <h3 className="font-semibold text-foreground truncate">
                                                 <HighlightText text={payer.name} highlight={searchQuery} />
                                             </h3>
-                                            <p className="text-sm text-muted-foreground font-inter">
+                                            <p className="text-sm text-muted-foreground font-inter truncate">
                                                 {payer.transactions?.[0]?.count || 0} transações
                                             </p>
                                         </div>
@@ -184,7 +188,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
             )}
 
             <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px]" onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle className="font-jakarta">
                             {editingPayer ? 'Editar pagador' : 'Novo pagador'}
@@ -217,13 +221,11 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
             </Dialog>
 
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <AlertDialogContent>
+                <AlertDialogContent className="sm:max-w-[400px]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="font-jakarta">
-                            Confirmar exclusão
-                        </AlertDialogTitle>
+                        <AlertDialogTitle>Excluir</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tem certeza que deseja excluir este pagador? Esta ação não pode ser desfeita.
+                            Você está prestes a realizar uma exclusão permanente que não poderá ser desfeita. Tem certeza que deseja continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -233,7 +235,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                             disabled={submitting}
                             variant="destructive"
                         >
-                            {submitting ? 'Excluindo...' : 'Excluir'}
+                            Excluir
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

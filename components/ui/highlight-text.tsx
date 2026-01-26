@@ -1,4 +1,4 @@
-import React from 'react';
+import { normalizeSearch } from '@/lib/utils';
 
 interface HighlightTextProps {
     text: string;
@@ -11,12 +11,11 @@ export function HighlightText({ text, highlight, className }: HighlightTextProps
         return <span className={className}>{text}</span>;
     }
 
-    const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    const normText = normalize(text);
-    const normHighlight = normalize(highlight);
+    const normText = normalizeSearch(text);
+    const normHighlight = normalizeSearch(highlight);
 
     if (!normText.includes(normHighlight)) {
-        return <span className={`${className || ''} text-muted-foreground`}>{text}</span>;
+        return <span className={`${className || ''} opacity-30`}>{text}</span>;
     }
 
     const result = [];
@@ -27,7 +26,7 @@ export function HighlightText({ text, highlight, className }: HighlightTextProps
         // Text before match
         if (searchIndex > currentIndex) {
             result.push(
-                <span key={`pre-${currentIndex}`} className="text-muted-foreground">
+                <span key={`pre-${currentIndex}`} className="opacity-30">
                     {text.slice(currentIndex, searchIndex)}
                 </span>
             );
@@ -36,7 +35,7 @@ export function HighlightText({ text, highlight, className }: HighlightTextProps
         // Matched text (using original string content but indices from normalized search)
         const matchEnd = searchIndex + normHighlight.length;
         result.push(
-            <span key={`match-${searchIndex}`} className="text-[#00665C]">
+            <span key={`match-${searchIndex}`}>
                 {text.slice(searchIndex, matchEnd)}
             </span>
         );
@@ -48,7 +47,7 @@ export function HighlightText({ text, highlight, className }: HighlightTextProps
     // Remaining text
     if (currentIndex < text.length) {
         result.push(
-            <span key={`post-${currentIndex}`} className="text-muted-foreground">
+            <span key={`post-${currentIndex}`} className="opacity-30">
                 {text.slice(currentIndex)}
             </span>
         );

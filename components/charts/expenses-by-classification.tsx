@@ -44,6 +44,8 @@ export interface ClassificationData {
 interface ExpensesByClassificationChartProps {
     data: ClassificationData[]
     periodLabel?: string
+    onClassificationClick?: (classification: string | null) => void
+    selectedClassification?: string | null
 }
 
 const chartConfig = {
@@ -52,29 +54,12 @@ const chartConfig = {
     },
 } satisfies ChartConfig
 
-export function ExpensesByClassificationChart({ data, periodLabel }: ExpensesByClassificationChartProps) {
-    const [hiddenClassifications, setHiddenClassifications] = React.useState<Set<string>>(new Set())
+export function ExpensesByClassificationChart({ data, periodLabel, onClassificationClick, selectedClassification }: ExpensesByClassificationChartProps) {
     const [activeIndex, setActiveIndex] = React.useState<number | undefined>(undefined)
 
-    const filteredData = React.useMemo(() => {
-        return data.filter(item => !hiddenClassifications.has(item.classification))
-    }, [data, hiddenClassifications])
-
     const totalAmount = React.useMemo(() => {
-        return filteredData.reduce((acc, curr) => acc + curr.amount, 0)
-    }, [filteredData])
-
-    const toggleClassification = (classification: string) => {
-        setHiddenClassifications(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(classification)) {
-                newSet.delete(classification);
-            } else {
-                newSet.add(classification);
-            }
-            return newSet;
-        });
-    }
+        return data.reduce((acc, curr) => acc + curr.amount, 0)
+    }, [data])
 
     const renderChart = (isExpanded = false) => {
         if (!data || data.length === 0) {
@@ -133,7 +118,7 @@ export function ExpensesByClassificationChart({ data, periodLabel }: ExpensesByC
                         )}
                     />
                     <Pie
-                        data={filteredData}
+                        data={data}
                         dataKey="amount"
                         nameKey="classification"
                         innerRadius={isExpanded ? 120 : 65}
@@ -141,9 +126,11 @@ export function ExpensesByClassificationChart({ data, periodLabel }: ExpensesByC
                         paddingAngle={2}
                         onMouseEnter={(_, index) => setActiveIndex(index)}
                         onMouseLeave={() => setActiveIndex(undefined)}
+                        onClick={(data) => onClassificationClick?.(data.classification === selectedClassification ? null : data.classification)}
                         labelLine={false}
-                        label={({ percent, x, y, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                        label={({ percent, x, y, cx, cy, midAngle, innerRadius, outerRadius, payload }) => {
                             if (!percent || percent < 0.05 || midAngle === undefined) return null;
+
                             const RADIAN = Math.PI / 180;
                             const radius = (Number(outerRadius) || 0) + 12;
                             const labelX = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -158,24 +145,37 @@ export function ExpensesByClassificationChart({ data, periodLabel }: ExpensesByC
                                     dominantBaseline="central"
                                     fontSize={isExpanded ? 14 : 11}
                                     fontWeight={600}
+                                    style={{ opacity: 1, transition: 'opacity 0.2s' }}
                                 >
                                     {`${(percent * 100).toFixed(0)}%`}
                                 </text>
                             );
                         }}
                     >
-                        {filteredData.map((entry, index) => (
-                            <Cell
-                                key={`cell-${index}`}
-                                fill={entry.fill}
-                                stroke="transparent"
-                                style={{
-                                    opacity: activeIndex === undefined || activeIndex === index ? 1 : 0.3,
-                                    transition: "opacity 0.2s ease-in-out",
-                                    cursor: "pointer"
-                                }}
-                            />
-                        ))}
+                        {data.map((entry, index) => {
+                            const isSelected = !selectedClassification || entry.classification === selectedClassification
+                            const isHovered = activeIndex === index
+
+                            let opacity = 1
+                            if (selectedClassification) {
+                                opacity = isSelected ? 1 : 0.3
+                            } else if (activeIndex !== undefined) {
+                                opacity = isHovered ? 1 : 0.6
+                            }
+
+                            return (
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={entry.fill}
+                                    stroke="transparent"
+                                    style={{
+                                        opacity,
+                                        transition: "opacity 0.2s ease-in-out",
+                                        cursor: onClassificationClick ? "pointer" : "default"
+                                    }}
+                                />
+                            )
+                        })}
                     </Pie>
                 </PieChart>
             </ChartContainer>
@@ -185,15 +185,15 @@ export function ExpensesByClassificationChart({ data, periodLabel }: ExpensesByC
     const renderLegend = (isExpanded = false) => (
         <div className="flex w-full flex-wrap items-center justify-center gap-4">
             {data.map((item) => {
-                const isHidden = hiddenClassifications.has(item.classification)
+                const isSelected = !selectedClassification || item.classification === selectedClassification
                 return (
                     <div
                         key={item.classification}
                         className={cn(
                             "flex items-center gap-1.5 cursor-pointer transition-opacity select-none",
-                            isHidden && "opacity-40 grayscale"
+                            !isSelected && "opacity-40"
                         )}
-                        onClick={() => toggleClassification(item.classification)}
+                        onClick={() => onClassificationClick?.(item.classification === selectedClassification ? null : item.classification)}
                     >
                         <div
                             className="h-3 w-3 rounded-sm"
@@ -201,8 +201,7 @@ export function ExpensesByClassificationChart({ data, periodLabel }: ExpensesByC
                         />
                         <span className={cn(
                             "font-medium text-muted-foreground whitespace-nowrap",
-                            isExpanded ? "text-base" : "text-xs",
-                            isHidden && "line-through"
+                            isExpanded ? "text-base" : "text-xs"
                         )}>
                             {item.classification}
                         </span>

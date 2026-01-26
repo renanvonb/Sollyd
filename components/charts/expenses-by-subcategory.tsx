@@ -41,6 +41,8 @@ export interface SubcategoryData {
 interface ExpensesBySubcategoryChartProps {
     data: SubcategoryData[]
     periodLabel?: string
+    onSubcategoryClick?: (subcategory: string | null) => void
+    selectedSubcategory?: string | null
 }
 
 const chartConfig = {
@@ -49,7 +51,7 @@ const chartConfig = {
     },
 } satisfies ChartConfig
 
-export function ExpensesBySubcategoryChart({ data, periodLabel }: ExpensesBySubcategoryChartProps) {
+export function ExpensesBySubcategoryChart({ data, periodLabel, onSubcategoryClick, selectedSubcategory }: ExpensesBySubcategoryChartProps) {
     const totalAmount = data.reduce((acc, curr) => acc + curr.amount, 0)
 
     const renderChart = (isExpanded = false) => {
@@ -148,10 +150,15 @@ export function ExpensesBySubcategoryChart({ data, periodLabel }: ExpensesBySubc
                     <Bar
                         dataKey="amount"
                         radius={4}
+                        onClick={(data: any) => onSubcategoryClick?.(data.subcategory === selectedSubcategory ? null : data.subcategory)}
+                        cursor={onSubcategoryClick ? "pointer" : "default"}
                         shape={(props: any) => {
-                            const { fill, x, y, width, height } = props;
+                            const { fill, x, y, width, height, payload } = props;
+                            const isSelected = !selectedSubcategory || (payload as SubcategoryData).subcategory === selectedSubcategory
+                            const opacity = isSelected ? 1 : 0.3
+
                             return (
-                                <g>
+                                <g style={{ opacity, transition: 'opacity 0.3s' }}>
                                     <rect
                                         x={x}
                                         y={y}
@@ -180,7 +187,11 @@ export function ExpensesBySubcategoryChart({ data, periodLabel }: ExpensesBySubc
                         <LabelList
                             dataKey="amount"
                             content={(props: any) => {
-                                const { x, y, width, height, value } = props
+                                const { x, y, width, height, value, index } = props
+                                const subcategory = data[index]?.subcategory
+                                const isSelected = !selectedSubcategory || subcategory === selectedSubcategory
+                                const opacity = isSelected ? 1 : 0.3
+
                                 const formatted = Number(value).toLocaleString('pt-BR', {
                                     style: "currency",
                                     currency: "BRL",
@@ -204,7 +215,7 @@ export function ExpensesBySubcategoryChart({ data, periodLabel }: ExpensesBySubc
                                         fontSize={isExpanded ? 14 : 10}
                                         fontWeight={500}
                                         transform={`rotate(-90, ${x + width / 2}, ${y + height / 2})`}
-                                        style={{ pointerEvents: 'none' }}
+                                        style={{ pointerEvents: 'none', opacity, transition: 'opacity 0.3s' }}
                                     >
                                         {formatted}
                                     </text>

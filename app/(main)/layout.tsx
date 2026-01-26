@@ -61,8 +61,7 @@ export default function RootLayout({
                 >
                     {children}
                     <Toaster
-                        position="bottom-right"
-                        closeButton
+                        position="bottom-center"
                         expand={false}
                     />
                 </ThemeProvider>

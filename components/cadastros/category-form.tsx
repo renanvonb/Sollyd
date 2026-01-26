@@ -97,12 +97,12 @@ export function CategoryForm({
                 toast.success('Categoria atualizada com sucesso!');
             } else {
                 await createCategory(payload);
-                toast.success('Categoria criada com sucesso!');
+                toast.success('Categoria cadastrada com sucesso!');
             }
             onSuccess();
         } catch (error: any) {
             console.error('Error saving category:', error);
-            toast.error(error.message || 'Erro ao salvar categoria');
+            toast.error('Erro ao salvar categoria');
         } finally {
             setIsSubmitting(false);
         }
@@ -202,7 +202,7 @@ export function CategoryForm({
                             variant="ghost"
                             onClick={onDelete}
                             disabled={isSubmitting}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-destructive/10 font-inter"
                         >
                             Excluir
                         </Button>

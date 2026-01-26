@@ -6,9 +6,11 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { LayoutDashboard, ArrowRightLeft, TrendingUp, UserPlus, LogOut, User, Menu, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { signOut } from '@/app/actions/auth'
+import { signOut, updateProfile } from '@/app/actions/auth'
 import { useSidebar } from '@/hooks/use-sidebar-state'
 import { SidebarSkeleton } from '@/components/ui/skeletons'
+import { ProfileSheet } from '@/components/profile-sheet'
+import { useState } from 'react'
 
 import {
     Tooltip,
@@ -61,13 +63,14 @@ const menuItems = [
 export function AppSidebar({ user }: SidebarProps) {
     const pathname = usePathname()
     const { isOpen, toggle } = useSidebar()
+    const [isProfileOpen, setIsProfileOpen] = useState(false)
 
     if (!user) {
         return <SidebarSkeleton />
     }
 
-    // Extracting user name from metadata or using email prefix
     const userName = (user as any)?.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário'
+    const avatarUrl = (user as any)?.user_metadata?.avatar_url || null
 
 
     return (
@@ -175,7 +178,7 @@ export function AppSidebar({ user }: SidebarProps) {
 
 
 
-                <div className="p-4 border-t border-[#262626]">
+                <div className="p-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
@@ -185,8 +188,8 @@ export function AppSidebar({ user }: SidebarProps) {
                                     !isOpen && "justify-center px-0"
                                 )}
                             >
-                                <Avatar className="h-9 w-9 shrink-0 border border-neutral-700">
-                                    {/* <AvatarImage src={user.user_metadata?.avatar_url} /> */}
+                                <Avatar className="h-9 w-9 shrink-0">
+                                    <AvatarImage src={avatarUrl || ""} className="object-cover" />
                                     <AvatarFallback className="bg-[#E0FE56] text-neutral-900 font-medium">
                                         {userName.charAt(0).toUpperCase()}
                                     </AvatarFallback>
@@ -212,13 +215,12 @@ export function AppSidebar({ user }: SidebarProps) {
                                     <p className="text-xs leading-none text-neutral-400 truncate">{user.email}</p>
                                 </div>
                             </DropdownMenuLabel>
-                            <DropdownMenuItem className="cursor-pointer focus:bg-neutral-800 focus:text-white hover:text-white">
+                            <DropdownMenuItem
+                                className="cursor-pointer focus:bg-neutral-800 focus:text-white hover:text-white"
+                                onClick={() => setIsProfileOpen(true)}
+                            >
                                 <User className="mr-2 h-4 w-4" />
                                 <span>Perfil</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer focus:bg-neutral-800 focus:text-white hover:text-white">
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Configurações</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator className="bg-neutral-800" />
                             <DropdownMenuItem
@@ -232,6 +234,12 @@ export function AppSidebar({ user }: SidebarProps) {
                     </DropdownMenu>
                 </div>
             </aside>
+
+            <ProfileSheet
+                user={user}
+                isOpen={isProfileOpen}
+                onOpenChange={setIsProfileOpen}
+            />
         </TooltipProvider >
     )
 }

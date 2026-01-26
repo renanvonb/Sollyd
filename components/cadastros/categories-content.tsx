@@ -65,7 +65,9 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
             const { data: { user } } = await supabase.auth.getUser();
 
             if (!user) {
-                toast.error('Sessão expirada. Faça login novamente.');
+                toast.error('Sessão expirada', {
+                    description: 'Faça login novamente para continuar.'
+                });
                 return;
             }
 
@@ -85,7 +87,9 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
             }
         } catch (error: any) {
             console.error('Error fetching categories:', error);
-            toast.error(`Erro ao carregar categorias: ${error.message || 'Erro desconhecido'}`);
+            toast.error('Erro de carregamento', {
+                description: 'Não foi possível carregar as categorias.'
+            });
         } finally {
             setLoading(false);
         }
@@ -114,7 +118,9 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
 
             if (error) {
                 if (error.code === '23503') {
-                    toast.error('Não é possível excluir: existem transações ou subcategorias vinculadas.');
+                    toast.warning('Ação impedida', {
+                        description: 'Existem transações ou subcategorias vinculadas a esta categoria.'
+                    });
                     return;
                 }
                 throw error;
@@ -215,7 +221,7 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
             />
 
             <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px]" onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle className="font-jakarta">
                             {editingItem ? 'Editar categoria' : 'Nova categoria'}
@@ -250,12 +256,11 @@ export function CategoriesContent({ isOpen, onOpenChange, searchQuery, activeTab
             </Dialog>
 
             <AlertDialog open={!!deleteItem} onOpenChange={() => setDeleteItem(null)}>
-                <AlertDialogContent>
+                <AlertDialogContent className="sm:max-w-[400px]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="font-jakarta">Confirmar exclusão</AlertDialogTitle>
-                        <AlertDialogDescription className="font-inter">
-                            Tem certeza que deseja excluir a categoria <strong>{deleteItem?.name}</strong>?
-                            Esta ação não pode ser desfeita e pode falhar se houver registros vinculados.
+                        <AlertDialogTitle>Excluir</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Você está prestes a realizar uma exclusão permanente que não poderá ser desfeita. Tem certeza que deseja continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

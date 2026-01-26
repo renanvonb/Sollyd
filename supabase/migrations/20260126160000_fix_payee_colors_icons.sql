@@ -1,9 +1,9 @@
 -- Atualizar Pagadores (payer)
 UPDATE payees 
-SET color = 'green', icon = 'arrow-down-right' 
+SET color = 'green', icon = 'arrow-up-right' 
 WHERE type = 'payer';
 
 -- Atualizar Beneficiários (favored)
 UPDATE payees 
-SET color = 'red', icon = 'arrow-up-right' 
+SET color = 'red', icon = 'arrow-down-right' 
 WHERE type = 'favored';

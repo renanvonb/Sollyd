@@ -91,10 +91,14 @@ export function CategorySheet({
             setNewSubName('');
             await fetchSubcategories();
             onRefresh(); // Refresh parent to update counts if needed
-            toast.success('Subcategoria adicionada!');
+            toast.success('Pronto!', {
+                description: 'Subcategoria adicionada com sucesso.'
+            });
         } catch (error) {
             console.error('Error adding subcategory:', error);
-            toast.error('Erro ao adicionar subcategoria');
+            toast.error('Erro ao adicionar', {
+                description: 'Não foi possível salvar a subcategoria.'
+            });
         } finally {
             setSubmitting(false);
         }
@@ -110,10 +114,14 @@ export function CategorySheet({
             await deleteSubcategory(subToDelete.id);
             setSubcategories(prev => prev.filter(s => s.id !== subToDelete.id));
             onRefresh();
-            toast.success('Subcategoria removida');
+            toast.success('Excluído!', {
+                description: 'Subcategoria removida com sucesso.'
+            });
         } catch (error) {
             console.error('Error deleting subcategory:', error);
-            toast.error('Erro ao remover subcategoria');
+            toast.error('Erro ao remover', {
+                description: 'Não foi possível excluir a subcategoria.'
+            });
         } finally {
             setSubToDelete(null);
         }
@@ -216,7 +224,7 @@ export function CategorySheet({
                 <SheetFooter className="mt-auto flex flex-row items-center justify-between sm:justify-between">
                     <Button
                         variant="ghost"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 px-2"
+                        className="text-red-600 hover:text-red-700 hover:bg-destructive/10 px-4 font-inter"
                         onClick={() => onDelete(category)}
                     >
                         Excluir
@@ -249,12 +257,11 @@ export function CategorySheet({
             />
 
             <AlertDialog open={!!subToDelete} onOpenChange={() => setSubToDelete(null)}>
-                <AlertDialogContent>
+                <AlertDialogContent className="sm:max-w-[400px]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="font-jakarta">Excluir subcategoria</AlertDialogTitle>
+                        <AlertDialogTitle>Excluir</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tem certeza que deseja excluir a subcategoria <strong>{subToDelete?.name}</strong>?
-                            Esta ação não pode ser desfeita.
+                            Você está prestes a realizar uma exclusão permanente que não poderá ser desfeita. Tem certeza que deseja continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

@@ -91,12 +91,12 @@ export function WalletForm({
                 if (values.is_principal && newWallet.id) {
                     await setWalletAsPrincipal(newWallet.id);
                 }
-                toast.success('Carteira criada com sucesso!');
+                toast.success('Carteira cadastrada com sucesso!');
             }
             onSuccess();
         } catch (error: any) {
             console.error('Error saving wallet:', error);
-            toast.error(error.message || 'Erro ao salvar carteira');
+            toast.error('Erro ao salvar carteira');
         } finally {
             setIsSubmitting(false);
         }
@@ -198,7 +198,7 @@ export function WalletForm({
                             variant="ghost"
                             onClick={onDelete}
                             disabled={isSubmitting}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-destructive/10 font-inter"
                         >
                             Excluir
                         </Button>

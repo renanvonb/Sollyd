@@ -72,7 +72,9 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
             setWallets(sorted);
         } catch (error) {
             console.error('Erro ao carregar carteiras:', error);
-            toast.error('Erro ao carregar as carteiras.');
+            toast.error('Erro de carregamento', {
+                description: 'Não foi possível carregar suas carteiras.'
+            });
         } finally {
             setLoading(false);
         }
@@ -199,7 +201,7 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
 
             {/* Dialog de Criação/Edição */}
             <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px]" onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle className="font-jakarta">{editingWallet ? 'Editar carteira' : 'Nova carteira'}</DialogTitle>
                         <DialogDescription>
@@ -233,11 +235,11 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
 
             {/* Dialog de Exclusão */}
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <AlertDialogContent>
+                <AlertDialogContent className="sm:max-w-[400px]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="font-jakarta">Excluir carteira</AlertDialogTitle>
+                        <AlertDialogTitle>Excluir</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tem certeza que deseja excluir esta carteira? Esta ação não pode ser desfeita.
+                            Você está prestes a realizar uma exclusão permanente que não poderá ser desfeita. Tem certeza que deseja continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -247,7 +249,7 @@ export function WalletsContent({ isOpen, onOpenChange, searchQuery }: WalletsCon
                             variant="destructive"
                             disabled={submitting}
                         >
-                            {submitting ? 'Excluindo...' : 'Excluir'}
+                            Excluir
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

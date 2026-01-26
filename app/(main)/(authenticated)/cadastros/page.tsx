@@ -132,7 +132,7 @@ export default function CadastrosPage() {
                 </div>
 
                 {/* Content Area - Cards */}
-                <div className="flex-1 flex flex-col gap-8 overflow-auto">
+                <div className="flex-1 flex flex-col gap-8 overflow-auto scrollbar-hide">
                     {activeTab === 'carteiras' && <WalletsContent isOpen={isWalletDialogOpen} onOpenChange={setIsWalletDialogOpen} searchQuery={searchValue} />}
                     {activeTab === 'pagadores' && <PayersContent isOpen={isPayerDialogOpen} onOpenChange={setIsPayerDialogOpen} searchQuery={searchValue} />}
                     {activeTab === 'beneficiarios' && <PayeesContent isOpen={isPayeeDialogOpen} onOpenChange={setIsPayeeDialogOpen} searchQuery={searchValue} />}

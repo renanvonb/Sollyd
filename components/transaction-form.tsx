@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import {
     Select,
@@ -123,11 +124,14 @@ export interface TransactionFormProps {
     defaultType?: "revenue" | "expense" | "investment"
     onSuccess?: () => void
     onCancel?: () => void
+    initialDate?: Date
 }
 
-export function TransactionForm({ open, transaction, defaultType = "expense", onSuccess, onCancel }: TransactionFormProps) {
+export function TransactionForm({ open, transaction, defaultType = "expense", onSuccess, onCancel, initialDate }: TransactionFormProps) {
     const [isPending, startTransition] = React.useTransition()
     const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
+
+    const [isLoadingData, setIsLoadingData] = React.useState(false)
 
     const [allCategories, setAllCategories] = React.useState<Category[]>([])
     const [subcategories, setSubcategories] = React.useState<Subcategory[]>([])
@@ -146,8 +150,8 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
             classification_id: "",
             category_id: "",
             subcategory_id: "",
-            date: new Date(),
-            competence: startOfMonth(new Date()),
+            date: initialDate || new Date(),
+            competence: startOfMonth(initialDate || new Date()),
             status: "Realizado",
         },
     })
@@ -195,7 +199,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
     const watchedDate = form.watch("date")
     React.useEffect(() => {
         if (watchedDate) {
-            form.setValue("competence", startOfMonth(watchedDate))
+            form.setValue("competence", watchedDate)
         }
     }, [watchedDate])
 
@@ -203,41 +207,50 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
     React.useEffect(() => {
         if (open) {
             const loadData = async () => {
-                const [w, c, cl] = await Promise.all([
-                    getWallets(),
-                    getCategories(),
-                    getClassifications(),
-                ])
-                setWallets(w)
-                setAllCategories(c)
-                setClassifications(cl)
+                setIsLoadingData(true)
+                try {
+                    const [w, c, cl] = await Promise.all([
+                        getWallets(),
+                        getCategories(),
+                        getClassifications(),
+                    ])
+                    setWallets(w)
+                    setAllCategories(c)
+                    setClassifications(cl)
 
-                if (transaction) {
-                    const categoryId = transaction.category_id || ""
-                    if (categoryId) {
-                        const subs = await getSubcategories(categoryId)
-                        setSubcategories(subs)
-                    }
+                    if (transaction) {
+                        const categoryId = transaction.category_id || ""
+                        if (categoryId) {
+                            const subs = await getSubcategories(categoryId)
+                            setSubcategories(subs)
+                        }
 
-                    form.reset({
-                        description: transaction.description,
-                        amount: transaction.amount,
-                        type: transaction.type,
-                        wallet_id: transaction.wallet_id || "",
-                        payee_id: transaction.payee_id || transaction.payer_id || "",
-                        payment_method: transaction.payment_method || "",
-                        classification_id: transaction.classification_id || "",
-                        category_id: transaction.category_id || "",
-                        subcategory_id: transaction.subcategory_id || "",
-                        date: transaction.date ? parseISO(transaction.date) : new Date(),
-                        competence: transaction.competence ? parseISO(transaction.competence) : startOfMonth(new Date()),
-                        status: transaction.status === 'Realizado' ? 'Realizado' : 'Pendente',
-                    })
-                } else {
-                    const principal = w.find(wallet => wallet.is_principal)
-                    if (principal && !form.getValues("wallet_id")) {
-                        form.setValue("wallet_id", principal.id)
+                        form.reset({
+                            description: transaction.description,
+                            amount: transaction.amount,
+                            type: transaction.type,
+                            wallet_id: transaction.wallet_id || "",
+                            payee_id: transaction.payee_id || transaction.payer_id || "",
+                            payment_method: transaction.payment_method || "",
+                            classification_id: transaction.classification_id || "",
+                            category_id: transaction.category_id || "",
+                            subcategory_id: transaction.subcategory_id || "",
+                            date: transaction.date ? parseISO(transaction.date) : new Date(),
+                            competence: transaction.competence ? parseISO(transaction.competence) : startOfMonth(new Date()),
+                            status: transaction.status === 'Realizado' ? 'Realizado' : 'Pendente',
+                        })
+                    } else {
+                        const principal = w.find(wallet => wallet.is_principal)
+                        if (principal && !form.getValues("wallet_id")) {
+                            form.setValue("wallet_id", principal.id)
+                        }
+                        if (initialDate) {
+                            form.setValue("date", initialDate)
+                            form.setValue("competence", startOfMonth(initialDate))
+                        }
                     }
+                } finally {
+                    setIsLoadingData(false)
                 }
             }
             loadData()
@@ -272,15 +285,15 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         : await saveTransaction(payload)
 
                     if (result.success) {
-                        toast.success(isEditMode ? "Transação atualizada!" : "Transação registrada!")
+                        toast.success(isEditMode ? "Transação atualizada com sucesso!" : "Transação registrada com sucesso!")
                         form.reset()
                         if (onSuccess) onSuccess()
                     } else {
-                        toast.error(result.error || "Erro ao salvar")
+                        toast.error(result.error || "Erro ao salvar transação")
                     }
                 } catch (error) {
                     console.error(error)
-                    toast.error("Erro inesperado")
+                    toast.error("Erro ao salvar transação")
                 }
             }
             run()
@@ -292,10 +305,10 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
         startTransition(async () => {
             const result = await deleteTransaction(transaction.id)
             if (result.success) {
-                toast.success("Transação excluída")
+                toast.success("Transação excluída com sucesso!")
                 if (onSuccess) onSuccess()
             } else {
-                toast.error(result.error || "Erro ao excluir")
+                toast.error(result.error || "Erro ao excluir transação")
             }
         })
     }
@@ -308,103 +321,113 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                     onValueChange={(v) => form.setValue("type", v as any)}
                     className="w-full"
                 >
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="expense">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="expense" disabled={isLoadingData}>
                             Despesa
                         </TabsTrigger>
-                        <TabsTrigger value="revenue">
+                        <TabsTrigger value="revenue" disabled={isLoadingData}>
                             Receita
+                        </TabsTrigger>
+                        <TabsTrigger value="investment" disabled={true}>
+                            Investimento
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
 
                 <div className="flex flex-col gap-6 min-h-[600px]">
-                    <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                            <FormItem className="space-y-2">
-                                <RequiredLabel error={!!form.formState.errors.description}>Descrição</RequiredLabel>
-                                <FormControl>
-                                    <Input
-                                        {...field}
-                                        placeholder="Informe uma descrição"
-                                        className="font-inter"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    {isLoadingData ? (
+                        <div className="flex flex-col gap-6">
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                            control={form.control}
-                            name="amount"
-                            render={({ field }) => (
-                                <FormItem className="space-y-2">
-                                    <RequiredLabel error={!!form.formState.errors.amount}>Valor</RequiredLabel>
-                                    <FormControl>
-                                        <MoneyInput
-                                            value={field.value}
-                                            onValueChange={field.onChange}
-                                            placeholder="R$ 0,00"
-                                            className="font-inter"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="wallet_id"
-                            render={({ field }) => (
-                                <FormItem className="space-y-2">
-                                    <RequiredLabel error={!!form.formState.errors.wallet_id}>Carteira</RequiredLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
-                                                <SelectValue placeholder="Selecione" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {wallets.map(w => (
-                                                <SelectItem key={w.id} value={w.id}>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(w.color || 'zinc'))} />
-                                                        {w.name}
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-12" />
+                                    <Skeleton className="h-10 w-full" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-16" />
+                                    <Skeleton className="h-10 w-full" />
+                                </div>
+                            </div>
 
-                    {type === 'expense' ? (
+                            {(transaction?.type || type) === 'expense' ? (
+                                <>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-4 w-20" />
+                                            <Skeleton className="h-10 w-full" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-4 w-24" />
+                                            <Skeleton className="h-10 w-full" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-4 w-20" />
+                                            <Skeleton className="h-10 w-full" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-4 w-24" />
+                                            <Skeleton className="h-10 w-full" />
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-20" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-20" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-24" />
+                                    <Skeleton className="h-10 w-full" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-12" />
+                                    <Skeleton className="h-10 w-full" />
+                                </div>
+                            </div>
+
+                            <div className="flex flex-row items-center justify-between rounded-lg border p-4 space-y-0 mt-auto">
+                                <div className="space-y-0.5">
+                                    <Skeleton className="h-5 w-24" />
+                                    <Skeleton className="h-4 w-48 mt-1" />
+                                </div>
+                                <Skeleton className="h-6 w-10 rounded-full" />
+                            </div>
+                        </div>
+                    ) : (
                         <>
                             <FormField
                                 control={form.control}
-                                name="payment_method"
+                                name="description"
                                 render={({ field }) => (
                                     <FormItem className="space-y-2">
-                                        <RequiredLabel error={!!form.formState.errors.payment_method}>Método</RequiredLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
-                                                    <SelectValue placeholder="Selecione" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {["Boleto", "Crédito", "Débito", "Pix", "Dinheiro"].map(m => (
-                                                    <SelectItem key={m} value={m}>{m}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <RequiredLabel error={!!form.formState.errors.description}>Descrição</RequiredLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                autoFocus
+                                                placeholder="Informe uma descrição"
+                                                className="font-inter"
+                                            />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -413,32 +436,28 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
-                                    name="payee_id"
+                                    name="amount"
                                     render={({ field }) => (
                                         <FormItem className="space-y-2">
-                                            <RequiredLabel error={!!form.formState.errors.payee_id}>Beneficiário</RequiredLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
-                                                        <SelectValue placeholder="Selecione" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent className="max-h-[250px]">
-                                                    {payees.map(p => (
-                                                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <RequiredLabel error={!!form.formState.errors.amount}>Valor</RequiredLabel>
+                                            <FormControl>
+                                                <MoneyInput
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                    placeholder="R$ 0,00"
+                                                    className="font-inter"
+                                                />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="classification_id"
+                                    name="wallet_id"
                                     render={({ field }) => (
                                         <FormItem className="space-y-2">
-                                            <RequiredLabel error={!!form.formState.errors.classification_id}>Classificação</RequiredLabel>
+                                            <RequiredLabel error={!!form.formState.errors.wallet_id}>Carteira</RequiredLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
@@ -446,11 +465,11 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    {classifications.map(c => (
-                                                        <SelectItem key={c.id} value={c.id}>
+                                                    {wallets.map(w => (
+                                                        <SelectItem key={w.id} value={w.id}>
                                                             <div className="flex items-center gap-2">
-                                                                <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(c.color || 'zinc'))} />
-                                                                {c.name}
+                                                                <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(w.color || 'zinc'))} />
+                                                                {w.name}
                                                             </div>
                                                         </SelectItem>
                                                     ))}
@@ -462,178 +481,262 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="category_id"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-2">
-                                            <RequiredLabel error={!!form.formState.errors.category_id}>Categoria</RequiredLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
-                                                        <SelectValue placeholder="Selecione" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {filteredCategories.map(c => (
-                                                        <SelectItem key={c.id} value={c.id}>
-                                                            <div className="flex items-center gap-2">
-                                                                <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(c.color || 'zinc'))} />
-                                                                {c.name}
-                                                            </div>
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="subcategory_id"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-2">
-                                            <RequiredLabel error={!!form.formState.errors.subcategory_id}>Subcategoria</RequiredLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                value={field.value}
-                                                disabled={!selectedCategoryId}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
-                                                        <SelectValue placeholder="Selecione" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {subcategories.map(s => (
-                                                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                        </>
-                    ) : (
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="payee_id"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-2">
-                                        <RequiredLabel error={!!form.formState.errors.payee_id}>Pagador</RequiredLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
-                                                    <SelectValue placeholder="Selecione" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent className="max-h-[250px]">
-                                                {payees.map(p => (
-                                                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="category_id"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-2">
-                                        <RequiredLabel error={!!form.formState.errors.category_id}>Categoria</RequiredLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
-                                                    <SelectValue placeholder="Selecione" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {filteredCategories.map(c => (
-                                                    <SelectItem key={c.id} value={c.id}>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(c.color || 'zinc'))} />
-                                                            {c.name}
-                                                        </div>
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                            control={form.control}
-                            name="competence"
-                            render={({ field }) => (
-                                <FormItem className="space-y-2 flex flex-col">
-                                    <FormLabel className={cn("text-muted-foreground", !!form.formState.errors.competence && "text-destructive")}>Competência</FormLabel>
-                                    <FormControl>
-                                        <MonthPicker
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            className="w-full font-inter"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="date"
-                            render={({ field }) => (
-                                <FormItem className="space-y-2 flex flex-col">
-                                    <FormLabel className={cn("text-muted-foreground", !!form.formState.errors.date && "text-destructive")}>Data</FormLabel>
-                                    <FormControl>
-                                        <DatePicker
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            className="w-full font-inter"
-                                            disabled={status === 'Pendente'}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 space-y-0 mt-auto">
-                                <div className="space-y-0.5">
-                                    <FormLabel className="text-base">
-                                        {type === 'expense' ? 'Pago' : 'Recebido'}
-                                    </FormLabel>
-                                    <p className="text-sm text-muted-foreground font-inter">
-                                        {type === 'expense'
-                                            ? 'Marcar como pagamento realizado'
-                                            : 'Marcar como pagamento recebido'}
-                                    </p>
-                                </div>
-                                <FormControl>
-                                    <Switch
-                                        checked={field.value === 'Realizado'}
-                                        onCheckedChange={(checked) => field.onChange(checked ? 'Realizado' : 'Pendente')}
+                            {type === 'expense' ? (
+                                <>
+                                    <FormField
+                                        control={form.control}
+                                        name="payment_method"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-2">
+                                                <RequiredLabel error={!!form.formState.errors.payment_method}>Método</RequiredLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
+                                                            <SelectValue placeholder="Selecione" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {["Boleto", "Crédito", "Débito", "Pix", "Dinheiro"].map(m => (
+                                                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
                                     />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="payee_id"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <RequiredLabel error={!!form.formState.errors.payee_id}>Beneficiário</RequiredLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
+                                                                <SelectValue placeholder="Selecione" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="max-h-[250px]">
+                                                            {payees.map(p => (
+                                                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="classification_id"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <RequiredLabel error={!!form.formState.errors.classification_id}>Classificação</RequiredLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
+                                                                <SelectValue placeholder="Selecione" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {classifications.map(c => (
+                                                                <SelectItem key={c.id} value={c.id}>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(c.color || 'zinc'))} />
+                                                                        {c.name}
+                                                                    </div>
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="category_id"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <RequiredLabel error={!!form.formState.errors.category_id}>Categoria</RequiredLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
+                                                                <SelectValue placeholder="Selecione" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {filteredCategories.map(c => (
+                                                                <SelectItem key={c.id} value={c.id}>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(c.color || 'zinc'))} />
+                                                                        {c.name}
+                                                                    </div>
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="subcategory_id"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2">
+                                                    <RequiredLabel error={!!form.formState.errors.subcategory_id}>Subcategoria</RequiredLabel>
+                                                    <Select
+                                                        onValueChange={field.onChange}
+                                                        value={field.value}
+                                                        disabled={!selectedCategoryId}
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
+                                                                <SelectValue placeholder="Selecione" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {subcategories.map(s => (
+                                                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="payee_id"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-2">
+                                                <RequiredLabel error={!!form.formState.errors.payee_id}>Pagador</RequiredLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
+                                                            <SelectValue placeholder="Selecione" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent className="max-h-[250px]">
+                                                        {payees.map(p => (
+                                                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="category_id"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-2">
+                                                <RequiredLabel error={!!form.formState.errors.category_id}>Categoria</RequiredLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="font-inter w-full text-left font-normal cursor-pointer">
+                                                            <SelectValue placeholder="Selecione" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {filteredCategories.map(c => (
+                                                            <SelectItem key={c.id} value={c.id}>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className={cn("h-2.5 w-2.5 rounded-full", getColorClass(c.color || 'zinc'))} />
+                                                                    {c.name}
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="competence"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-2 flex flex-col">
+                                            <FormLabel className={cn("text-muted-foreground", !!form.formState.errors.competence && "text-destructive")}>Competência</FormLabel>
+                                            <FormControl>
+                                                <MonthPicker
+                                                    value={field.value}
+                                                    onChange={(val) => {
+                                                        field.onChange(val)
+                                                        if (val) {
+                                                            form.setValue("date", startOfMonth(val))
+                                                        }
+                                                    }}
+                                                    className="w-full font-inter"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="date"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-2 flex flex-col">
+                                            <FormLabel className={cn("text-muted-foreground", !!form.formState.errors.date && "text-destructive")}>Data</FormLabel>
+                                            <FormControl>
+                                                <DatePicker
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    className="w-full font-inter"
+                                                    disabled={status === 'Pendente'}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <FormField
+                                control={form.control}
+                                name="status"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 space-y-0 mt-auto">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base">
+                                                {type === 'expense' ? 'Pago' : 'Recebido'}
+                                            </FormLabel>
+                                            <p className="text-sm text-muted-foreground font-inter">
+                                                {type === 'expense'
+                                                    ? 'Marcar como pagamento realizado'
+                                                    : 'Marcar como pagamento recebido'}
+                                            </p>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value === 'Realizado'}
+                                                onCheckedChange={(checked) => field.onChange(checked ? 'Realizado' : 'Pendente')}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        </>
+                    )}
                 </div>
 
                 <div className="flex justify-between gap-3 pt-2">
@@ -642,8 +745,8 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                             type="button"
                             variant="ghost"
                             onClick={() => setShowDeleteDialog(true)}
-                            disabled={isPending}
-                            className="text-destructive hover:text-destructive/90 hover:bg-destructive/10 font-inter"
+                            disabled={isPending || isLoadingData}
+                            className="text-red-600 hover:text-red-700 hover:bg-destructive/10 font-inter"
                         >
                             Excluir
                         </Button>
@@ -660,7 +763,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         </Button>
                         <Button
                             type="submit"
-                            disabled={isPending}
+                            disabled={isPending || isLoadingData}
                             className="font-inter"
                         >
                             {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -671,20 +774,20 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
             </form>
 
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <AlertDialogContent>
+                <AlertDialogContent className="sm:max-w-[400px]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
+                        <AlertDialogTitle>Excluir</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta ação não pode ser desfeita.
+                            Você está prestes a realizar uma exclusão permanente que não poderá ser desfeita. Tem certeza que deseja continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Não, cancelar</AlertDialogCancel>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
                             variant="destructive"
                         >
-                            Sim, excluir
+                            Excluir
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

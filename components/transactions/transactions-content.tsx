@@ -66,7 +66,7 @@ export function TransactionsContent({
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
             {/* Grid de Totalizadores (KPIs) - SEMPRE VISÍVEL */}
             <div className="flex-none font-sans">
-                <TransactionSummaryCards totals={totals} />
+                <TransactionSummaryCards totals={totals} isLoading={isPending} />
             </div>
 
             {/* Área de Conteúdo */}
@@ -108,7 +108,7 @@ export function TransactionsContent({
                     />
                 ) : (
                     <div id="data-table-wrapper" className="flex-1 min-h-0 bg-card rounded-lg border border-border shadow-sm flex flex-col relative overflow-hidden font-sans">
-                        <TransactionTable data={data} onRowClick={onRowClick} />
+                        <TransactionTable data={data} onRowClick={onRowClick} searchQuery={searchQuery} />
                     </div>
                 )}
             </div>

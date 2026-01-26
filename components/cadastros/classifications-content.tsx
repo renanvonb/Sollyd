@@ -70,7 +70,9 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
             setClassifications(data || []);
         } catch (error: any) {
             console.error('Error fetching classifications:', error);
-            toast.error(`Erro ao carregar classificações: ${error.message || 'Erro desconhecido'}`);
+            toast.error('Erro de carregamento', {
+                description: 'Não foi possível carregar as classificações.'
+            });
         } finally {
             setLoading(false);
         }
@@ -83,13 +85,19 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
             setSubmitting(true);
             await deleteClassification(deleteItem.id);
             setClassifications(prev => prev.filter(item => item.id !== deleteItem.id));
-            toast.success('Classificação excluída com sucesso!');
+            toast.success('Excluída!', {
+                description: 'A classificação foi removida com sucesso.'
+            });
         } catch (error: any) {
             console.error('Error deleting classification:', error);
             if (error.code === '23503') {
-                toast.error('Não é possível excluir: existem categorias usando esta classificação.');
+                toast.warning('Ação impedida', {
+                    description: 'Existem categorias vinculadas a esta classificação.'
+                });
             } else {
-                toast.error('Erro ao excluir classificação');
+                toast.error('Ops!', {
+                    description: 'Ocorreu um erro ao tentar excluir a classificação.'
+                });
             }
         } finally {
             setDeleteItem(null);
@@ -168,7 +176,7 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
             )}
 
             <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px]" onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle className="font-jakarta">
                             {editingItem ? 'Editar classificação' : 'Nova classificação'}
@@ -201,13 +209,11 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
             </Dialog>
 
             <AlertDialog open={!!deleteItem} onOpenChange={(open) => !open && setDeleteItem(null)}>
-                <AlertDialogContent>
+                <AlertDialogContent className="sm:max-w-[400px]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="font-jakarta">
-                            Confirmar exclusão
-                        </AlertDialogTitle>
+                        <AlertDialogTitle>Excluir</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Ao excluir esta classificação, todas as categorias associadas ficarão 'Sem Classificação'. As transações vinculadas a essas categorias não serão afetadas.
+                            Você está prestes a realizar uma exclusão permanente que não poderá ser desfeita. Tem certeza que deseja continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -217,7 +223,7 @@ export function ClassificationsContent({ isOpen, onOpenChange, searchQuery }: Cl
                             variant="destructive"
                             disabled={submitting}
                         >
-                            {submitting ? 'Excluindo...' : 'Excluir'}
+                            Excluir
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

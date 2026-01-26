@@ -82,7 +82,9 @@ export function ClassificationForm({
             const { data: { user } } = await supabase.auth.getUser();
 
             if (!user) {
-                toast.error('Sessão expirada. Faça login novamente.');
+                toast.error('Sessão expirada', {
+                    description: 'Faça login novamente para continuar.'
+                });
                 return;
             }
 
@@ -100,18 +102,24 @@ export function ClassificationForm({
                     .eq('id', classificationId)
                     .eq('user_id', user.id);
                 if (error) throw error;
-                toast.success('Classificação atualizada com sucesso!');
+                toast.success('Tudo pronto!', {
+                    description: 'A classificação foi atualizada com sucesso.'
+                });
             } else {
                 const { error } = await supabase
                     .from('classifications')
                     .insert([payload]);
                 if (error) throw error;
-                toast.success('Classificação criada com sucesso!');
+                toast.success('Sucesso!', {
+                    description: 'Sua nova classificação foi cadastrada.'
+                });
             }
             onSuccess();
         } catch (error: any) {
             console.error('Error saving classification:', error);
-            toast.error(error.message || 'Erro ao salvar classificação');
+            toast.error('Não foi possível salvar', {
+                description: error.message || 'Ocorreu um erro ao processar a classificação.'
+            });
         } finally {
             setIsSubmitting(false);
         }

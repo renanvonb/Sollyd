@@ -70,33 +70,38 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
     )
 
     try {
-        const { data, error } = await Promise.race([
-            supabase
-                .from('transactions')
-                .select(`
-                    *,
-                    payees(id, name),
-                    classifications(id, name, color),
-                    categories(id, name, color),
-                    subcategories(id, name),
-                    wallets(id, name, color)
-                `)
-                .eq('user_id', userId)
-                .gte('competence', format(start, 'yyyy-MM-dd'))
-                .lte('competence', format(end, 'yyyy-MM-dd'))
-                .order('competence', { ascending: false })
-                .order('created_at', { ascending: false }),
-            timeout
-        ]) as any
+        const startStr = format(start, 'yyyy-MM-dd')
+        const endStr = format(end, 'yyyy-MM-dd')
 
-        console.log('[getTransactions] Result:', { count: data?.length || 0, error: error?.message })
+        // Executar a query de forma mais robusta
+        const query = supabase
+            .from('transactions')
+            .select(`
+                *,
+                payees(id, name),
+                classifications(id, name, color),
+                categories(id, name, color),
+                subcategories(id, name),
+                wallets(id, name, color)
+            `)
+            .eq('user_id', userId)
+            // Filtro simplificado e mais performático (busca tanto em competência quanto em data)
+            .or(`competence.gte.${startStr},date.gte.${startStr}`)
+            .or(`competence.lte.${endStr},date.lte.${endStr}`)
+            .order('competence', { ascending: false })
+            .order('created_at', { ascending: false });
+
+        const { data, error } = await Promise.race([
+            query,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Query timeout')), 30000))
+        ]) as any
 
         if (error) {
             console.error('[getTransactions] Query Error:', error.message)
             return []
         }
 
-        return data as any[]
+        return data || []
     } catch (error) {
         console.error('[getTransactions] Unexpected error or timeout:', error)
         return []

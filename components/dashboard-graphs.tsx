@@ -31,6 +31,12 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
     const currentYear = new Date().getFullYear()
     const selectedYear = parseInt(searchParams.get('year') || currentYear.toString())
 
+    const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null)
+    const [selectedSubcategory, setSelectedSubcategory] = React.useState<string | null>(null)
+    const [selectedClassification, setSelectedClassification] = React.useState<string | null>(null)
+    const [selectedPayee, setSelectedPayee] = React.useState<string | null>(null)
+    const [selectedPayer, setSelectedPayer] = React.useState<string | null>(null)
+
     const date: { from: Date; to: Date } | undefined = React.useMemo(() => {
         const from = searchParams.get('from')
         const to = searchParams.get('to')
@@ -102,7 +108,17 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
             return tDate >= date.from! && tDate <= date.to!;
         }) : filteredData;
 
-        return dataInRange.reduce((acc, curr) => {
+        // Apply all filters for totals calculation to reflect current view
+        const fullyFiltered = dataInRange.filter(t => {
+            if (selectedCategory && (t.categories?.name || "Sem Categoria") !== selectedCategory) return false;
+            if (selectedSubcategory && (t.subcategories?.name || "Sem Subcategoria") !== selectedSubcategory) return false;
+            if (selectedClassification && (t.classifications?.name || "Sem Classificação") !== selectedClassification) return false;
+            if (selectedPayee && (t.payees?.name || "Sem Beneficiário") !== selectedPayee) return false;
+            if (selectedPayer && (t.payees?.name || t.payers?.name || "Sem Pagador") !== selectedPayer) return false;
+            return true;
+        });
+
+        return fullyFiltered.reduce((acc, curr) => {
             const amount = parseFloat(curr.amount as any) || 0
             if (curr.type === 'revenue') acc.income += amount
             else if (curr.type === 'expense') acc.expense += amount
@@ -110,20 +126,39 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
             acc.balance = acc.income - acc.expense - acc.investment
             return acc
         }, { income: 0, expense: 0, investment: 0, balance: 0 })
-    }, [filteredData, date])
+    }, [filteredData, date, selectedCategory, selectedSubcategory, selectedClassification, selectedPayee, selectedPayer])
 
     const chartsData = React.useMemo(() => {
-        const dataInRange = date?.from && date?.to ? filteredData.filter(t => {
+        const baseData = date?.from && date?.to ? filteredData.filter(t => {
             if (!t.date) return false;
             const tDate = parseISO(t.date);
             return tDate >= date.from! && tDate <= date.to!;
         }) : filteredData;
 
-        const expenses = dataInRange.filter(t => t.type === 'expense');
+        // Helper to apply filters EXCEPT specific keys
+        const getFilteredData = (exclude?: 'category' | 'subcategory' | 'classification' | 'payee' | 'payer') => {
+            return baseData.filter(t => {
+                if (exclude !== 'category' && selectedCategory && (t.categories?.name || "Sem Categoria") !== selectedCategory) return false;
+                if (exclude !== 'subcategory' && selectedSubcategory && (t.subcategories?.name || "Sem Subcategoria") !== selectedSubcategory) return false;
+                if (exclude !== 'classification' && selectedClassification && (t.classifications?.name || "Sem Classificação") !== selectedClassification) return false;
+                if (exclude !== 'payee' && selectedPayee && (t.payees?.name || "Sem Beneficiário") !== selectedPayee) return false;
+                if (exclude !== 'payer' && selectedPayer && (t.payees?.name || t.payers?.name || "Sem Pagador") !== selectedPayer) return false;
+                return true;
+            });
+        };
 
-        // 1. By Category
+        const dataForCategory = getFilteredData('category').filter(t => t.type === 'expense');
+        const dataForSubcategory = getFilteredData('subcategory').filter(t => t.type === 'expense');
+        const dataForClassification = getFilteredData('classification').filter(t => t.type === 'expense');
+        const dataForPayee = getFilteredData('payee').filter(t => t.type === 'expense');
+        const dataForPayer = getFilteredData('payer').filter(t => t.type === 'revenue');
+
+        // History uses ALL filters
+        const dataForHistory = getFilteredData();
+
+        // 1. By Category (Input: dataForCategory)
         const byCategoryMap = new Map<string, { amount: number, color: string }>();
-        expenses.forEach(t => {
+        dataForCategory.forEach(t => {
             const name = t.categories?.name || "Sem Categoria";
             const color = getColorHex(t.categories?.color || "zinc");
             const current = byCategoryMap.get(name) || { amount: 0, color };
@@ -136,9 +171,9 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
             fill: val.color
         })).sort((a, b) => b.amount - a.amount);
 
-        // 2. By Subcategory
+        // 2. By Subcategory (Input: dataForSubcategory)
         const bySubMap = new Map<string, { amount: number, color: string }>();
-        expenses.forEach(t => {
+        dataForSubcategory.forEach(t => {
             if (t.subcategories?.name) {
                 const name = t.subcategories.name;
                 const rawColor = t.subcategories.color || t.categories?.color || "zinc";
@@ -154,9 +189,9 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
             fill: val.color
         })).sort((a, b) => b.amount - a.amount).slice(0, 10);
 
-        // 3. By Classification
+        // 3. By Classification (Input: dataForClassification)
         const byClassMap = new Map<string, { amount: number, color: string }>();
-        expenses.forEach(t => {
+        dataForClassification.forEach(t => {
             if (t.classifications) {
                 const name = t.classifications.name;
                 const color = getColorHex(t.classifications.color || "zinc");
@@ -171,7 +206,7 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
             fill: val.color
         })).sort((a, b) => b.amount - a.amount);
 
-        // 4. History
+        // 4. History (Input: dataForHistory)
         const isMonthlyRange = range === 'mes';
         let historyStart = startOfYear(new Date(selectedYear, 0, 1));
         let historyEnd = endOfYear(new Date(selectedYear, 0, 1));
@@ -182,7 +217,7 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
         }
 
         const historyMap = new Map<string, { income: number, expense: number }>();
-        filteredData.forEach(t => {
+        dataForHistory.forEach(t => {
             if (!t.date) return;
             const tDate = parseISO(t.date);
             if (tDate >= historyStart && tDate <= historyEnd) {
@@ -205,11 +240,11 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
             return { date: dateKey, ...data };
         });
 
-        // 5. By Payee (Expenses)
+        // 5. By Payee (Input: dataForPayee)
         const byPayeeMap = new Map<string, { amount: number, color: string }>();
-        expenses.forEach(t => {
+        dataForPayee.forEach(t => {
             const name = t.payees?.name || "Sem Beneficiário";
-            const color = getColorHex('red'); // Force standard red for all beneficiaries
+            const color = getColorHex('red');
             const current = byPayeeMap.get(name) || { amount: 0, color };
             current.amount += parseFloat(t.amount as any);
             byPayeeMap.set(name, current);
@@ -220,12 +255,12 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
             fill: val.color
         })).sort((a, b) => b.amount - a.amount).slice(0, 5);
 
-        // 6. By Payer (Revenue)
-        const revenues = dataInRange.filter(t => t.type === 'revenue');
+        // 6. By Payer (Input: dataForPayer)
         const byPayerMap = new Map<string, { amount: number, color: string }>();
-        revenues.forEach(t => {
+        // Note: dataForPayer is already filtered by type='revenue' above
+        dataForPayer.forEach(t => {
             const name = t.payees?.name || t.payers?.name || "Sem Pagador";
-            const color = getColorHex('green'); // Force standard green for all payers
+            const color = getColorHex('green');
             const current = byPayerMap.get(name) || { amount: 0, color };
             current.amount += parseFloat(t.amount as any);
             byPayerMap.set(name, current);
@@ -237,7 +272,7 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
         })).sort((a, b) => b.amount - a.amount).slice(0, 5);
 
         return { byCategory, bySubcategory, byClassification, history, byPayee, byPayer };
-    }, [filteredData, date, range, selectedYear]);
+    }, [filteredData, date, range, selectedYear, selectedCategory, selectedSubcategory, selectedClassification, selectedPayee, selectedPayer]);
 
     return (
         <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-hidden">
@@ -260,6 +295,8 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
                             <ExpensesByClassificationChart
                                 data={chartsData.byClassification}
                                 periodLabel={periodLabel}
+                                onClassificationClick={setSelectedClassification}
+                                selectedClassification={selectedClassification}
                             />
                         </div>
                     </div>
@@ -270,12 +307,16 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
                             <ExpensesByCategoryChart
                                 data={chartsData.byCategory}
                                 periodLabel={periodLabel}
+                                onCategoryClick={setSelectedCategory}
+                                selectedCategory={selectedCategory}
                             />
                         </div>
                         <div className="h-full">
                             <ExpensesBySubcategoryChart
                                 data={chartsData.bySubcategory}
                                 periodLabel={periodLabel}
+                                onSubcategoryClick={setSelectedSubcategory}
+                                selectedSubcategory={selectedSubcategory}
                             />
                         </div>
                     </div>
@@ -286,12 +327,16 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
                             <ExpensesByPayeeChart
                                 data={chartsData.byPayee}
                                 periodLabel={periodLabel}
+                                onPayeeClick={setSelectedPayee}
+                                selectedPayee={selectedPayee}
                             />
                         </div>
                         <div className="h-full">
                             <ExpensesByPayerChartNameHack
                                 data={chartsData.byPayer}
                                 periodLabel={periodLabel}
+                                onPayerClick={setSelectedPayer}
+                                selectedPayer={selectedPayer}
                             />
                         </div>
                     </div>
@@ -300,6 +345,7 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
         </div>
     )
 }
+
 
 function ExpensesByPayerChartNameHack(props: any) {
     return <RevenueByPayerChart {...props} />

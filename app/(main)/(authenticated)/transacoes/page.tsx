@@ -5,6 +5,7 @@ import { useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { DateRange } from "react-day-picker"
 import { getTransactions, TimeRange } from "@/app/actions/transactions-fetch"
+import { normalizeSearch } from "@/lib/utils"
 import { TopBar } from "@/components/ui/top-bar"
 import { TransactionsHeader } from "@/components/transactions/transactions-header"
 import { TransactionsContent } from "@/components/transactions/transactions-content"
@@ -19,13 +20,12 @@ const periodTabs = [
     { id: 'semana', label: 'Semana' },
     { id: 'mes', label: 'Mês' },
     { id: 'ano', label: 'Ano' },
-    { id: 'custom', label: 'Período' },
 ]
 
 export default function TransactionsPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const [isPending, startTransition] = useTransition()
+    // const [isPending, startTransition] = useTransition() // Not currently needed for this fetch pattern
 
     // State
     const [data, setData] = React.useState<any[]>([])
@@ -55,7 +55,9 @@ export default function TransactionsPage() {
             setData(result)
         } catch (error) {
             console.error("Error fetching transactions:", error)
-            toast.error("Erro ao carregar transações")
+            toast.error("Erro de carregamento", {
+                description: "Não foi possível carregar o histórico de transações."
+            })
         } finally {
             setLoading(false)
         }
@@ -85,14 +87,17 @@ export default function TransactionsPage() {
 
     // Search debounce
     React.useEffect(() => {
+        const currentQ = searchParams.get('q') || ""
+        if (searchValue === currentQ) return
+
         const timer = setTimeout(() => {
-            const params = new URLSearchParams(searchParams.toString())
+            const params = new URLSearchParams(window.location.search)
             if (searchValue) params.set('q', searchValue)
             else params.delete('q')
             router.push(`?${params.toString()}`, { scroll: false })
-        }, 300)
+        }, 400)
         return () => clearTimeout(timer)
-    }, [searchValue, router, searchParams])
+    }, [searchValue, router])
 
     const handleAddClick = (type: "revenue" | "expense" | "investment") => {
         setNewTransactionType(type)
@@ -121,11 +126,27 @@ export default function TransactionsPage() {
 
         // Filter by search query
         if (searchQuery) {
+            const normalizedQuery = normalizeSearch(searchQuery)
             filtered = filtered.filter(t => {
-                const desc = (t.description || "").toLowerCase()
-                const payee = (t.payees?.name || "").toLowerCase()
-                const cat = (t.categories?.name || "").toLowerCase()
-                return desc.includes(searchQuery) || payee.includes(searchQuery) || cat.includes(searchQuery)
+                const desc = normalizeSearch(t.description || "")
+                const payee = normalizeSearch(t.payees?.name || "")
+                const cat = normalizeSearch(t.categories?.name || "")
+                const amount = normalizeSearch((t.amount || 0).toString())
+
+                // Date formatting for search (DD/MM/YYYY)
+                let dateStr = ""
+                if (t.date && typeof t.date === 'string') {
+                    const [year, month, day] = t.date.split('-')
+                    if (year && month && day) {
+                        dateStr = normalizeSearch(`${day}/${month}/${year}`)
+                    }
+                }
+
+                return desc.includes(normalizedQuery) ||
+                    payee.includes(normalizedQuery) ||
+                    cat.includes(normalizedQuery) ||
+                    amount.includes(normalizedQuery) ||
+                    dateStr.includes(normalizedQuery)
             })
         }
 
@@ -136,6 +157,11 @@ export default function TransactionsPage() {
         if (from && to) return { from: new Date(from), to: new Date(to) }
         return undefined
     }, [from, to])
+
+    const referenceDate = React.useMemo(() => {
+        if (from) return new Date(from);
+        return new Date();
+    }, [from]);
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden bg-background">
@@ -166,7 +192,7 @@ export default function TransactionsPage() {
 
                 <TransactionsContent
                     data={filteredData}
-                    isPending={loading || isPending}
+                    isPending={loading}
                     searchQuery={searchQuery}
                     range={range}
                     onRowClick={handleRowClick}
@@ -188,6 +214,7 @@ export default function TransactionsPage() {
                         <TransactionForm
                             open={isNewSheetOpen}
                             defaultType={newTransactionType}
+                            initialDate={referenceDate}
                             onSuccess={handleSuccess}
                             onCancel={() => setIsNewSheetOpen(false)}
                         />

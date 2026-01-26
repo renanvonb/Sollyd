@@ -24,7 +24,6 @@ const periodTabs = [
     { id: 'semana', label: 'Semana' },
     { id: 'mes', label: 'Mês' },
     { id: 'ano', label: 'Ano' },
-    { id: 'custom', label: 'Período' },
 ]
 
 export function DashboardHeader({ userName }: DashboardHeaderProps) {

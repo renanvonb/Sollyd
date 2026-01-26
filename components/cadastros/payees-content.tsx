@@ -63,10 +63,14 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
         } catch (error: any) {
             console.error('Erro ao carregar beneficiários:', error);
             if (error.message === 'Usuário não autenticado') {
-                toast.error('Sessão expirada. Faça login novamente.');
+                toast.error('Sessão expirada', {
+                    description: 'Faça login novamente para continuar.'
+                });
                 router.push('/login');
             } else {
-                toast.error('Erro ao carregar beneficiários');
+                toast.error('Erro de carregamento', {
+                    description: 'Não foi possível carregar os beneficiários.'
+                });
             }
         } finally {
             setLoading(false);
@@ -98,7 +102,7 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                 toast.error('Sessão expirada. Faça login novamente.');
                 router.push('/login');
             } else {
-                toast.error(error.message || 'Erro ao excluir beneficiário');
+                toast.error('Erro ao excluir beneficiário');
             }
         } finally {
             setSubmitting(false);
@@ -141,7 +145,7 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                     {filteredPayees.map((payee) => {
-                        const IconComponent = getIconByName('arrow-up-right');
+                        const IconComponent = getIconByName('arrow-down-right');
                         const cardColor = getColorHex('red');
 
                         return (
@@ -165,7 +169,7 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                                             <h3 className="font-semibold text-foreground truncate font-jakarta">
                                                 <HighlightText text={payee.name} highlight={searchQuery} />
                                             </h3>
-                                            <p className="text-sm text-muted-foreground font-inter">
+                                            <p className="text-sm text-muted-foreground font-inter truncate">
                                                 {payee.transactions?.[0]?.count || 0} transações
                                             </p>
                                         </div>
@@ -179,7 +183,7 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
 
             {/* Create/Edit Dialog */}
             <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px]" onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle className="font-jakarta">
                             {editingPayee ? 'Editar beneficiário' : 'Novo beneficiário'}
@@ -212,13 +216,11 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
             </Dialog>
 
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <AlertDialogContent>
+                <AlertDialogContent className="sm:max-w-[400px]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="font-jakarta">
-                            Confirmar exclusão
-                        </AlertDialogTitle>
+                        <AlertDialogTitle>Excluir</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tem certeza que deseja excluir este beneficiário? Esta ação não pode ser desfeita.
+                            Você está prestes a realizar uma exclusão permanente que não poderá ser desfeita. Tem certeza que deseja continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -228,7 +230,7 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                             disabled={submitting}
                             variant="destructive"
                         >
-                            {submitting ? 'Excluindo...' : 'Excluir'}
+                            Excluir
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

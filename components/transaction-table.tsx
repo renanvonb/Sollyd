@@ -7,8 +7,9 @@ import { Transaction } from "@/types/transaction"
 interface TransactionTableProps {
     data: any[]
     onRowClick?: (transaction: Transaction) => void
+    searchQuery?: string
 }
 
-export function TransactionTable({ data, onRowClick }: TransactionTableProps) {
-    return <DataTable columns={columns} data={data} onRowClick={onRowClick} />
+export function TransactionTable({ data, onRowClick, searchQuery }: TransactionTableProps) {
+    return <DataTable columns={columns} data={data} onRowClick={onRowClick} searchQuery={searchQuery} />
 }

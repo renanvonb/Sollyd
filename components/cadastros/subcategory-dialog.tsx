@@ -56,13 +56,13 @@ export function SubcategoryDialog({
                 await updateSubcategory(subcategory.id, {
                     name: name.trim()
                 })
-                toast.success("Subcategoria atualizada!")
+                toast.success("Subcategoria atualizada com sucesso!")
             } else {
                 await createSubcategory({
                     category_id: category.id,
                     name: name.trim(),
                 })
-                toast.success("Subcategoria adicionada!")
+                toast.success("Subcategoria cadastrada com sucesso!")
             }
 
             setName("")
@@ -70,7 +70,7 @@ export function SubcategoryDialog({
             onOpenChange(false)
         } catch (error) {
             console.error(error)
-            toast.error(subcategory ? "Erro ao atualizar subcategoria" : "Erro ao adicionar subcategoria")
+            toast.error("Erro ao salvar subcategoria")
         } finally {
             setSubmitting(false)
         }
@@ -83,7 +83,7 @@ export function SubcategoryDialog({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle className="font-jakarta">
                         {subcategory ? 'Editar subcategoria' : 'Nova subcategoria'}

@@ -42,6 +42,8 @@ interface RevenueByPayerChartProps {
     data: PayerData[]
     title?: string
     periodLabel?: string
+    onPayerClick?: (payer: string | null) => void
+    selectedPayer?: string | null
 }
 
 const chartConfig = {
@@ -50,7 +52,7 @@ const chartConfig = {
     },
 } satisfies ChartConfig
 
-export function RevenueByPayerChart({ data, title = "Pagadores", periodLabel }: RevenueByPayerChartProps) {
+export function RevenueByPayerChart({ data, title = "Pagadores", periodLabel, onPayerClick, selectedPayer }: RevenueByPayerChartProps) {
     const totalAmount = data.reduce((acc, curr) => acc + curr.amount, 0)
 
     const renderChart = (isExpanded = false) => {
@@ -143,10 +145,15 @@ export function RevenueByPayerChart({ data, title = "Pagadores", periodLabel }: 
                         dataKey="amount"
                         radius={4}
                         barSize={isExpanded ? 48 : 32}
+                        onClick={(data: any) => onPayerClick?.(data.payer === selectedPayer ? null : data.payer)}
+                        cursor={onPayerClick ? "pointer" : "default"}
                         shape={(props: any) => {
-                            const { fill, x, y, width, height } = props;
+                            const { fill, x, y, width, height, payload } = props;
+                            const isSelected = !selectedPayer || (payload as PayerData).payer === selectedPayer
+                            const opacity = isSelected ? 1 : 0.3
+
                             return (
-                                <g>
+                                <g style={{ opacity, transition: 'opacity 0.3s' }}>
                                     <rect
                                         x={x}
                                         y={y}
@@ -175,7 +182,11 @@ export function RevenueByPayerChart({ data, title = "Pagadores", periodLabel }: 
                         <LabelList
                             dataKey="amount"
                             content={(props: any) => {
-                                const { x, y, width, height, value } = props
+                                const { x, y, width, height, value, index } = props
+                                const payer = data[index]?.payer
+                                const isSelected = !selectedPayer || payer === selectedPayer
+                                const opacity = isSelected ? 1 : 0.3
+
                                 const formatted = Number(value).toLocaleString('pt-BR', {
                                     style: "currency",
                                     currency: "BRL",
@@ -198,7 +209,7 @@ export function RevenueByPayerChart({ data, title = "Pagadores", periodLabel }: 
                                         dominantBaseline="middle"
                                         fontSize={isExpanded ? 14 : 10}
                                         fontWeight={500}
-                                        style={{ pointerEvents: 'none' }}
+                                        style={{ pointerEvents: 'none', opacity, transition: 'opacity 0.3s' }}
                                     >
                                         {formatted}
                                     </text>
