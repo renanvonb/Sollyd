@@ -1,26 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Loader2, User, UserRound, SearchX } from 'lucide-react';
+import { Plus, Loader2, User, SearchX, ArrowDownRight } from 'lucide-react';
 import { HighlightText } from '@/components/ui/highlight-text';
-import { IconPicker, getIconByName } from './icon-picker';
-import { ColorPicker, getColorClass } from './color-picker';
+import { getIconByName } from './icon-picker';
+import { getColorClass } from './color-picker';
 import { useRouter } from 'next/navigation';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -36,33 +32,12 @@ import { cn } from '@/lib/utils';
 import {
     Payee,
     getPayees,
-    createPayee,
-    updatePayee,
     deletePayee,
 } from '@/lib/supabase/cadastros';
 import { ModuleCardsSkeleton } from '@/components/ui/skeletons';
+import { PayeeForm } from './payee-form';
 
-// Paleta de cores Shadcn (Anterior)
-const COLORS = [
-    { name: 'zinc', label: 'Cinza', bg: 'bg-zinc-500' },
-    { name: 'red', label: 'Vermelho', bg: 'bg-red-500' },
-    { name: 'orange', label: 'Laranja', bg: 'bg-orange-500' },
-    { name: 'amber', label: 'Âmbar', bg: 'bg-amber-500' },
-    { name: 'yellow', label: 'Amarelo', bg: 'bg-yellow-500' },
-    { name: 'lime', label: 'Lima', bg: 'bg-lime-500' },
-    { name: 'green', label: 'Verde', bg: 'bg-green-500' },
-    { name: 'emerald', label: 'Esmeralda', bg: 'bg-emerald-500' },
-    { name: 'teal', label: 'Azul-petróleo', bg: 'bg-teal-500' },
-    { name: 'cyan', label: 'Ciano', bg: 'bg-cyan-500' },
-    { name: 'sky', label: 'Céu', bg: 'bg-sky-500' },
-    { name: 'blue', label: 'Azul', bg: 'bg-blue-500' },
-    { name: 'indigo', label: 'Índigo', bg: 'bg-indigo-500' },
-    { name: 'violet', label: 'Violeta', bg: 'bg-violet-500' },
-    { name: 'purple', label: 'Roxo', bg: 'bg-purple-500' },
-    { name: 'fuchsia', label: 'Fúcsia', bg: 'bg-fuchsia-500' },
-    { name: 'pink', label: 'Rosa', bg: 'bg-pink-500' },
-    { name: 'rose', label: 'Rosa-escuro', bg: 'bg-rose-500' },
-];
+
 
 
 
@@ -79,14 +54,18 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [editingPayer, setEditingPayer] = useState<Payee | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
-    const [formData, setFormData] = useState({ name: '', color: 'zinc', icon: 'user-round' });
-    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
 
     const filteredPayers = payers.filter(payer => {
         const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
         return normalize(payer.name).includes(normalize(searchQuery));
     });
+
+    useEffect(() => {
+        if (!isOpen) {
+            setEditingPayer(null);
+        }
+    }, [isOpen]);
 
     const fetchPayers = async () => {
         setLoading(true);
@@ -109,59 +88,6 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
     useEffect(() => {
         fetchPayers();
     }, []);
-
-    useEffect(() => {
-        if (!isOpen) {
-            setFormData({ name: '', color: 'zinc', icon: 'user-round' });
-            setFormErrors({});
-            setEditingPayer(null);
-        }
-    }, [isOpen]);
-
-    useEffect(() => {
-        if (editingPayer) {
-            setFormData({
-                name: editingPayer.name,
-                color: editingPayer.color || 'zinc',
-                icon: editingPayer.icon || 'user-round',
-            });
-        }
-    }, [editingPayer]);
-
-    const validateForm = (): boolean => {
-        const errors: Record<string, string> = {};
-        if (!formData.name.trim()) {
-            errors.name = 'Nome é obrigatório';
-        }
-        setFormErrors(errors);
-        return Object.keys(errors).length === 0;
-    };
-
-    const handleSubmit = async () => {
-        if (!validateForm()) return;
-
-        setSubmitting(true);
-        try {
-            if (editingPayer) {
-                await updatePayee(editingPayer.id, { ...formData, type: 'payer' });
-                toast.success('Pagador atualizado com sucesso!');
-            } else {
-                await createPayee({ ...formData, type: 'payer' });
-                toast.success('Pagador criado com sucesso!');
-            }
-            onOpenChange(false);
-            await fetchPayers();
-        } catch (error: any) {
-            if (error.message === 'Usuário não autenticado') {
-                toast.error('Sessão expirada. Faça login novamente.');
-                router.push('/login');
-            } else {
-                toast.error(error.message || 'Erro ao salvar pagador');
-            }
-        } finally {
-            setSubmitting(false);
-        }
-    };
 
     const handleDelete = async () => {
         if (!deletingId) return;
@@ -187,26 +113,7 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
 
 
 
-    const PreviewBadge = () => {
-        let iconName = formData.icon || 'user-round';
-        if (iconName === 'user') iconName = 'user-round';
-        // Ensure building-2 uses the correct component if my icon-picker handles it by name
-        // (Since I added 'building-2' to ICONS, getIconByName will find it).
 
-        const IconComp = getIconByName(iconName, UserRound);
-        const colorClass = getColorClass(formData.color);
-
-        return (
-            <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-border">
-                <div className={cn('rounded-full p-2', colorClass)}>
-                    <IconComp className="h-4 w-4 text-white" />
-                </div>
-                <span className="text-sm font-medium text-foreground">
-                    {formData.name || 'Nome do pagador'}
-                </span>
-            </div>
-        );
-    };
 
     return (
         <>
@@ -243,9 +150,8 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                     {filteredPayers.map((payer) => {
-                        const iconName = (!payer.icon || payer.icon === 'user') ? 'user-round' : payer.icon;
-                        const IconComponent = getIconByName(iconName, UserRound);
-                        const colorClass = getColorClass(payer.color);
+                        const IconComponent = getIconByName('arrow-down-right');
+                        const colorClass = getColorClass('green');
 
                         return (
                             <Card
@@ -256,11 +162,6 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                                     onOpenChange(true);
                                 }}
                             >
-                                <div className="absolute top-4 right-4">
-                                    <Badge variant="secondary" className="font-inter text-[10px] uppercase tracking-wider px-2 py-0 border bg-muted/80 backdrop-blur-sm shadow-sm">
-                                        {(payer.icon === 'building-2' || payer.icon === 'building') ? 'Jurídica' : 'Física'}
-                                    </Badge>
-                                </div>
                                 <CardContent className="p-6">
                                     <div className="flex items-center gap-4">
                                         <div className={cn('rounded-full p-2.5 flex-shrink-0', colorClass)}>
@@ -295,115 +196,23 @@ export function PayersContent({ isOpen, onOpenChange, searchQuery }: PayersConte
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="space-y-4 pb-4">
-                        <PreviewBadge />
-
-                        <Tabs
-                            defaultValue={formData.icon === 'building-2' || formData.icon === 'building' ? 'corporate' : 'individual'}
-                            className="w-full"
-                            onValueChange={(value) => {
-                                setFormData({
-                                    ...formData,
-                                    icon: value === 'corporate' ? 'building-2' : 'user-round'
-                                });
-                            }}
-                        >
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="individual">Pessoa física</TabsTrigger>
-                                <TabsTrigger value="corporate">Pessoa jurídica</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-
-                        <div className="space-y-2">
-                            <Label
-                                htmlFor="name"
-                                className={cn(
-                                    'text-sm font-medium',
-                                    formErrors.name && 'text-red-600'
-                                )}
-                            >
-                                Nome <span className="text-red-600">*</span>
-                            </Label>
-                            <Input
-                                id="name"
-                                placeholder="Informe o nome do pagador"
-                                value={formData.name}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, name: e.target.value })
-                                }
-                                className={cn(
-                                    formErrors.name && 'border-red-500 focus-visible:ring-red-500'
-                                )}
-                            />
-                            {formErrors.name && (
-                                <p className="text-sm text-red-600">{formErrors.name}</p>
-                            )}
-                        </div>
-
-
-
-                        <div className="space-y-2">
-                            <Label>Cor</Label>
-                            <div className="grid grid-cols-9 gap-2">
-                                {COLORS.map((color) => {
-                                    const isSelected = formData.color === color.name;
-
-                                    return (
-                                        <button
-                                            key={color.name}
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, color: color.name })}
-                                            className={cn(
-                                                'h-10 w-10 rounded-lg transition-all',
-                                                color.bg,
-                                                isSelected && 'ring-2 ring-zinc-950 ring-offset-2'
-                                            )}
-                                            title={color.label}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-
-                    <DialogFooter className={editingPayer ? "sm:justify-between" : ""}>
-                        {editingPayer && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={() => {
-                                    setDeletingId(editingPayer.id);
-                                    onOpenChange(false);
-                                    setIsDeleteDialogOpen(true);
-                                }}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                                Excluir
-                            </Button>
-                        )}
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => onOpenChange(false)}
-                                disabled={submitting}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                onClick={handleSubmit}
-                                disabled={submitting}
-                            >
-                                {submitting ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        Salvando...
-                                    </>
-                                ) : (
-                                    'Salvar'
-                                )}
-                            </Button>
-                        </div>
-                    </DialogFooter>
+                    <PayeeForm
+                        type="payer"
+                        payeeId={editingPayer?.id}
+                        defaultValues={editingPayer ? {
+                            name: editingPayer.name,
+                        } : undefined}
+                        onSuccess={() => {
+                            onOpenChange(false);
+                            fetchPayers();
+                        }}
+                        onCancel={() => onOpenChange(false)}
+                        onDelete={editingPayer ? () => {
+                            setDeletingId(editingPayer.id);
+                            onOpenChange(false);
+                            setIsDeleteDialogOpen(true);
+                        } : undefined}
+                    />
                 </DialogContent>
             </Dialog>
 

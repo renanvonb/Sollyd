@@ -4,6 +4,8 @@ export type TransactionClassification = 'essential' | 'necessary' | 'superfluous
 export interface Payer {
     id: string;
     name: string;
+    color?: string;
+    icon?: string;
     created_at: string;
 }
 
@@ -17,6 +19,8 @@ export interface Payee {
     id: string;
     name: string;
     type?: string;
+    color?: string;
+    icon?: string;
     created_at: string;
 }
 
@@ -33,6 +37,7 @@ export interface Subcategory {
     id: string;
     name: string;
     category_id: string;
+    color?: string;
     created_at: string;
 }
 

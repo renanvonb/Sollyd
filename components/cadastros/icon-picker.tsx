@@ -5,6 +5,7 @@ import {
     ShoppingCart, Utensils, Heart, Briefcase,
     Wallet, CreditCard, Smartphone, DollarSign,
     Zap, Coffee, Plane, Gamepad2, Book, Flag, UserRound,
+    ArrowUpRight, ArrowDownRight,
     LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,8 @@ export const ICONS = [
     { name: 'plane', label: 'Viagem', Icon: Plane },
     { name: 'gamepad', label: 'Lazer', Icon: Gamepad2 },
     { name: 'book', label: 'Educação', Icon: Book },
+    { name: 'arrow-up-right', label: 'Seta Cima Direita', Icon: ArrowUpRight },
+    { name: 'arrow-down-right', label: 'Seta Baixo Direita', Icon: ArrowDownRight },
 ];
 
 interface IconPickerProps {

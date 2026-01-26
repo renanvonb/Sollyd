@@ -24,16 +24,17 @@ const emptyStateVariants = cva(
 )
 
 interface EmptyStateProps
-    extends React.HTMLAttributes<HTMLDivElement>,
+    extends Omit<React.HTMLAttributes<HTMLDivElement>, "title">,
     VariantProps<typeof emptyStateVariants> {
-    title: string
+    title: string | React.ReactNode
     description?: string
     icon?: LucideIcon
     action?: React.ReactNode
+    titleClassName?: string
 }
 
 const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
-    ({ className, variant, size, title, description, icon: Icon, action, ...props }, ref) => {
+    ({ className, variant, size, title, description, icon: Icon, action, titleClassName, ...props }, ref) => {
         return (
             <div
                 ref={ref}
@@ -46,7 +47,7 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
                             <Icon className="h-8 w-8 text-muted-foreground" strokeWidth={1.5} />
                         </div>
                     )}
-                    <h3 className="text-xl font-bold tracking-tight font-jakarta text-foreground">{title}</h3>
+                    <h3 className={cn("text-xl font-bold tracking-tight font-jakarta text-foreground", titleClassName)}>{title}</h3>
                     {description && (
                         <p className="mt-2 text-muted-foreground font-sans max-w-[400px]">
                             {description}

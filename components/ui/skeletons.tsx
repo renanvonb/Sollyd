@@ -234,32 +234,55 @@ export function ModuleCardsSkeleton() {
  */
 export function DashboardSkeleton() {
     return (
-        <div className="flex flex-col h-screen animate-pulse bg-background font-sans">
+        <div className="flex flex-col h-full animate-pulse bg-background font-sans overflow-hidden">
+            {/* Dashboard Content - Matches the spacing after the Header */}
             <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-hidden">
-                {/* Title Skeleton */}
-                <div className="flex-none">
-                    <Skeleton className="h-9 w-48 bg-muted rounded-xl mb-2" />
-                </div>
-
-                {/* Dashboard Content */}
                 <div className="flex flex-col flex-1 min-h-0 gap-4">
-                    {/* Summary Cards Skeleton */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-none">
+                    {/* Row 1: Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
                         {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-32 bg-card border border-border rounded-lg pl-6 pr-5 py-5">
-                                <div className="flex flex-col gap-4">
-                                    {/* Header: Label + Icon */}
-                                    <div className="flex items-start justify-between">
-                                        <Skeleton className="h-4 w-20 bg-muted" />
-                                        <Skeleton className="h-9 w-9 rounded-full bg-muted" />
-                                    </div>
-                                    {/* Value */}
-                                    <Skeleton className="h-8 w-32 bg-muted" />
+                            <div key={i} className="h-[142px] bg-card border border-border rounded-lg p-6 flex flex-col justify-between">
+                                <div className="flex justify-between items-start">
+                                    <Skeleton className="h-4 w-24 bg-muted" />
+                                    <Skeleton className="h-4 w-4 rounded-full bg-muted" />
                                 </div>
+                                <Skeleton className="h-9 w-32 bg-muted" />
                             </div>
                         ))}
                     </div>
 
+                    {/* Charts Area */}
+                    <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden pr-1 pb-4">
+                        {/* Row 1 Charts */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 min-h-[400px]">
+                            <div className="md:col-span-3 h-full bg-card border border-border rounded-lg p-6">
+                                <Skeleton className="h-full w-full bg-muted/20 rounded-md" />
+                            </div>
+                            <div className="md:col-span-1 h-full bg-card border border-border rounded-lg p-6">
+                                <Skeleton className="h-full w-full bg-muted/20 rounded-md" />
+                            </div>
+                        </div>
+
+                        {/* Row 2 Charts */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
+                            <div className="h-full bg-card border border-border rounded-lg p-6">
+                                <Skeleton className="h-full w-full bg-muted/20 rounded-md" />
+                            </div>
+                            <div className="h-full bg-card border border-border rounded-lg p-6">
+                                <Skeleton className="h-full w-full bg-muted/20 rounded-md" />
+                            </div>
+                        </div>
+
+                        {/* Row 3 Charts */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
+                            <div className="h-full bg-card border border-border rounded-lg p-6">
+                                <Skeleton className="h-full w-full bg-muted/20 rounded-md" />
+                            </div>
+                            <div className="h-full bg-card border border-border rounded-lg p-6">
+                                <Skeleton className="h-full w-full bg-muted/20 rounded-md" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

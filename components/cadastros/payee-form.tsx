@@ -23,8 +23,6 @@ import { cn } from "@/lib/utils"
 
 const formSchema = z.object({
     name: z.string().min(1, "Nome é obrigatório"),
-    color: z.string().min(1, "Cor é obrigatória"),
-    icon: z.string().min(1, "Ícone é obrigatório"),
 })
 
 export type PayeeFormValues = z.infer<typeof formSchema>;
@@ -48,27 +46,25 @@ export function PayeeForm({
 }: PayeeFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Hardcoded defaults based on type
+    const defaultColor = type === 'payer' ? 'green' : 'red';
+    const defaultIcon = type === 'payer' ? 'arrow-down-right' : 'arrow-up-right';
+
     const form = useForm<PayeeFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: '',
-            color: 'zinc',
-            icon: 'user',
             ...defaultValues
         },
     })
 
     const { watch } = form;
     const watchName = watch('name');
-    const watchColor = watch('color');
-    const watchIcon = watch('icon');
 
     useEffect(() => {
         if (defaultValues) {
             form.reset({
                 name: '',
-                color: 'zinc',
-                icon: 'user',
                 ...defaultValues
             });
         }
@@ -77,7 +73,12 @@ export function PayeeForm({
     const handleSubmit = async (values: PayeeFormValues) => {
         try {
             setIsSubmitting(true);
-            const payload = { ...values, type };
+            const payload = {
+                ...values,
+                type,
+                color: defaultColor,
+                icon: defaultIcon
+            };
 
             if (payeeId) {
                 await updatePayee(payeeId, payload);
@@ -96,8 +97,8 @@ export function PayeeForm({
     };
 
     const PreviewBadge = () => {
-        const IconComp = getIconByName(watchIcon);
-        const colorClass = getColorClass(watchColor);
+        const IconComp = getIconByName(defaultIcon);
+        const colorClass = getColorClass(defaultColor);
 
         return (
             <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-border mb-4">
@@ -126,34 +127,6 @@ export function PayeeForm({
                             </FormLabel>
                             <FormControl>
                                 <Input {...field} placeholder={type === 'payer' ? "Informe o nome do pagador" : "Informe o nome do beneficiário"} className="font-inter" />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="icon"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Ícone</FormLabel>
-                            <FormControl>
-                                <IconPicker value={field.value} onChange={field.onChange} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="color"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Cor</FormLabel>
-                            <FormControl>
-                                <ColorPicker value={field.value} onChange={field.onChange} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

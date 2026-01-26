@@ -1,31 +1,14 @@
 "use client"
 
 import * as React from "react"
-import { useTransition } from "react"
-import { DateRange } from "react-day-picker"
-import { useRouter, useSearchParams } from "next/navigation"
-import { format, startOfMonth, endOfMonth, parseISO, eachDayOfInterval, eachMonthOfInterval, startOfYear, endOfYear, differenceInMonths, getYear } from "date-fns"
+import { useSearchParams } from "next/navigation"
+import { format, startOfMonth, endOfMonth, parseISO, eachDayOfInterval, eachMonthOfInterval, startOfYear, endOfYear, getYear } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 import { TransactionSummaryCards } from "@/components/transaction-summary-cards"
 import { TimeRange } from "@/app/actions/transactions-fetch"
-import { Eye, EyeOff, Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { AdaptiveDatePicker } from "@/components/ui/adaptive-date-picker"
-import { useVisibility } from "@/hooks/use-visibility-state"
-
-import { TopBar } from "@/components/ui/top-bar"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 
 import { getColorHex } from "@/components/cadastros/color-picker"
-
 import { Transaction } from "@/types/transaction"
 import { ExpensesByCategoryChart } from "@/components/charts/expenses-by-category"
 import { ExpensesBySubcategoryChart } from "@/components/charts/expenses-by-subcategory"
@@ -34,59 +17,21 @@ import { TransactionsHistoryChart } from "@/components/charts/transactions-histo
 import { ExpensesByPayeeChart } from "@/components/charts/expenses-by-payee"
 import { RevenueByPayerChart } from "@/components/charts/revenue-by-payer"
 
-interface DashboardClientProps {
+interface DashboardGraphsProps {
     initialData: Transaction[]
-    userName: string
     metrics?: any
 }
 
-const periodTabs = [
-    { id: 'dia', label: 'Dia' },
-    { id: 'semana', label: 'Semana' },
-    { id: 'mes', label: 'Mês' },
-    { id: 'ano', label: 'Ano' },
-    { id: 'custom', label: 'Período' },
-]
-
-export default function DashboardClient({ initialData, userName, metrics }: DashboardClientProps) {
-    const router = useRouter()
+export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
     const searchParams = useSearchParams()
-    const [isPending, startTransition] = useTransition()
-    const { isVisible, toggleVisibility } = useVisibility()
-
-    const [searchValue, setSearchValue] = React.useState(searchParams.get('q') || "")
-
-    React.useEffect(() => {
-        const timer = setTimeout(() => {
-            const params = new URLSearchParams(searchParams.toString())
-            if (searchValue) params.set('q', searchValue)
-            else params.delete('q')
-            router.push(`?${params.toString()}`, { scroll: false })
-        }, 300)
-        return () => clearTimeout(timer)
-    }, [searchValue, router, searchParams])
 
     const range = (searchParams.get('range') as TimeRange) || 'mes'
     const searchQuery = searchParams.get('q')?.toLowerCase() || ""
     const statusFilter = searchParams.get('status') || "Realizado"
-
-    // Lista de anos disponíveis calculada a partir dos dados (apenas anos com transações)
-    const availableYears = React.useMemo(() => {
-        const yearsSet = new Set<string>()
-        initialData.forEach(t => {
-            if (t.date) {
-                yearsSet.add(getYear(parseISO(t.date)).toString())
-            }
-        })
-        const currentYear = new Date().getFullYear().toString()
-        yearsSet.add(currentYear) // Garantir que o ano atual sempre esteja lá
-        return Array.from(yearsSet).sort((a, b) => parseInt(b) - parseInt(a))
-    }, [initialData])
-
     const currentYear = new Date().getFullYear()
     const selectedYear = parseInt(searchParams.get('year') || currentYear.toString())
 
-    const date: DateRange | undefined = React.useMemo(() => {
+    const date: { from: Date; to: Date } | undefined = React.useMemo(() => {
         const from = searchParams.get('from')
         const to = searchParams.get('to')
         if (from && to) {
@@ -109,55 +54,12 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
         return undefined
     }, [searchParams, range, selectedYear])
 
-    const handleRangeChange = (newRange: TimeRange) => {
-        startTransition(() => {
-            const params = new URLSearchParams(searchParams.toString())
-            params.set('range', newRange)
-            params.delete('from')
-            params.delete('to')
-            router.push(`?${params.toString()}`, { scroll: false })
-        })
-    }
-
-    const handleDateChange = (newDate: DateRange | undefined) => {
-        startTransition(() => {
-            const params = new URLSearchParams(searchParams.toString())
-            if (newDate?.from) params.set('from', newDate.from.toISOString())
-            else params.delete('from')
-            if (newDate?.to) params.set('to', newDate.to.toISOString())
-            else params.delete('to')
-            router.push(`?${params.toString()}`, { scroll: false })
-        })
-    }
-
-    const handleYearChange = (year: string) => {
-        startTransition(() => {
-            const params = new URLSearchParams(searchParams.toString())
-            params.set('year', year)
-            params.delete('from')
-            params.delete('to')
-            router.push(`?${params.toString()}`, { scroll: false })
-        })
-    }
-
-    const handleStatusFilterChange = (value: string) => {
-        startTransition(() => {
-            const params = new URLSearchParams(searchParams.toString())
-            if (value) params.set('status', value)
-            router.push(`?${params.toString()}`, { scroll: false })
-        })
-    }
-
     const periodLabel = React.useMemo(() => {
         if (!date?.from || !date?.to) return ""
-
-        // Ensure we handle default dates if hook hasn't run or param is missing,
-        // but 'date' is already memoized with defaults above, so safe to use.
 
         if (range === 'mes') {
             const month = format(date.from, "MMMM", { locale: ptBR })
             const year = format(date.from, "yyyy", { locale: ptBR })
-            // Capitalize month
             return `${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`
         }
 
@@ -307,7 +209,7 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
         const byPayeeMap = new Map<string, { amount: number, color: string }>();
         expenses.forEach(t => {
             const name = t.payees?.name || "Sem Beneficiário";
-            const color = getColorHex(t.payees?.color || "zinc");
+            const color = getColorHex('red'); // Force standard red for all beneficiaries
             const current = byPayeeMap.get(name) || { amount: 0, color };
             current.amount += parseFloat(t.amount as any);
             byPayeeMap.set(name, current);
@@ -323,7 +225,7 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
         const byPayerMap = new Map<string, { amount: number, color: string }>();
         revenues.forEach(t => {
             const name = t.payees?.name || t.payers?.name || "Sem Pagador";
-            const color = getColorHex(t.payees?.color || t.payers?.color || "zinc");
+            const color = getColorHex('green'); // Force standard green for all payers
             const current = byPayerMap.get(name) || { amount: 0, color };
             current.amount += parseFloat(t.amount as any);
             byPayerMap.set(name, current);
@@ -338,113 +240,67 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
     }, [filteredData, date, range, selectedYear]);
 
     return (
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
-            <TopBar
-                moduleName="Dashboard"
-                tabs={periodTabs}
-                activeTab={range}
-                onTabChange={handleRangeChange as any}
-                variant="simple"
-            />
-
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-hidden">
-                {/* Page Header */}
-                <div className="flex items-center justify-between flex-none px-1">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground font-jakarta">
-                            Olá, {userName.split(' ')[0]}!
-                        </h1>
-                    </div>
-
-                    <div id="standard-filters" className="flex items-center gap-3 font-sans justify-end flex-wrap">
-                        <AdaptiveDatePicker
-                            mode={range}
-                            value={date}
-                            onChange={handleDateChange}
-                            className="w-auto"
-                        />
-
-                        <div className="relative w-[250px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Buscar"
-                                className="pl-9 h-10 font-inter w-full"
-                                value={searchValue}
-                                onChange={(e) => setSearchValue(e.target.value)}
-                            />
-                        </div>
-
-                        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                            <SelectTrigger className="w-[140px] h-10 font-inter">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todas</SelectItem>
-                                <SelectItem value="Realizado">Realizadas</SelectItem>
-                                <SelectItem value="Pendente">Pendentes</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+        <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-hidden">
+            <div className="flex flex-col flex-1 min-h-0 gap-4">
+                {/* Row 1: Summary Cards (Fixed Height) */}
+                <div className="shrink-0">
+                    <TransactionSummaryCards totals={totals} />
                 </div>
 
-                {/* Dashboard Content - Flexible Height */}
-                <div className="flex flex-col flex-1 min-h-0 gap-4">
-                    {/* Row 1: Summary Cards (Fixed Height) */}
-                    <div className="shrink-0">
-                        <TransactionSummaryCards totals={totals} isLoading={isPending} />
+                {/* Charts Area (Fills remaining space) */}
+                <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto pr-1 pb-4 scrollbar-hide">
+                    {/* Row 1 (Top Charts) */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 min-h-[400px]">
+                        <div className="md:col-span-3 h-full">
+                            <TransactionsHistoryChart
+                                data={chartsData.history}
+                            />
+                        </div>
+                        <div className="md:col-span-1 h-full">
+                            <ExpensesByClassificationChart
+                                data={chartsData.byClassification}
+                                periodLabel={periodLabel}
+                            />
+                        </div>
                     </div>
 
-                    {/* Charts Area (Fills remaining space) */}
-                    <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto pr-1 pb-4 scrollbar-hide">
-                        {/* Row 1 (Top Charts) */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 min-h-[400px]">
-                            <div className="md:col-span-3 h-full">
-                                <TransactionsHistoryChart
-                                    data={chartsData.history}
-                                />
-                            </div>
-                            <div className="md:col-span-1 h-full">
-                                <ExpensesByClassificationChart
-                                    data={chartsData.byClassification}
-                                    periodLabel={periodLabel}
-                                />
-                            </div>
+                    {/* Row 2 (Middle Charts) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
+                        <div className="h-full">
+                            <ExpensesByCategoryChart
+                                data={chartsData.byCategory}
+                                periodLabel={periodLabel}
+                            />
                         </div>
-
-                        {/* Row 2 (Middle Charts) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
-                            <div className="h-full">
-                                <ExpensesByCategoryChart
-                                    data={chartsData.byCategory}
-                                    periodLabel={periodLabel}
-                                />
-                            </div>
-                            <div className="h-full">
-                                <ExpensesBySubcategoryChart
-                                    data={chartsData.bySubcategory}
-                                    periodLabel={periodLabel}
-                                />
-                            </div>
+                        <div className="h-full">
+                            <ExpensesBySubcategoryChart
+                                data={chartsData.bySubcategory}
+                                periodLabel={periodLabel}
+                            />
                         </div>
+                    </div>
 
-                        {/* Row 3 (Bottom Charts - Contact analysis) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
-                            <div className="h-full">
-                                <ExpensesByPayeeChart
-                                    data={chartsData.byPayee}
-                                    periodLabel={periodLabel}
-                                />
-                            </div>
-                            <div className="h-full">
-                                <RevenueByPayerChart
-                                    data={chartsData.byPayer}
-                                    periodLabel={periodLabel}
-                                />
-                            </div>
+                    {/* Row 3 (Bottom Charts - Contact analysis) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
+                        <div className="h-full">
+                            <ExpensesByPayeeChart
+                                data={chartsData.byPayee}
+                                periodLabel={periodLabel}
+                            />
+                        </div>
+                        <div className="h-full">
+                            <ExpensesByPayerChartNameHack
+                                data={chartsData.byPayer}
+                                periodLabel={periodLabel}
+                            />
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     )
+}
+
+function ExpensesByPayerChartNameHack(props: any) {
+    return <RevenueByPayerChart {...props} />
 }

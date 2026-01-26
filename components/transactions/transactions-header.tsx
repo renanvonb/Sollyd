@@ -12,13 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { DateRange } from "react-day-picker"
 import { TimeRange } from "@/app/actions/transactions-fetch"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface TransactionsHeaderProps {
     title: string
@@ -74,16 +68,13 @@ export function TransactionsHeader({
                 </div>
 
                 {/* 3. Status Filter (140px) */}
-                <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-                    <SelectTrigger className="w-[140px] h-10 font-inter">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="Realizado">Realizadas</SelectItem>
-                        <SelectItem value="Pendente">Pendentes</SelectItem>
-                    </SelectContent>
-                </Select>
+                <Tabs value={statusFilter} onValueChange={onStatusFilterChange} className="h-10">
+                    <TabsList className="h-10">
+                        <TabsTrigger value="all" className="h-8">Todas</TabsTrigger>
+                        <TabsTrigger value="Realizado" className="h-8">Realizadas</TabsTrigger>
+                        <TabsTrigger value="Pendente" className="h-8">Pendentes</TabsTrigger>
+                    </TabsList>
+                </Tabs>
 
                 {/* 4. Add Button -> Dropdown */}
                 <Button onClick={() => onAddClick('expense')} className="font-inter font-medium">

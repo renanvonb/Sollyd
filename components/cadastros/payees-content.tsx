@@ -141,8 +141,8 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                     {filteredPayees.map((payee) => {
-                        const IconComponent = getIconByName(payee.icon || 'user');
-                        const cardColor = getColorHex(payee.color || 'zinc');
+                        const IconComponent = getIconByName('arrow-up-right');
+                        const cardColor = getColorHex('red');
 
                         return (
                             <Card
@@ -196,8 +196,6 @@ export function PayeesContent({ isOpen, onOpenChange, searchQuery }: PayeesConte
                         payeeId={editingPayee?.id}
                         defaultValues={editingPayee ? {
                             name: editingPayee.name,
-                            icon: editingPayee.icon,
-                            color: editingPayee.color
                         } : undefined}
                         onSuccess={() => {
                             onOpenChange(false);
