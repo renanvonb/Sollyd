@@ -1,7 +1,8 @@
 import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
 import DashboardClient from "@/components/dashboard-client"
-import { getTransactions, TimeRange } from "@/app/actions/transactions-fetch"
+import { getTransactions } from "@/app/actions/transactions-fetch"
+import { TimeRange } from "@/types/time-range"
 import { TableSkeleton } from "@/components/ui/skeletons"
 
 interface DashboardPageProps {

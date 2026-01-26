@@ -6,7 +6,7 @@ import { format, startOfMonth, endOfMonth, parseISO, eachDayOfInterval, eachMont
 import { ptBR } from "date-fns/locale"
 
 import { TransactionSummaryCards } from "@/components/transaction-summary-cards"
-import { TimeRange } from "@/app/actions/transactions-fetch"
+import { TimeRange } from "@/types/time-range"
 
 import { getColorHex } from "@/components/cadastros/color-picker"
 import { Transaction } from "@/types/transaction"
@@ -103,8 +103,9 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
 
     const totals = React.useMemo(() => {
         const dataInRange = date?.from && date?.to ? filteredData.filter(t => {
-            if (!t.date) return false;
-            const tDate = parseISO(t.date);
+            const refDate = t.competence || t.date;
+            if (!refDate) return false;
+            const tDate = parseISO(refDate);
             return tDate >= date.from! && tDate <= date.to!;
         }) : filteredData;
 
@@ -130,9 +131,13 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
 
     const chartsData = React.useMemo(() => {
         const baseData = date?.from && date?.to ? filteredData.filter(t => {
-            if (!t.date) return false;
-            const tDate = parseISO(t.date);
-            return tDate >= date.from! && tDate <= date.to!;
+            const refDate = t.competence || t.date;
+            if (!refDate) return false;
+            // Use string comparison (YYYY-MM-DD) to avoid timezone issues
+            const refDateStr = refDate.substring(0, 10);
+            const fromStr = format(date.from!, 'yyyy-MM-dd');
+            const toStr = format(date.to!, 'yyyy-MM-dd');
+            return refDateStr >= fromStr && refDateStr <= toStr;
         }) : filteredData;
 
         // Helper to apply filters EXCEPT specific keys
@@ -217,11 +222,18 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
         }
 
         const historyMap = new Map<string, { income: number, expense: number }>();
+        const historyFromStr = format(historyStart, 'yyyy-MM-dd');
+        const historyEndStr = format(historyEnd, 'yyyy-MM-dd');
+
         dataForHistory.forEach(t => {
-            if (!t.date) return;
-            const tDate = parseISO(t.date);
-            if (tDate >= historyStart && tDate <= historyEnd) {
-                const dateKey = isMonthlyRange ? format(tDate, 'yyyy-MM-dd') : format(tDate, 'yyyy-MM');
+            const refDate = t.competence || t.date;
+            if (!refDate) return;
+            // Use string key directly
+            const refDateStr = refDate.substring(0, 10);
+
+            // Allow if within range (string comparison)
+            if (refDateStr >= historyFromStr && refDateStr <= historyEndStr) {
+                const dateKey = isMonthlyRange ? refDateStr : refDateStr.substring(0, 7); // YYYY-MM
                 const current = historyMap.get(dateKey) || { income: 0, expense: 0 };
                 const amount = parseFloat(t.amount as any);
                 if (t.type === 'revenue') current.income += amount;

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { AdaptiveDatePicker } from "@/components/ui/adaptive-date-picker"
 import { TopBar } from "@/components/ui/top-bar"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TimeRange } from "@/app/actions/transactions-fetch"
+import { TimeRange } from "@/types/time-range"
 
 interface DashboardHeaderProps {
     userName: string

@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import TransactionsClient from "@/components/transactions-client"
-import { getTransactions, TimeRange } from "@/app/actions/transactions-fetch"
+import { getTransactions } from "@/app/actions/transactions-fetch"
+import { TimeRange } from "@/types/time-range"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Loader2 } from "lucide-react"
 

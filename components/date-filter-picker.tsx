@@ -14,7 +14,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { TimeRange } from "@/app/actions/transactions-fetch"
+import { TimeRange } from "@/types/time-range"
 
 interface DateFilterPickerProps {
     range: TimeRange

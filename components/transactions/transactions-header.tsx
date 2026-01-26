@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { DateRange } from "react-day-picker"
-import { TimeRange } from "@/app/actions/transactions-fetch"
+import { TimeRange } from "@/types/time-range"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface TransactionsHeaderProps {

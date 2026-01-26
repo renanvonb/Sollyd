@@ -11,7 +11,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 import { TransactionForm } from "@/components/transaction-form"
-import { TimeRange } from "@/app/actions/transactions-fetch"
+import { TimeRange } from "@/types/time-range"
 
 interface TransactionFiltersProps {
     range: TimeRange

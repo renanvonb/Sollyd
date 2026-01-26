@@ -14,7 +14,8 @@ import {
     parseISO
 } from 'date-fns'
 
-export type TimeRange = 'dia' | 'semana' | 'mes' | 'ano' | 'custom'
+import { TimeRange } from '@/types/time-range'
+
 
 interface GetTransactionsParams {
     range: TimeRange
@@ -86,8 +87,8 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
             `)
             .eq('user_id', userId)
             // Filtro simplificado e mais performático (busca tanto em competência quanto em data)
-            .or(`competence.gte.${startStr},date.gte.${startStr}`)
-            .or(`competence.lte.${endStr},date.lte.${endStr}`)
+            .gte('competence', startStr)
+            .lte('competence', endStr)
             .order('competence', { ascending: false })
             .order('created_at', { ascending: false });
 

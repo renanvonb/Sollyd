@@ -8,7 +8,7 @@ import { format, startOfMonth, endOfMonth, parseISO, eachDayOfInterval, eachMont
 import { ptBR } from "date-fns/locale"
 
 import { TransactionSummaryCards } from "@/components/transaction-summary-cards"
-import { TimeRange } from "@/app/actions/transactions-fetch"
+import { TimeRange } from "@/types/time-range"
 import { Eye, EyeOff, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

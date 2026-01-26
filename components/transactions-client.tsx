@@ -12,7 +12,7 @@ import { TransactionDetailsDialog } from "@/components/transaction-details-dialo
 import { TransactionDialog } from "@/components/transactions/transaction-dialog"
 import { TransactionsTableSkeleton } from "@/components/ui/skeletons"
 import { EmptyState } from "@/components/ui/empty-state"
-import { TimeRange } from "@/app/actions/transactions-fetch"
+import { TimeRange } from "@/types/time-range"
 import { Plus, Search, ChevronDown, Inbox } from "lucide-react"
 import type { Transaction } from "@/types/transaction"
 import { Button } from "@/components/ui/button"
