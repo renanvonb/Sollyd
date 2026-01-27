@@ -30,6 +30,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { EmptyState } from "@/components/ui/empty-state"
+import { useVisibility } from "@/hooks/use-visibility-state"
 
 export interface CategoryData {
     category: string
@@ -53,6 +54,8 @@ const chartConfig = {
 
 export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, selectedCategory }: ExpensesByCategoryChartProps) {
     const totalAmount = data.reduce((acc, curr) => acc + curr.amount, 0)
+
+    const { isVisible } = useVisibility()
 
     const renderChart = (isExpanded = false) => {
         if (!data || data.length === 0) {
@@ -104,6 +107,7 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
                         tickMargin={0}
                         dx={-75}
                         tickFormatter={(value) => {
+                            if (!isVisible) return "R$ ••••";
                             const formatted = value.toLocaleString("pt-BR", {
                                 notation: "compact",
                                 maximumFractionDigits: 1
@@ -112,7 +116,7 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
                         }}
                     />
                     <ChartTooltip
-                        cursor={{ fill: 'hsl(var(--muted-foreground))', opacity: 0.1 }}
+                        cursor={{ fill: 'hsl(var(--muted-foreground))', opacity: 0.25 }}
                         content={(props) => (
                             <ChartTooltipContent
                                 {...props}
@@ -133,11 +137,11 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
                                                         {item.payload.category || name}
                                                     </span>
                                                     <span className="text-muted-foreground/50 tabular-nums text-[10px]">
-                                                        {percent.toFixed(1)}%
+                                                        {isVisible ? `${percent.toFixed(1)}%` : "•••%"}
                                                     </span>
                                                 </div>
                                                 <span className="font-mono font-medium tabular-nums text-foreground">
-                                                    R$ {Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                                    {isVisible ? `R$ ${Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "R$ ••••"}
                                                 </span>
                                             </div>
                                         </>
@@ -192,11 +196,17 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
                                 const isSelected = !selectedCategory || category === selectedCategory
                                 const opacity = isSelected ? 1 : 0.3
 
-                                const formatted = Number(value).toLocaleString('pt-BR', {
-                                    style: "currency",
-                                    currency: "BRL",
-                                    minimumFractionDigits: 2
-                                })
+                                let formatted: string;
+                                if (!isVisible) {
+                                    formatted = "R$ ••••";
+                                } else {
+                                    formatted = Number(value).toLocaleString('pt-BR', {
+                                        style: "currency",
+                                        currency: "BRL",
+                                        minimumFractionDigits: 2
+                                    })
+                                }
+
                                 // Estimativa conservadora para font 10px: ~6.5px por caractere + margem
                                 // Font 12px: ~8px por caractere
                                 // Font 14px: ~9px por caractere

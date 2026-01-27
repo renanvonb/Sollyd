@@ -15,6 +15,7 @@ interface DashboardPageProps {
         to?: string
         q?: string
         year?: string
+        status?: string
     }
 }
 
@@ -22,6 +23,7 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
     const range = (searchParams.range as TimeRange) || 'mes'
     const from = searchParams.from
     const to = searchParams.to
+    const status = searchParams.status // Default to undefined (server fetches all), Client handles view default.
     const competenceDate = from ? from : new Date().toISOString()
 
     // Data fetching (Server Side)
@@ -30,12 +32,14 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
             range,
             startDate: from,
             endDate: to,
-            competence: competenceDate
+            competence: competenceDate,
+            status
         }),
         getTransactions({
             range,
             startDate: from,
             endDate: to,
+            status
         })
     ])
 

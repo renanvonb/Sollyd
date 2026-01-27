@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AdaptiveDatePicker } from "@/components/ui/adaptive-date-picker"
 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 interface TransactionsClientProps {
     initialData: any[]
 }
@@ -88,6 +90,17 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
     // Filtros sincronizados com a URL
     const range = (searchParams.get('range') as TimeRange) || 'mes'
     const searchQuery = searchParams.get('q')?.toLowerCase() || ""
+    const statusFilter = searchParams.get('status') || "all"
+
+    const handleStatusFilterChange = (value: string) => {
+        startTransition(() => {
+            const params = new URLSearchParams(searchParams.toString())
+            if (value && value !== 'all') params.set('status', value)
+            else params.delete('status') // Remove if 'all' to keep URL clean? Or force 'all'?
+            // If we remove it, page default is 'all', so that works.
+            router.push(`?${params.toString()}`, { scroll: false })
+        })
+    }
 
 
     const date: DateRange | undefined = React.useMemo(() => {
@@ -206,7 +219,16 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                             />
                         </div>
 
-                        {/* 2. Select Period (100px) */}
+                        {/* 2. Status Tabs */}
+                        <Tabs value={statusFilter} onValueChange={handleStatusFilterChange} className="h-10">
+                            <TabsList className="bg-neutral-900 border border-neutral-800 h-10">
+                                <TabsTrigger value="all" className="h-8 data-[state=active]:bg-neutral-800 data-[state=active]:text-neutral-50 font-inter">Todas</TabsTrigger>
+                                <TabsTrigger value="Realizado" className="h-8 data-[state=active]:bg-neutral-800 data-[state=active]:text-neutral-50 font-inter">Realizadas</TabsTrigger>
+                                <TabsTrigger value="Pendente" className="h-8 data-[state=active]:bg-neutral-800 data-[state=active]:text-neutral-50 font-inter">Pendentes</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+
+                        {/* 3. Select Period (100px) */}
                         <Select
                             value={range}
                             onValueChange={handleRangeChange}
@@ -223,7 +245,7 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                             </SelectContent>
                         </Select>
 
-                        {/* 3. Adaptive Date Picker (150px) */}
+                        {/* 4. Adaptive Date Picker (150px) */}
                         <AdaptiveDatePicker
                             mode={range}
                             value={date}
@@ -231,7 +253,7 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                             className="w-[150px]"
                         />
 
-                        {/* 4. Add Button -> Dropdown */}
+                        {/* 5. Add Button -> Dropdown */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button className="font-inter font-medium">
@@ -276,7 +298,7 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                             description={
                                 searchQuery
                                     ? "Não encontramos transações com os termos buscados. Tente ajustar sua pesquisa."
-                                    : "Comece registrando sua primeira movimentação financeira para acompanhar suas finanças."
+                                    : <span>Registre sua primeira transação clicando <br /> no botão "Adicionar".</span>
                             }
                             action={
                                 searchQuery ? (

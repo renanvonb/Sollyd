@@ -4,7 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, ArrowRightLeft, TrendingUp, UserPlus, LogOut, User, Menu, Settings } from 'lucide-react'
+import { LayoutDashboard, ArrowRightLeft, TrendingUp, UserPlus, LogOut, User, Menu, Settings, PieChart } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { signOut, updateProfile } from '@/app/actions/auth'
 import { useSidebar } from '@/hooks/use-sidebar-state'
@@ -35,7 +36,15 @@ interface SidebarProps {
     }
 }
 
-const menuItems = [
+interface MenuItem {
+    label: string
+    href: string
+    icon: any
+    disabled?: boolean
+    tooltip?: string
+}
+
+const menuItems: MenuItem[] = [
     {
         label: 'Dashboard',
         href: '/dashboard',
@@ -50,8 +59,11 @@ const menuItems = [
         label: 'Investimentos',
         href: '/investimentos',
         icon: TrendingUp,
-        disabled: true,
-        tooltip: 'Investimentos (Em breve)',
+    },
+    {
+        label: 'Orçamentos',
+        href: '/orcamentos',
+        icon: PieChart,
     },
     {
         label: 'Cadastros',

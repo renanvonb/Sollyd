@@ -21,9 +21,10 @@ interface GetTransactionsParams {
     range: TimeRange
     startDate?: string
     endDate?: string
+    status?: string
 }
 
-export async function getTransactions({ range, startDate, endDate }: GetTransactionsParams) {
+export async function getTransactions({ range, startDate, endDate, status }: GetTransactionsParams) {
     const supabase = createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -59,22 +60,13 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
         end = endOfMonth(referenceDate)
     }
 
-    console.log('[getTransactions] Params:', { range, startDate, endDate })
-    console.log('[getTransactions] Date Range:', {
-        start: format(start, 'yyyy-MM-dd'),
-        end: format(end, 'yyyy-MM-dd')
-    })
+    const startStr = format(start, 'yyyy-MM-dd')
+    const endStr = format(end, 'yyyy-MM-dd')
 
-    // Timeout promise
-    const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Query timeout')), 15000)
-    )
+    console.log('[getTransactions] Params:', { range, startDate, endDate, status })
+    console.log('[getTransactions] Date Range:', { start: startStr, end: endStr })
 
     try {
-        const startStr = format(start, 'yyyy-MM-dd')
-        const endStr = format(end, 'yyyy-MM-dd')
-
-        // Executar a query de forma mais robusta
         const query = supabase
             .from('transactions')
             .select(`
@@ -86,16 +78,43 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
                 wallets(id, name, color)
             `)
             .eq('user_id', userId)
-            // Filtro simplificado e mais performático (busca tanto em competência quanto em data)
-            .gte('competence', startStr)
-            .lte('competence', endStr)
-            .order('competence', { ascending: false })
-            .order('created_at', { ascending: false });
 
-        const { data, error } = await Promise.race([
-            query,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Query timeout')), 30000))
-        ]) as any
+        // 1. Date & Status Filtering
+        if (range === 'mes') {
+            // "Quando "Mês" trazer todas as transações vinculadas a "Date" da "Competence" filtrada"
+            query.gte('competence', startStr).lte('competence', endStr)
+            query.order('competence', { ascending: false })
+
+            if (status === 'Realizado') query.eq('status', 'Realizado')
+            else if (status === 'Pendente') query.eq('status', 'Pendente')
+        } else {
+            // "Quando "Ano" trazer todas as transações vinculadas a "Date" dentro do ano selecionada"
+            // Interpreted as: Realized -> Date, Pending -> Competence
+
+            if (status === 'Realizado') {
+                query.eq('status', 'Realizado')
+                    .gte('date', startStr)
+                    .lte('date', endStr)
+                query.order('date', { ascending: false })
+            } else if (status === 'Pendente') {
+                query.eq('status', 'Pendente')
+                    .gte('competence', startStr)
+                    .lte('competence', endStr)
+                query.order('competence', { ascending: false })
+            } else {
+                // All: Realized (Date) OR Pending (Competence)
+                const orCondition = `and(status.eq.Realizado,date.gte.${startStr},date.lte.${endStr}),and(status.eq.Pendente,competence.gte.${startStr},competence.lte.${endStr})`
+                query.or(orCondition)
+
+                // Sort by competence for mixed view as it's the most reliable common field
+                query.order('competence', { ascending: false })
+            }
+        }
+
+        query.order('created_at', { ascending: false }) // Secondary sort
+
+        // Executar a query
+        const { data, error } = await query
 
         if (error) {
             console.error('[getTransactions] Query Error:', error.message)
@@ -104,7 +123,7 @@ export async function getTransactions({ range, startDate, endDate }: GetTransact
 
         return data || []
     } catch (error) {
-        console.error('[getTransactions] Unexpected error or timeout:', error)
+        console.error('[getTransactions] Unexpected error:', error)
         return []
     }
 }

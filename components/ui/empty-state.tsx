@@ -27,7 +27,7 @@ interface EmptyStateProps
     extends Omit<React.HTMLAttributes<HTMLDivElement>, "title">,
     VariantProps<typeof emptyStateVariants> {
     title: string | React.ReactNode
-    description?: string
+    description?: string | React.ReactNode
     icon?: LucideIcon
     action?: React.ReactNode
     titleClassName?: string

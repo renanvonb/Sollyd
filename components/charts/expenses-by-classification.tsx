@@ -32,6 +32,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { EmptyState } from "@/components/ui/empty-state"
+import { useVisibility } from "@/hooks/use-visibility-state"
 import { cn } from "@/lib/utils"
 
 export interface ClassificationData {
@@ -56,6 +57,7 @@ const chartConfig = {
 
 export function ExpensesByClassificationChart({ data, periodLabel, onClassificationClick, selectedClassification }: ExpensesByClassificationChartProps) {
     const [activeIndex, setActiveIndex] = React.useState<number | undefined>(undefined)
+    const { isVisible } = useVisibility()
 
     const totalAmount = React.useMemo(() => {
         return data.reduce((acc, curr) => acc + curr.amount, 0)
@@ -103,11 +105,11 @@ export function ExpensesByClassificationChart({ data, periodLabel, onClassificat
                                                         {name}
                                                     </span>
                                                     <span className="text-muted-foreground/50 tabular-nums text-[10px]">
-                                                        {percent.toFixed(1)}%
+                                                        {isVisible ? `${percent.toFixed(1)}%` : "•••%"}
                                                     </span>
                                                 </div>
                                                 <span className="font-mono font-medium tabular-nums text-foreground">
-                                                    R$ {Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                                    {isVisible ? `R$ ${Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "R$ ••••"}
                                                 </span>
                                             </div>
                                         </>
@@ -147,7 +149,7 @@ export function ExpensesByClassificationChart({ data, periodLabel, onClassificat
                                     fontWeight={600}
                                     style={{ opacity: 1, transition: 'opacity 0.2s' }}
                                 >
-                                    {`${(percent * 100).toFixed(0)}%`}
+                                    {isVisible ? `${(percent * 100).toFixed(0)}%` : "•••%"}
                                 </text>
                             );
                         }}

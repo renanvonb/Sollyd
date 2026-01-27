@@ -3,6 +3,9 @@
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { Maximize2, Inbox } from "lucide-react"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { useVisibility } from "@/hooks/use-visibility-state"
 
 import {
     Card,
@@ -77,6 +80,8 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
         }))
     }
 
+    const { isVisible } = useVisibility()
+
     const renderChart = (isExpanded = false) => {
         if (!hasData) {
             return (
@@ -115,15 +120,41 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
                         interval={0}
                         tick={{ fontSize: isExpanded ? 14 : 10 }}
                         tickFormatter={(value) => {
-                            if (value.length <= 7) {
+                            // Year View: YYYY-MM
+                            if (value.length === 7) {
                                 const [year, month] = value.split('-')
                                 const date = new Date(parseInt(year), parseInt(month) - 1, 1)
                                 const monthName = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
                                 const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1)
                                 return `${capitalizedMonth}/${year}`
                             }
-                            const date = new Date(value + 'T00:00:00')
-                            return date.toLocaleDateString('pt-BR', { day: '2-digit' })
+                            // Day/Week/Month View: YYYY-MM-DD
+                            if (value.length === 10) {
+                                const [y, m, d] = value.split('-').map(Number);
+                                const date = new Date(y, m - 1, d);
+
+                                // Specific for Single Day view (or very short ranges) might want more detail?
+                                // User asked: "00/00/00, Quarta-feira"
+                                // But XAxis space is limited. Let's try compact "dd/MM" usually, 
+                                // but if data length is small (Week view), maybe "EEE, dd/MM"
+
+                                if (data.length === 1) {
+                                    // Day View
+                                    const dayName = date.toLocaleDateString('pt-BR', { weekday: 'long' });
+                                    const dayNameCap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+                                    return `${date.toLocaleDateString('pt-BR')} - ${dayNameCap}`;
+                                }
+                                if (data.length <= 7) {
+                                    // Week View
+                                    const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+                                    const dayNameCap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+                                    return `${dayNameCap}, ${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                                }
+
+                                // Month View
+                                return date.toLocaleDateString('pt-BR', { day: '2-digit' })
+                            }
+                            return value
                         }}
                     />
                     <YAxis
@@ -134,6 +165,7 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
                         tickMargin={0}
                         dx={-75}
                         tickFormatter={(value) => {
+                            if (!isVisible) return "R$ ••••";
                             const formatted = value.toLocaleString("pt-BR", {
                                 notation: "compact",
                                 maximumFractionDigits: 1
@@ -148,15 +180,15 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
                                 {...props}
                                 className="w-[200px]"
                                 labelFormatter={(value) => {
-                                    if (value.length <= 7) {
+                                    if (value.length === 7) {
                                         const [year, month] = value.split('-')
                                         const date = new Date(parseInt(year), parseInt(month) - 1, 1)
-                                        const monthName = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
-                                        const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1)
-                                        return `${capitalizedMonth}/${year}`
+                                        const formatted = format(date, "MMMM 'de' yyyy", { locale: ptBR })
+                                        return formatted.charAt(0).toUpperCase() + formatted.slice(1)
                                     }
                                     const date = new Date(value + 'T00:00:00')
-                                    return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+                                    const formatted = format(date, "EEE, dd 'de' MMM. yyyy", { locale: ptBR })
+                                    return formatted.charAt(0).toUpperCase() + formatted.slice(1)
                                 }}
                                 formatter={(value, name, item, index, payload) => {
                                     const data = payload as any
@@ -176,13 +208,13 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
                                                 {chartConfig[name as keyof typeof chartConfig]?.label || name}
                                             </span>
                                             <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
-                                                R$ {Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                                {isVisible ? `R$ ${Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "R$ ••••"}
                                             </div>
                                             {index === 1 && (
                                                 <div className="mt-1.5 flex basis-full items-center border-t border-dashed pt-1.5 text-xs font-medium text-foreground">
                                                     Saldo
                                                     <div className={`ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums ${balance >= 0 ? "text-green-500" : "text-red-500"}`}>
-                                                        R$ {balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                                        {isVisible ? `R$ ${balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "R$ ••••"}
                                                     </div>
                                                 </div>
                                             )}
@@ -255,10 +287,10 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
                     <div className="flex items-center gap-2">
                         {hasData ? (
                             <DialogTrigger asChild>
-                                <CardTitle className="text-base font-semibold text-nowrap cursor-pointer">Balanço financeiro</CardTitle>
+                                <CardTitle className="text-base font-semibold text-nowrap cursor-pointer">Balanço</CardTitle>
                             </DialogTrigger>
                         ) : (
-                            <CardTitle className="text-base font-semibold text-nowrap">Balanço financeiro</CardTitle>
+                            <CardTitle className="text-base font-semibold text-nowrap">Balanço</CardTitle>
                         )}
                         {hasData && (
                             <TooltipProvider>
@@ -288,7 +320,7 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
             <DialogContent className="max-w-[90vw] h-[80vh] flex flex-col">
                 <DialogHeader className="flex-none border-b pb-4">
                     <div className="flex items-center justify-between pr-8">
-                        <DialogTitle>Balanço financeiro</DialogTitle>
+                        <DialogTitle>Balanço</DialogTitle>
                         <Legend />
                     </div>
                 </DialogHeader>

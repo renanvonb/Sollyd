@@ -82,7 +82,7 @@ export function TransactionsContent({
                         description={
                             searchQuery
                                 ? "Não encontramos transações com os termos buscados. Tente ajustar sua pesquisa."
-                                : "Comece registrando sua primeira movimentação financeira para acompanhar suas finanças."
+                                : <span>Registre sua primeira transação clicando <br /> no botão "Adicionar".</span>
                         }
                         action={
                             searchQuery ? (

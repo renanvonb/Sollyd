@@ -74,7 +74,8 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
         }
 
         if (range === 'dia') {
-            return format(date.from, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+            const formatted = format(date.from, "EEE, dd 'de' MMM. yyyy", { locale: ptBR })
+            return formatted.charAt(0).toUpperCase() + formatted.slice(1)
         }
 
         return `${format(date.from, "dd MMM", { locale: ptBR })} - ${format(date.to, "dd MMM", { locale: ptBR })}`
@@ -103,9 +104,14 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
 
     const totals = React.useMemo(() => {
         const dataInRange = date?.from && date?.to ? filteredData.filter(t => {
-            const refDate = t.competence || t.date;
+            const refDate = range === 'mes'
+                ? (t.competence || t.date)
+                : (t.date || t.competence || t.created_at);
+
             if (!refDate) return false;
             const tDate = parseISO(refDate);
+            // Ignore time component for date comparison logic if using ISO strings from DB
+            // But parseISO handles it.
             return tDate >= date.from! && tDate <= date.to!;
         }) : filteredData;
 
@@ -131,7 +137,10 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
 
     const chartsData = React.useMemo(() => {
         const baseData = date?.from && date?.to ? filteredData.filter(t => {
-            const refDate = t.competence || t.date;
+            const refDate = range === 'mes'
+                ? (t.competence || t.date)
+                : (t.date || t.competence || t.created_at);
+
             if (!refDate) return false;
             // Use string comparison (YYYY-MM-DD) to avoid timezone issues
             const refDateStr = refDate.substring(0, 10);
@@ -215,10 +224,25 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
         const isMonthlyRange = range === 'mes';
         let historyStart = startOfYear(new Date(selectedYear, 0, 1));
         let historyEnd = endOfYear(new Date(selectedYear, 0, 1));
+        let intervals: Date[] = [];
 
-        if (isMonthlyRange && date?.from && date?.to) {
+        if (date?.from && date?.to) {
             historyStart = date.from;
             historyEnd = date.to;
+        }
+
+        if (range === 'dia') {
+            // Just showing that single day
+            intervals = [historyStart];
+        } else if (range === 'semana') {
+            intervals = eachDayOfInterval({ start: historyStart, end: historyEnd });
+        } else if (range === 'mes') {
+            intervals = eachDayOfInterval({ start: historyStart, end: historyEnd });
+        } else if (range === 'ano') {
+            intervals = eachMonthOfInterval({ start: historyStart, end: historyEnd });
+        } else {
+            // Fallback
+            intervals = eachMonthOfInterval({ start: historyStart, end: historyEnd });
         }
 
         const historyMap = new Map<string, { income: number, expense: number }>();
@@ -226,14 +250,23 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
         const historyEndStr = format(historyEnd, 'yyyy-MM-dd');
 
         dataForHistory.forEach(t => {
-            const refDate = t.competence || t.date;
+            // Prioritize actual date for day-level granularity
+            const refDate = t.date || t.competence || t.created_at;
             if (!refDate) return;
             // Use string key directly
             const refDateStr = refDate.substring(0, 10);
 
             // Allow if within range (string comparison)
             if (refDateStr >= historyFromStr && refDateStr <= historyEndStr) {
-                const dateKey = isMonthlyRange ? refDateStr : refDateStr.substring(0, 7); // YYYY-MM
+                // Determine grouping key
+                let dateKey: string;
+                if (range === 'ano') {
+                    dateKey = refDateStr.substring(0, 7); // YYYY-MM
+                } else {
+                    // Day, Week, Month -> Group by Day
+                    dateKey = refDateStr; // YYYY-MM-DD
+                }
+
                 const current = historyMap.get(dateKey) || { income: 0, expense: 0 };
                 const amount = parseFloat(t.amount as any);
                 if (t.type === 'revenue') current.income += amount;
@@ -242,12 +275,8 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
             }
         });
 
-        const intervals = isMonthlyRange
-            ? eachDayOfInterval({ start: historyStart, end: historyEnd })
-            : eachMonthOfInterval({ start: historyStart, end: historyEnd });
-
         const history = intervals.map(interval => {
-            const dateKey = isMonthlyRange ? format(interval, 'yyyy-MM-dd') : format(interval, 'yyyy-MM');
+            const dateKey = (range === 'ano') ? format(interval, 'yyyy-MM') : format(interval, 'yyyy-MM-dd');
             const data = historyMap.get(dateKey) || { income: 0, expense: 0 };
             return { date: dateKey, ...data };
         });

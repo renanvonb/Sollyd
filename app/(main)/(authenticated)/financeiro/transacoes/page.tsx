@@ -10,6 +10,7 @@ interface TransactionsPageProps {
         range?: string
         from?: string
         to?: string
+        status?: string
     }
 }
 
@@ -17,11 +18,13 @@ async function TransactionsContent({ searchParams }: TransactionsPageProps) {
     const range = (searchParams.range as TimeRange) || 'mes'
     const from = searchParams.from
     const to = searchParams.to
+    const status = searchParams.status // Default to undefined (all) if not present, or 'Realizado'?
 
     const initialData = await getTransactions({
         range,
         startDate: from,
         endDate: to,
+        status: status || 'all' // Defaulting to 'all' for transactions list makes sense unless requested otherwise.
     })
 
     return <TransactionsClient initialData={initialData} />
