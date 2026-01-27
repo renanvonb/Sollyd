@@ -14,7 +14,7 @@ import { TransactionForm } from "@/components/transaction-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import type { Transaction } from "@/types/transaction"
-import { startOfMonth, endOfMonth } from "date-fns"
+import { startOfMonth, endOfMonth, format, parseISO } from "date-fns"
 
 const periodTabs = [
     { id: 'dia', label: 'Dia' },
@@ -50,7 +50,7 @@ export default function TransactionsPage() {
             setLoading(true)
             const result = await getTransactions({
                 range,
-                startDate: from || undefined,
+                startDate: from ? format(parseISO(from), 'yyyy-MM-01') : undefined,
                 endDate: to || undefined,
             })
             setData(result)

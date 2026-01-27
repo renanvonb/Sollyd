@@ -28,6 +28,7 @@ export async function getDashboardMetrics({ range, startDate, endDate, competenc
         effectiveEndDate = endDate
     } else {
         // Fallback or Range logic
+        // Fallback or Range logic
         const referenceCompetence = competence || new Date().toISOString()
         const referenceDate = startDate ? parseISO(startDate) : parseISO(referenceCompetence)
         let start: Date

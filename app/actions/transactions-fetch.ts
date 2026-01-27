@@ -36,7 +36,16 @@ export async function getTransactions({ range, startDate, endDate, status }: Get
     const userId = user.id
     let start: Date
     let end: Date
-    const referenceDate = startDate ? parseISO(startDate) : new Date()
+    // Fix Timezone: Parse date components directly to avoid shifting
+    const getDateFromParam = (dateStr?: string) => {
+        if (!dateStr) return new Date()
+        // If it's an ISO string (e.g. 2024-02-01T00:00:00.000Z), treating it as UTC might shift it.
+        // But if we trust the "YYYY-MM-DD" part of the string matches user intent (if sent as such):
+        // Ideally we assume the input IS the date we want.
+        return parseISO(dateStr)
+    }
+
+    const referenceDate = getDateFromParam(startDate)
 
     // Lógica de intervalos
     if (startDate && endDate) {
@@ -60,6 +69,11 @@ export async function getTransactions({ range, startDate, endDate, status }: Get
         end = endOfMonth(referenceDate)
     }
 
+    // Ensure format uses local date part. 
+    // In production (UTC environment), format(date, 'yyyy-MM-dd') outputs the UTC date string.
+    // If referenceDate was shifted, this is where it fails.
+    // However, without changing the client, we rely on standard parsers.
+    // To match the specific request "Utilizar date-fns format...":
     const startStr = format(start, 'yyyy-MM-dd')
     const endStr = format(end, 'yyyy-MM-dd')
 

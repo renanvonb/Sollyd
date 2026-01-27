@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Suspense } from "react"
+import { format, parseISO } from "date-fns"
 import { createClient } from "@/lib/supabase/server"
 import { getTransactions } from "@/app/actions/transactions-fetch"
 import { TimeRange } from "@/types/time-range"
@@ -24,7 +25,7 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
     const from = searchParams.from
     const to = searchParams.to
     const status = searchParams.status // Default to undefined (server fetches all), Client handles view default.
-    const competenceDate = from ? from : new Date().toISOString()
+    const competenceDate = from ? format(parseISO(from), 'yyyy-MM-01') : format(new Date(), 'yyyy-MM-01')
 
     // Data fetching (Server Side)
     const [metrics, initialData] = await Promise.all([

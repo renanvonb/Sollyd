@@ -275,7 +275,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         category_id: data.category_id || null,
                         subcategory_id: data.subcategory_id || null,
                         date: data.status === 'Realizado' && data.date ? format(data.date, 'yyyy-MM-dd') : null,
-                        competence: data.competence ? format(data.competence, 'yyyy-MM-dd') : null,
+                        competence: data.competence ? format(data.competence, 'yyyy-MM-01') : null,
                         status: data.status || 'Realizado',
                     }
 
@@ -289,11 +289,19 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                         form.reset()
                         if (onSuccess) onSuccess()
                     } else {
-                        toast.error(result.error || "Erro ao salvar transação")
+                        const errorMsg = result.error || "Erro ao salvar transação"
+                        if (errorMsg.includes("check_competence_is_first_day") || (errorMsg.includes("check constraint") && errorMsg.includes("competence"))) {
+                            console.error("[TransactionForm] DB Constraint Violation:", errorMsg)
+                            toast.error("Erro de validação: Data de competência inválida.", {
+                                description: "A competência deve ser sempre o primeiro dia do mês (ex: 01/04/2026). O sistema tentou corrigir mas foi rejeitado pelo banco."
+                            })
+                        } else {
+                            toast.error(errorMsg)
+                        }
                     }
                 } catch (error) {
                     console.error(error)
-                    toast.error("Erro ao salvar transação")
+                    toast.error("Erro inesperado ao processar transação")
                 }
             }
             run()
