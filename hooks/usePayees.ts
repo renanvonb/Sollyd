@@ -8,7 +8,7 @@ import { Payee } from '@/types/transaction';
  * - 'expense' -> Filtra por 'payee' (e 'both')
  * - undefined -> Busca todos
  */
-export function usePayees(type: 'revenue' | 'expense' | 'investment' | undefined) {
+export function usePayees(type: 'revenue' | 'expense' | 'investment' | 'Receita' | 'Despesa' | undefined) {
     const [payees, setPayees] = useState<Payee[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -20,9 +20,9 @@ export function usePayees(type: 'revenue' | 'expense' | 'investment' | undefined
             try {
                 let typeFilter: 'payer' | 'favored' | undefined;
 
-                if (type === 'revenue') {
+                if (type === 'revenue' || type === 'Receita') {
                     typeFilter = 'payer';
-                } else if (type === 'expense') {
+                } else if (type === 'expense' || type === 'Despesa') {
                     typeFilter = 'favored';
                 }
                 // Se investment, por padrão traz benefícios (payee) ou todos?

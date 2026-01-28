@@ -1,4 +1,4 @@
-export type TransactionType = 'revenue' | 'expense';
+export type TransactionType = 'revenue' | 'expense' | 'Receita' | 'Despesa';
 export type TransactionClassification = 'essential' | 'necessary' | 'superfluous';
 
 export interface Payer {

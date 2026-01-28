@@ -9,7 +9,7 @@ const emptyToNull = (val: any) => (val === "" ? null : val);
 const transactionSchema = z.object({
     description: z.string().min(1, "Descrição é obrigatória"),
     amount: z.coerce.number().gt(0, "Valor deve ser maior que zero"),
-    type: z.enum(["revenue", "expense"]),
+    type: z.enum(["revenue", "expense", "Receita", "Despesa"]),
     payee_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),
     payment_method: z.preprocess(emptyToNull, z.enum(["Boleto", "Crédito", "Débito", "Pix", "Dinheiro"]).optional().nullable()),
     classification_id: z.preprocess(emptyToNull, z.string().uuid().optional().nullable()),

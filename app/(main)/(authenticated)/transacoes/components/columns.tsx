@@ -36,7 +36,15 @@ export const columns: ColumnDef<Transaction>[] = [
                     label: "Receita",
                     className: "bg-green-50 text-green-700 hover:bg-green-50/80 dark:bg-green-900/30 dark:text-green-400"
                 },
+                Receita: {
+                    label: "Receita",
+                    className: "bg-green-50 text-green-700 hover:bg-green-50/80 dark:bg-green-900/30 dark:text-green-400"
+                },
                 expense: {
+                    label: "Despesa",
+                    className: "bg-red-50 text-red-700 hover:bg-red-50/80 dark:bg-red-900/30 dark:text-red-400"
+                },
+                Despesa: {
                     label: "Despesa",
                     className: "bg-red-50 text-red-700 hover:bg-red-50/80 dark:bg-red-900/30 dark:text-red-400"
                 },
@@ -134,9 +142,9 @@ export const columns: ColumnDef<Transaction>[] = [
                 }).format(amount)
                 : "R$ ••••"
 
-            const colorClass = type === "revenue"
+            const colorClass = (type === "revenue" || type === "Receita")
                 ? "text-green-600"
-                : type === "expense"
+                : (type === "expense" || type === "Despesa")
                     ? "text-red-600"
                     : "text-blue-600"
 

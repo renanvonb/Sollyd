@@ -133,9 +133,10 @@ export function DashboardGraphs({ initialData, metrics }: DashboardGraphsProps) 
 
         return fullyFiltered.reduce((acc, curr) => {
             const amount = parseFloat(curr.amount as any) || 0
-            if (curr.type === 'revenue') acc.income += amount
-            else if (curr.type === 'expense') acc.expense += amount
-            else if (curr.type === 'investment') acc.investment += amount
+            const type = curr.type?.toLowerCase()
+            if (type === 'revenue' || type === 'receita') acc.income += amount
+            else if (type === 'expense' || type === 'despesa') acc.expense += amount
+            else if (type === 'investment' || type === 'investimento') acc.investment += amount
             acc.balance = acc.income - acc.expense - acc.investment
             return acc
         }, { income: 0, expense: 0, investment: 0, balance: 0 })
@@ -171,11 +172,11 @@ export function DashboardGraphs({ initialData, metrics }: DashboardGraphsProps) 
             });
         };
 
-        const dataForCategory = getFilteredData('category').filter(t => t.type === 'expense');
-        const dataForSubcategory = getFilteredData('subcategory').filter(t => t.type === 'expense');
-        const dataForClassification = getFilteredData('classification').filter(t => t.type === 'expense');
-        const dataForPayee = getFilteredData('payee').filter(t => t.type === 'expense');
-        const dataForPayer = getFilteredData('payer').filter(t => t.type === 'revenue');
+        const dataForCategory = getFilteredData('category').filter(t => ['expense', 'despesa'].includes(t.type?.toLowerCase() || ''));
+        const dataForSubcategory = getFilteredData('subcategory').filter(t => ['expense', 'despesa'].includes(t.type?.toLowerCase() || ''));
+        const dataForClassification = getFilteredData('classification').filter(t => ['expense', 'despesa'].includes(t.type?.toLowerCase() || ''));
+        const dataForPayee = getFilteredData('payee').filter(t => ['expense', 'despesa'].includes(t.type?.toLowerCase() || ''));
+        const dataForPayer = getFilteredData('payer').filter(t => ['revenue', 'receita'].includes(t.type?.toLowerCase() || ''));
 
         // History uses ALL filters
         const dataForHistory = getFilteredData();
@@ -302,8 +303,9 @@ export function DashboardGraphs({ initialData, metrics }: DashboardGraphsProps) 
 
                 const current = historyMap.get(dateKey) || { income: 0, expense: 0 };
                 const amount = parseFloat(t.amount as any);
-                if (t.type === 'revenue') current.income += amount;
-                if (t.type === 'expense') current.expense += amount;
+                const type = t.type?.toLowerCase();
+                if (type === 'revenue' || type === 'receita') current.income += amount;
+                if (type === 'expense' || type === 'despesa') current.expense += amount;
                 historyMap.set(dateKey, current);
             }
         });

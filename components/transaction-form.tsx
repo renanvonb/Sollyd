@@ -54,7 +54,7 @@ import { toast } from "sonner"
 const transactionBaseSchema = z.object({
     description: z.string().min(1, "Descrição é obrigatória"),
     amount: z.coerce.number().gt(0, "Valor deve ser maior que zero"),
-    type: z.enum(["revenue", "expense"]),
+    type: z.enum(["revenue", "expense", "Receita", "Despesa"]),
     wallet_id: z.string().min(1, "Carteira é obrigatória"),
     payee_id: z.string().optional(),
     payment_method: z.string().optional(),
@@ -73,12 +73,12 @@ const transactionSchema = transactionBaseSchema.superRefine((data, ctx) => {
     if (!data.payee_id) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: data.type === 'revenue' ? "Pagador é obrigatório" : "Beneficiário é obrigatório",
+            message: (data.type === 'revenue' || data.type === 'Receita') ? "Pagador é obrigatório" : "Beneficiário é obrigatório",
             path: ["payee_id"],
         })
     }
 
-    if (data.type === 'expense') {
+    if (data.type === 'expense' || data.type === 'Despesa') {
         if (!data.payment_method) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -143,7 +143,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
         defaultValues: {
             description: "",
             amount: 0,
-            type: (defaultType === "investment" ? "expense" : defaultType) as any,
+            type: (defaultType === "investment" ? "Despesa" : (defaultType === "revenue" ? "Receita" : "Despesa")) as any,
             wallet_id: "",
             payee_id: "",
             payment_method: "",
@@ -162,7 +162,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
     const { payees } = usePayees(type)
 
     const filteredCategories = React.useMemo(() => {
-        const targetType = type === 'revenue' ? 'Receita' : 'Despesa';
+        const targetType = (type === 'revenue' || type === 'Receita') ? 'Receita' : 'Despesa';
         return allCategories.filter(c => !c.type || c.type === targetType);
     }, [allCategories, type]);
 
@@ -171,7 +171,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
         const currentCatId = form.getValues("category_id");
         if (currentCatId) {
             const cat = allCategories.find(c => c.id === currentCatId);
-            const targetType = type === 'revenue' ? 'Receita' : 'Despesa';
+            const targetType = (type === 'revenue' || type === 'Receita') ? 'Receita' : 'Despesa';
             if (cat && cat.type && cat.type !== targetType) {
                 form.setValue("category_id", "");
                 form.setValue("subcategory_id", "");
@@ -330,10 +330,10 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                     className="w-full"
                 >
                     <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="expense" disabled={isLoadingData}>
+                        <TabsTrigger value="Despesa" disabled={isLoadingData}>
                             Despesa
                         </TabsTrigger>
-                        <TabsTrigger value="revenue" disabled={isLoadingData}>
+                        <TabsTrigger value="Receita" disabled={isLoadingData}>
                             Receita
                         </TabsTrigger>
                         <TabsTrigger value="investment" disabled={true}>
@@ -361,7 +361,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                 </div>
                             </div>
 
-                            {(transaction?.type || type) === 'expense' ? (
+                            {['expense', 'Despesa'].includes(transaction?.type || type) ? (
                                 <>
                                     <div className="space-y-2">
                                         <Skeleton className="h-4 w-16" />
@@ -489,7 +489,7 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                 />
                             </div>
 
-                            {type === 'expense' ? (
+                            {(type === 'expense' || type === 'Despesa') ? (
                                 <>
                                     <FormField
                                         control={form.control}
@@ -726,10 +726,10 @@ export function TransactionForm({ open, transaction, defaultType = "expense", on
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 space-y-0 mt-auto">
                                         <div className="space-y-0.5">
                                             <FormLabel className="text-base">
-                                                {type === 'expense' ? 'Pago' : 'Recebido'}
+                                                {(type === 'expense' || type === 'Despesa') ? 'Pago' : 'Recebido'}
                                             </FormLabel>
                                             <p className="text-sm text-muted-foreground font-inter">
-                                                {type === 'expense'
+                                                {(type === 'expense' || type === 'Despesa')
                                                     ? 'Marcar como pagamento realizado'
                                                     : 'Marcar como pagamento recebido'}
                                             </p>

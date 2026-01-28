@@ -49,8 +49,8 @@ export function TransactionsContent({
 
 
 
-            if (curr.type === 'revenue') acc.income += amount
-            else if (curr.type === 'expense') acc.expense += amount
+            if (curr.type === 'revenue' || curr.type === 'Receita' || curr.type === 'receita') acc.income += amount
+            else if (curr.type === 'expense' || curr.type === 'Despesa' || curr.type === 'despesa') acc.expense += amount
             else if (curr.type === 'investment') acc.investment += amount
 
             acc.balance = acc.income - acc.expense - acc.investment
