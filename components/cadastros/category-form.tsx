@@ -102,7 +102,11 @@ export function CategoryForm({
             onSuccess();
         } catch (error: any) {
             console.error('Error saving category:', error);
-            toast.error('Erro ao salvar categoria');
+            if (error?.code === '23505') {
+                toast.error('Você já possui uma categoria com este nome. Por favor, escolha outro.');
+            } else {
+                toast.error('Erro ao salvar categoria');
+            }
         } finally {
             setIsSubmitting(false);
         }

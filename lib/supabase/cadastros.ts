@@ -92,9 +92,14 @@ export interface Payee {
 
 export async function getWallets(): Promise<Wallet[]> {
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) throw new Error('Usuário não autenticado');
+
     const { data, error } = await supabase
         .from('wallets')
         .select('*, transactions(count)')
+        .eq('user_id', user.id)
         .order('name', { ascending: true });
 
     if (error) throw error;
@@ -243,6 +248,10 @@ export async function deleteCategory(id: string): Promise<void> {
 
 export async function getSubcategories(): Promise<Subcategory[]> {
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) throw new Error('Usuário não autenticado');
+
     const { data, error } = await supabase
         .from('subcategories')
         .select(`
@@ -252,6 +261,7 @@ export async function getSubcategories(): Promise<Subcategory[]> {
                 name
             )
         `)
+        .eq('user_id', user.id)
         .order('name', { ascending: true });
 
     if (error) throw error;
@@ -503,6 +513,7 @@ export async function getPayers(): Promise<Payer[]> {
     const { data, error } = await supabase
         .from('payees')
         .select('*, transactions(count)')
+        .eq('user_id', user.id)
         .or('type.eq.payer,type.eq.both')
         .order('name', { ascending: true });
 

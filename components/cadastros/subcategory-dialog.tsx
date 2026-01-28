@@ -68,9 +68,13 @@ export function SubcategoryDialog({
             setName("")
             onSuccess()
             onOpenChange(false)
-        } catch (error) {
+        } catch (error: any) {
             console.error(error)
-            toast.error("Erro ao salvar subcategoria")
+            if (error?.code === '23505') {
+                toast.error('Você já possui uma subcategoria com este nome. Por favor, escolha outro.');
+            } else {
+                toast.error("Erro ao salvar subcategoria")
+            }
         } finally {
             setSubmitting(false)
         }

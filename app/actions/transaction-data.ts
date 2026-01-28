@@ -8,9 +8,14 @@ import { unstable_noStore as noStore } from 'next/cache'
 export async function getWallets() {
     noStore()
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return []
+
     const { data, error } = await supabase
         .from('wallets')
         .select('*')
+        .eq('user_id', user.id)
         .order('name')
 
     if (error) {
@@ -71,9 +76,14 @@ export async function getPayees(typeFilter?: 'payer' | 'favored') {
 export async function getCategories() {
     noStore()
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return []
+
     const { data, error } = await supabase
         .from('categories')
         .select('*')
+        .eq('user_id', user.id)
         .order('name')
 
     if (error) {
@@ -89,10 +99,15 @@ export async function getSubcategories(categoryId: string) {
     if (!categoryId) return []
 
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return []
+
     const { data, error } = await supabase
         .from('subcategories')
         .select('*')
         .eq('category_id', categoryId)
+        .eq('user_id', user.id)
         .order('name')
 
     if (error) {
@@ -106,9 +121,14 @@ export async function getSubcategories(categoryId: string) {
 export async function getClassifications() {
     noStore()
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return []
+
     const { data, error } = await supabase
         .from('classifications')
         .select('*')
+        .eq('user_id', user.id)
         .order('name')
 
     if (error) {

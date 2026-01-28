@@ -90,7 +90,11 @@ export function PayeeForm({
             onSuccess();
         } catch (error: any) {
             console.error('Error saving payee:', error);
-            toast.error(`Erro ao salvar ${type === 'payer' ? 'pagador' : 'beneficiário'}`);
+            if (error?.code === '23505') {
+                toast.error(`Você já possui um ${type === 'payer' ? 'pagador' : 'beneficiário'} com este nome.`);
+            } else {
+                toast.error(`Erro ao salvar ${type === 'payer' ? 'pagador' : 'beneficiário'}`);
+            }
         } finally {
             setIsSubmitting(false);
         }

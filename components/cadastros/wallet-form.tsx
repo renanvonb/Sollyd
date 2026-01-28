@@ -96,7 +96,11 @@ export function WalletForm({
             onSuccess();
         } catch (error: any) {
             console.error('Error saving wallet:', error);
-            toast.error('Erro ao salvar carteira');
+            if (error?.code === '23505') {
+                toast.error('Você já possui uma carteira com este nome. Por favor, escolha outro.');
+            } else {
+                toast.error('Erro ao salvar carteira');
+            }
         } finally {
             setIsSubmitting(false);
         }
