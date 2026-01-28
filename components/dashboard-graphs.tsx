@@ -22,7 +22,7 @@ interface DashboardGraphsProps {
     metrics?: any
 }
 
-export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
+export function DashboardGraphs({ initialData, metrics }: DashboardGraphsProps) {
     const searchParams = useSearchParams()
 
     const range = (searchParams.get('range') as TimeRange) || 'mes'
@@ -103,15 +103,21 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
     }, [initialData, searchQuery, statusFilter])
 
     const totals = React.useMemo(() => {
-        const dataInRange = date?.from && date?.to ? filteredData.filter(t => {
-            const refDate = range === 'mes'
+        // DASHBOARD_SYNC_STRICT_V6: Use server metrics if available
+        if (metrics?.summary && !searchQuery && !statusFilter && !selectedCategory && !selectedSubcategory && !selectedClassification && !selectedPayee && !selectedPayer && range === 'mes') {
+            return metrics.summary;
+        }
+
+        // Strict Sync: If range is 'mes', skip date filter
+        const skipDateFilter = range === 'mes';
+
+        const dataInRange = date?.from && date?.to && !skipDateFilter ? filteredData.filter(t => {
+            const refDate = (range as string) === 'mes'
                 ? (t.competence || t.date)
                 : (t.date || t.competence || t.created_at);
 
             if (!refDate) return false;
             const tDate = parseISO(refDate);
-            // Ignore time component for date comparison logic if using ISO strings from DB
-            // But parseISO handles it.
             return tDate >= date.from! && tDate <= date.to!;
         }) : filteredData;
 
@@ -133,11 +139,15 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
             acc.balance = acc.income - acc.expense - acc.investment
             return acc
         }, { income: 0, expense: 0, investment: 0, balance: 0 })
-    }, [filteredData, date, selectedCategory, selectedSubcategory, selectedClassification, selectedPayee, selectedPayer])
+    }, [filteredData, date, selectedCategory, selectedSubcategory, selectedClassification, selectedPayee, selectedPayer, metrics, range, searchQuery, statusFilter])
 
     const chartsData = React.useMemo(() => {
-        const baseData = date?.from && date?.to ? filteredData.filter(t => {
-            const refDate = range === 'mes'
+        // Strict Sync: If range is 'mes', we trust the server's strict filtering.
+        // We do NOT filter by date locally to avoid timezone mismatches (e.g. 01/04 vs 31/03).
+        const skipDateFilter = (range as string) === 'mes';
+
+        const baseData = (date?.from && date?.to && !skipDateFilter) ? filteredData.filter(t => {
+            const refDate = (range as string) === 'mes'
                 ? (t.competence || t.date)
                 : (t.date || t.competence || t.created_at);
 
@@ -170,20 +180,30 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
         // History uses ALL filters
         const dataForHistory = getFilteredData();
 
-        // 1. By Category (Input: dataForCategory)
-        const byCategoryMap = new Map<string, { amount: number, color: string }>();
-        dataForCategory.forEach(t => {
-            const name = t.categories?.name || "Sem Categoria";
-            const color = getColorHex(t.categories?.color || "zinc");
-            const current = byCategoryMap.get(name) || { amount: 0, color };
-            current.amount += parseFloat(t.amount as any);
-            byCategoryMap.set(name, current);
-        });
-        const byCategory = Array.from(byCategoryMap.entries()).map(([name, val]) => ({
-            category: name,
-            amount: val.amount,
-            fill: val.color
-        })).sort((a, b) => b.amount - a.amount);
+        // 1. By Category
+        // DASHBOARD_SYNC_STRICT_V6: Use server metrics if available and no local filters used
+        let byCategory;
+        if (metrics?.categoryData && !searchQuery && !statusFilter && !selectedCategory && !selectedSubcategory && !selectedClassification && !selectedPayee && !selectedPayer && range === 'mes') {
+            byCategory = metrics.categoryData.map((d: any) => ({
+                category: d.name,
+                amount: d.value,
+                fill: d.color
+            })).sort((a: any, b: any) => b.amount - a.amount);
+        } else {
+            const byCategoryMap = new Map<string, { amount: number, color: string }>();
+            dataForCategory.forEach(t => {
+                const name = t.categories?.name || "Sem Categoria";
+                const color = getColorHex(t.categories?.color || "zinc");
+                const current = byCategoryMap.get(name) || { amount: 0, color };
+                current.amount += parseFloat(t.amount as any);
+                byCategoryMap.set(name, current);
+            });
+            byCategory = Array.from(byCategoryMap.entries()).map(([name, val]) => ({
+                category: name,
+                amount: val.amount,
+                fill: val.color
+            })).sort((a, b) => b.amount - a.amount);
+        }
 
         // 2. By Subcategory (Input: dataForSubcategory)
         const bySubMap = new Map<string, { amount: number, color: string }>();
@@ -203,22 +223,35 @@ export function DashboardGraphs({ initialData }: DashboardGraphsProps) {
             fill: val.color
         })).sort((a, b) => b.amount - a.amount).slice(0, 10);
 
-        // 3. By Classification (Input: dataForClassification)
-        const byClassMap = new Map<string, { amount: number, color: string }>();
-        dataForClassification.forEach(t => {
-            if (t.classifications) {
-                const name = t.classifications.name;
-                const color = getColorHex(t.classifications.color || "zinc");
-                const current = byClassMap.get(name) || { amount: 0, color };
-                current.amount += parseFloat(t.amount as any);
-                byClassMap.set(name, current);
-            }
-        });
-        const byClassification = Array.from(byClassMap.entries()).map(([name, val]) => ({
-            classification: name,
-            amount: val.amount,
-            fill: val.color
-        })).sort((a, b) => b.amount - a.amount);
+        // 3. By Classification
+        // DASHBOARD_SYNC_STRICT_V6: Use server metrics if available
+        let byClassification;
+        if (metrics?.classificationData && !searchQuery && !statusFilter && !selectedCategory && !selectedSubcategory && !selectedClassification && !selectedPayee && !selectedPayer && range === 'mes') {
+            byClassification = metrics.classificationData.map((d: any) => ({
+                classification: d.classification,
+                amount: d.value,
+                fill: d.color
+            })).sort((a: any, b: any) => b.amount - a.amount);
+        } else {
+            const byClassMap = new Map<string, { amount: number, color: string }>();
+            dataForClassification.forEach(t => {
+                if (t.classifications) {
+                    const name = t.classifications.name;
+                    const color = getColorHex(t.classifications.color || "zinc");
+                    const current = byClassMap.get(name) || { amount: 0, color };
+                    current.amount += parseFloat(t.amount as any);
+                    byClassMap.set(name, current);
+                }
+            });
+            byClassification = Array.from(byClassMap.entries()).map(([name, val]) => ({
+                classification: name,
+                amount: val.amount,
+                fill: val.color
+            })).sort((a, b) => b.amount - a.amount);
+        }
+
+        // ... (Keep history, payee, payer logic as is, but trusting formatted baseData)
+
 
         // 4. History (Input: dataForHistory)
         const isMonthlyRange = range === 'mes';

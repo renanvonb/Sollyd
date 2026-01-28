@@ -28,18 +28,22 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
     const competenceDate = from ? format(parseISO(from), 'yyyy-MM-01') : format(new Date(), 'yyyy-MM-01')
 
     // Data fetching (Server Side)
+    // STRICT_FILTER_V5: Ignore 'endDate' in Monthly view to prevent timezone leaks
+    const fetchStartDate = range === 'mes' ? competenceDate : from
+    const fetchEndDate = range === 'mes' ? undefined : to
+
     const [metrics, initialData] = await Promise.all([
         getDashboardMetrics({
             range,
-            startDate: from,
-            endDate: to,
+            startDate: fetchStartDate,
+            endDate: fetchEndDate,
             competence: competenceDate,
             status
         }),
         getTransactions({
             range,
-            startDate: from,
-            endDate: to,
+            startDate: fetchStartDate, // Use formatted YYYY-MM-01 for month view
+            endDate: fetchEndDate, // Undefined for month view
             status
         })
     ])

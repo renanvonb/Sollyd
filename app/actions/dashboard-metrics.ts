@@ -62,9 +62,9 @@ export async function getDashboardMetrics({ range, startDate, endDate, competenc
         let q = query.eq('user_id', user.id)
 
         if (effectiveRange === 'mes') {
-            // Month View: Strictly Competence
-            q = q.gte('competence', effectiveStartDate)
-                .lte('competence', effectiveEndDate)
+            // Month View: Strictly Competence (Exact Match)
+            // STRICT_EQUALITY_FILTER_V4: Use exact match to prevent timezone leaks
+            q = q.eq('competence', effectiveStartDate)
 
             if (status === 'Realizado') q = q.eq('status', 'Realizado')
             else if (status === 'Pendente') q = q.eq('status', 'Pendente')

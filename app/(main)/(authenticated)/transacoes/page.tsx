@@ -51,7 +51,8 @@ export default function TransactionsPage() {
             const result = await getTransactions({
                 range,
                 startDate: from ? format(parseISO(from), 'yyyy-MM-01') : undefined,
-                endDate: to || undefined,
+                // STRICT_FILTER_V5: Ignore 'to' when range is 'mes' to use backend's strict competence logic
+                endDate: (range === 'mes') ? undefined : (to || undefined),
             })
             setData(result)
         } catch (error) {

@@ -96,8 +96,11 @@ export async function getTransactions({ range, startDate, endDate, status }: Get
         // 1. Date & Status Filtering
         if (range === 'mes') {
             // "Quando "Mês" trazer todas as transações vinculadas a "Date" da "Competence" filtrada"
-            query.gte('competence', startStr).lte('competence', endStr)
-            query.order('competence', { ascending: false })
+            // STRICT_EQUALITY_FILTER_V4: Use exact match for competence to prevent timezone leaks
+            query.eq('competence', startStr)
+
+            // Secondary sort by date since competence is identical
+            query.order('date', { ascending: false })
 
             if (status === 'Realizado') query.eq('status', 'Realizado')
             else if (status === 'Pendente') query.eq('status', 'Pendente')
