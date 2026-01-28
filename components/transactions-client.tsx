@@ -181,9 +181,10 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
     const totals = React.useMemo(() => {
         return filteredData.reduce((acc, curr) => {
             const amount = parseFloat(curr.amount as any) || 0
-            if (curr.type === 'revenue') acc.income += amount
-            else if (curr.type === 'expense') acc.expense += amount
-            else if (curr.type === 'investment') acc.investment += amount
+            const type = curr.type as string
+            if (type === 'revenue' || type === 'Receita') acc.income += amount
+            else if (type === 'expense' || type === 'Despesa') acc.expense += amount
+            else if (type === 'investment') acc.investment += amount
 
             acc.balance = acc.income - acc.expense - acc.investment
             return acc

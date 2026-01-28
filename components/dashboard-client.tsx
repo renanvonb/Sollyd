@@ -202,9 +202,10 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
 
         return dataInRange.reduce((acc, curr) => {
             const amount = parseFloat(curr.amount as any) || 0
-            if (curr.type === 'revenue') acc.income += amount
-            else if (curr.type === 'expense') acc.expense += amount
-            else if (curr.type === 'investment') acc.investment += amount
+            const type = curr.type as string
+            if (type === 'revenue' || type === 'Receita') acc.income += amount
+            else if (type === 'expense' || type === 'Despesa') acc.expense += amount
+            else if (type === 'investment') acc.investment += amount
             acc.balance = acc.income - acc.expense - acc.investment
             return acc
         }, { income: 0, expense: 0, investment: 0, balance: 0 })
@@ -217,7 +218,7 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
             return tDate >= date.from! && tDate <= date.to!;
         }) : filteredData;
 
-        const expenses = dataInRange.filter(t => t.type === 'expense');
+        const expenses = dataInRange.filter(t => t.type === 'expense' || t.type === 'Despesa');
 
         // 1. By Category
         const byCategoryMap = new Map<string, { amount: number, color: string }>();
@@ -287,8 +288,9 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
                 const dateKey = isMonthlyRange ? format(tDate, 'yyyy-MM-dd') : format(tDate, 'yyyy-MM');
                 const current = historyMap.get(dateKey) || { income: 0, expense: 0 };
                 const amount = parseFloat(t.amount as any);
-                if (t.type === 'revenue') current.income += amount;
-                if (t.type === 'expense') current.expense += amount;
+                const type = t.type as string; // Safe cast
+                if (type === 'revenue' || type === 'Receita') current.income += amount;
+                if (type === 'expense' || type === 'Despesa') current.expense += amount;
                 historyMap.set(dateKey, current);
             }
         });
@@ -319,7 +321,7 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
         })).sort((a, b) => b.amount - a.amount).slice(0, 5);
 
         // 6. By Payer (Revenue)
-        const revenues = dataInRange.filter(t => t.type === 'revenue');
+        const revenues = dataInRange.filter(t => t.type === 'revenue' || t.type === 'Receita');
         const byPayerMap = new Map<string, { amount: number, color: string }>();
         revenues.forEach(t => {
             const name = t.payees?.name || t.payers?.name || "Sem Pagador";
