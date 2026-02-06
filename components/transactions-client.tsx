@@ -288,7 +288,7 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                     {/* Container da Tabela (Área E) - Scroll Interno */}
                     {filteredData.length > 0 ? (
                         <div id="data-table-wrapper" className="flex-1 min-h-0 bg-neutral-900 rounded-[16px] border border-neutral-800 shadow-sm flex flex-col relative overflow-hidden font-sans">
-                            <TransactionTable data={filteredData} onRowClick={handleRowClick} />
+                            <TransactionTable data={filteredData} onEdit={handleEdit} />
                         </div>
                     ) : (
                         <EmptyState

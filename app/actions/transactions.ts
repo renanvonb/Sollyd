@@ -175,3 +175,78 @@ export async function updateTransaction(id: string, formData: any) {
         }
     }
 }
+
+export async function markAsPaid(id: string) {
+    try {
+        const supabase = createClient()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+        if (authError || !user) {
+            throw new Error('Sessão expirada ou usuário não autenticado.')
+        }
+
+        // Data atual no formato YYYY-MM-DD
+        const today = new Date().toISOString().split('T')[0]
+
+        const { error: updateError } = await supabase
+            .from('transactions')
+            .update({
+                status: 'Realizado',
+                date: today
+            })
+            .eq('id', id)
+            .eq('user_id', user.id) // Ensure user can only update their own transactions
+
+        if (updateError) {
+            console.error('[markAsPaid] Database Error:', updateError)
+            throw new Error(`Erro ao marcar como pago: ${updateError.message}`)
+        }
+
+        revalidatePath('/financeiro/transacoes')
+        revalidatePath('/transacoes')
+        return { success: true }
+
+    } catch (error: any) {
+        console.error('[markAsPaid] Exception:', error)
+        return {
+            success: false,
+            error: error.message
+        }
+    }
+}
+
+export async function markAsPending(id: string) {
+    try {
+        const supabase = createClient()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+        if (authError || !user) {
+            throw new Error('Sessão expirada ou usuário não autenticado.')
+        }
+
+        const { error: updateError } = await supabase
+            .from('transactions')
+            .update({
+                status: 'Pendente',
+                date: null
+            })
+            .eq('id', id)
+            .eq('user_id', user.id) // Ensure user can only update their own transactions
+
+        if (updateError) {
+            console.error('[markAsPending] Database Error:', updateError)
+            throw new Error(`Erro ao marcar como pendente: ${updateError.message}`)
+        }
+
+        revalidatePath('/financeiro/transacoes')
+        revalidatePath('/transacoes')
+        return { success: true }
+
+    } catch (error: any) {
+        console.error('[markAsPending] Exception:', error)
+        return {
+            success: false,
+            error: error.message
+        }
+    }
+}

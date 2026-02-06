@@ -2,35 +2,71 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { useVisibility } from "@/hooks/use-visibility-state"
 import { Transaction } from "@/types/transaction"
 import { cn } from "@/lib/utils"
 import { HighlightText } from "@/components/ui/highlight-text"
+import { DataTableSortHeader } from "./data-table-sort-header"
+import { DataTableFilterHeader } from "./data-table-filter-header"
+import { TruncatedTextWithTooltip } from "./truncated-text-tooltip"
+import { MoreHorizontal, Pencil, Trash2, CheckCircle, Clock } from "lucide-react"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+// Opções de filtro para cada coluna
+const typeOptions = [
+    { label: "Receita", value: "Receita" },
+    { label: "Despesa", value: "Despesa" },
+]
+
+const paymentMethodOptions = [
+    { label: "Boleto", value: "Boleto" },
+    { label: "Crédito", value: "Crédito" },
+    { label: "Débito", value: "Débito" },
+    { label: "Pix", value: "Pix" },
+    { label: "Dinheiro", value: "Dinheiro" },
+]
+
+const statusOptions = [
+    { label: "Realizado", value: "Realizado" },
+    { label: "Pendente", value: "Pendente" },
+]
 
 export const columns: ColumnDef<Transaction>[] = [
     {
         accessorKey: "description",
-        header: () => <div className="min-w-[200px]">Descrição</div>,
+        header: () => <div>Descrição</div>,
         cell: ({ row, table }) => {
+            const description = row.getValue("description") as string
             const searchQuery = (table.options.meta as any)?.searchQuery || ""
             return (
-                <div className="flex items-center gap-2 max-w-[300px]">
-                    <span className="text-sm font-medium truncate">
+                <div className="flex items-center gap-2 overflow-hidden">
+                    <TruncatedTextWithTooltip
+                        text={description}
+                        className="text-sm font-medium truncate block"
+                    >
                         <HighlightText
-                            text={row.getValue("description")}
+                            text={description}
                             highlight={searchQuery}
                         />
-                    </span>
+                    </TruncatedTextWithTooltip>
                 </div>
             )
         },
     },
     {
         accessorKey: "type",
-        header: () => <div className="min-w-[100px]">Tipo</div>,
-        cell: ({ row, table }) => {
+        size: 100,
+        header: ({ column }) => (
+            <DataTableFilterHeader column={column} title="Tipo" options={typeOptions} />
+        ),
+        cell: ({ row }) => {
             const typeValue = row.getValue("type") as string
-            const searchQuery = (table.options.meta as any)?.searchQuery || ""
             const config = {
                 revenue: {
                     label: "Receita",
@@ -59,76 +95,117 @@ export const columns: ColumnDef<Transaction>[] = [
 
             return (
                 <Badge className={cn("font-medium border-none shadow-none", config.className)}>
-                    <HighlightText text={config.label} highlight={searchQuery} />
+                    {config.label}
                 </Badge>
             )
-        }
+        },
+        filterFn: (row, id, value) => {
+            return value === row.getValue(id)
+        },
     },
     {
         id: "payee",
         accessorFn: (row) => row.payees?.name,
-        header: () => <div className="min-w-[150px]">Favorecido</div>,
-        cell: ({ row, table }) => {
+        size: 130,
+        header: ({ column }) => (
+            <DataTableFilterHeader column={column} title="Favorecido" options={[]} />
+        ),
+        cell: ({ row }) => {
             const payee = row.original.payees?.name
-            const searchQuery = (table.options.meta as any)?.searchQuery || ""
             return payee ? (
                 <Badge variant="secondary" className="text-xs font-normal whitespace-nowrap shadow-none">
-                    <HighlightText text={payee} highlight={searchQuery} />
+                    {payee}
                 </Badge>
             ) : (
                 <span className="text-sm text-muted-foreground">-</span>
             )
+        },
+        filterFn: (row, id, value) => {
+            const payeeName = row.original.payees?.name
+            return payeeName?.toLowerCase().includes(value.toLowerCase()) ?? false
         },
     },
     {
         id: "category",
         accessorFn: (row) => row.categories?.name,
-        header: () => <div className="min-w-[150px]">Categoria</div>,
-        cell: ({ row, table }) => {
+        size: 120,
+        header: ({ column }) => (
+            <DataTableFilterHeader column={column} title="Categoria" options={[]} />
+        ),
+        cell: ({ row }) => {
             const category = row.original.categories?.name
-            const searchQuery = (table.options.meta as any)?.searchQuery || ""
             return category ? (
                 <Badge variant="secondary" className="text-xs font-normal whitespace-nowrap shadow-none">
-                    <HighlightText text={category} highlight={searchQuery} />
+                    {category}
                 </Badge>
             ) : (
                 <span className="text-sm text-muted-foreground">-</span>
             )
         },
+        filterFn: (row, id, value) => {
+            const categoryName = row.original.categories?.name
+            return categoryName?.toLowerCase().includes(value.toLowerCase()) ?? false
+        },
+    },
+    {
+        id: "payment_method",
+        accessorFn: (row) => row.payment_method,
+        size: 90,
+        header: ({ column }) => (
+            <DataTableFilterHeader column={column} title="Método" options={paymentMethodOptions} />
+        ),
+        cell: ({ row }) => {
+            const paymentMethod = row.original.payment_method
+            return paymentMethod ? (
+                <Badge variant="secondary" className="text-xs font-normal whitespace-nowrap shadow-none">
+                    {paymentMethod}
+                </Badge>
+            ) : (
+                <span className="text-sm text-muted-foreground">-</span>
+            )
+        },
+        filterFn: (row, id, value) => {
+            return value === row.getValue(id)
+        },
     },
     {
         accessorKey: "competence",
-        header: () => <div className="min-w-[100px]">Competência</div>,
-        cell: ({ row, table }) => {
+        size: 100,
+        header: () => <div>Competência</div>,
+        cell: ({ row }) => {
             const comp = row.original.competence as string | null
             if (!comp) return <span className="text-sm text-muted-foreground">-</span>
-            const searchQuery = (table.options.meta as any)?.searchQuery || ""
             const [year, month] = comp.split("-")
             const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
             const monthIndex = parseInt(month) - 1
             const formatted = `${monthNames[monthIndex]}/${year}`
             return <div className="text-sm tabular-nums text-muted-foreground">
-                <HighlightText text={formatted} highlight={searchQuery} />
+                {formatted}
             </div>
         },
     },
     {
         accessorKey: "date",
-        header: () => <div className="min-w-[100px]">Data</div>,
-        cell: ({ row, table }) => {
+        size: 100,
+        header: ({ column }) => (
+            <DataTableSortHeader column={column} title="Data" />
+        ),
+        cell: ({ row }) => {
             const date = row.getValue("date") as string | null
             if (!date) return <span className="text-sm text-muted-foreground">-</span>
-            const searchQuery = (table.options.meta as any)?.searchQuery || ""
             const [year, month, day] = date.split("-")
             const formatted = `${day}/${month}/${year}`
             return <div className="text-sm tabular-nums text-muted-foreground">
-                <HighlightText text={formatted} highlight={searchQuery} />
+                {formatted}
             </div>
         },
     },
     {
         accessorKey: "amount",
-        header: () => <div className="text-left min-w-[140px]">Valor</div>,
+        size: 120,
+        header: ({ column }) => (
+            <DataTableSortHeader column={column} title="Valor" />
+        ),
         cell: ({ row, table }) => {
             const { isVisible } = useVisibility()
             const amount = parseFloat(row.getValue("amount"))
@@ -157,11 +234,14 @@ export const columns: ColumnDef<Transaction>[] = [
     },
     {
         id: "status",
-        header: () => <div className="w-[72px]">Status</div>,
-        cell: ({ row, table }) => {
+        accessorFn: (row) => row.status || "Pendente",
+        size: 80,
+        header: ({ column }) => (
+            <DataTableFilterHeader column={column} title="Status" options={statusOptions} />
+        ),
+        cell: ({ row }) => {
             const statusValue = row.original.status || "Pendente"
             const dateStr = row.original.date
-            const searchQuery = (table.options.meta as any)?.searchQuery || ""
 
             let refinedStatus: "Pendente" | "Realizado" | "Agendado" | "Atrasado" = statusValue as any
 
@@ -192,11 +272,70 @@ export const columns: ColumnDef<Transaction>[] = [
             }
 
             return (
-                <div className="w-[72px]">
-                    <Badge className={cn("font-medium border-none shadow-none", config.className)}>
-                        <HighlightText text={refinedStatus} highlight={searchQuery} />
-                    </Badge>
-                </div>
+                <Badge className={cn("font-medium border-none shadow-none", config.className)}>
+                    {refinedStatus}
+                </Badge>
+            )
+        },
+        filterFn: (row, id, value) => {
+            return value === row.original.status
+        },
+    },
+    {
+        id: "actions",
+        size: 40,
+        header: () => <div className="sr-only">Ações</div>,
+        cell: ({ row, table }) => {
+            const transaction = row.original
+            const meta = table.options.meta as any
+
+            return (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                        >
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                            onClick={() => meta?.onEdit?.(transaction)}
+                            className="cursor-pointer"
+                        >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar
+                        </DropdownMenuItem>
+                        {transaction.status === "Pendente" && (
+                            <DropdownMenuItem
+                                onClick={() => meta?.onMarkAsPaid?.(transaction)}
+                                className="cursor-pointer text-emerald-600 focus:text-emerald-600"
+                            >
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Marcar como pago
+                            </DropdownMenuItem>
+                        )}
+                        {transaction.status === "Realizado" && (
+                            <DropdownMenuItem
+                                onClick={() => meta?.onMarkAsPending?.(transaction)}
+                                className="cursor-pointer text-amber-600 focus:text-amber-600"
+                            >
+                                <Clock className="mr-2 h-4 w-4" />
+                                Marcar como pendente
+                            </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                            onClick={() => meta?.onDelete?.(transaction)}
+                            className="cursor-pointer text-red-600 focus:text-red-600"
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             )
         },
     },

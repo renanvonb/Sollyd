@@ -1,20 +1,36 @@
 'use client'
 
 import * as React from "react"
-import { useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { DateRange } from "react-day-picker"
 import { getTransactions } from "@/app/actions/transactions-fetch"
+import { deleteTransaction, markAsPaid, markAsPending } from "@/app/actions/transactions"
 import { TimeRange } from "@/types/time-range"
 import { normalizeSearch } from "@/lib/utils"
 import { TopBar } from "@/components/ui/top-bar"
 import { TransactionsHeader } from "@/components/transactions/transactions-header"
 import { TransactionsContent } from "@/components/transactions/transactions-content"
 import { TransactionForm } from "@/components/transaction-form"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import type { Transaction } from "@/types/transaction"
-import { startOfMonth, endOfMonth, format, parseISO } from "date-fns"
+import { format, parseISO } from "date-fns"
 
 const periodTabs = [
     { id: 'dia', label: 'Dia' },
@@ -26,7 +42,6 @@ const periodTabs = [
 export default function TransactionsPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    // const [isPending, startTransition] = useTransition() // Not currently needed for this fetch pattern
 
     // State
     const [data, setData] = React.useState<any[]>([])
@@ -36,6 +51,8 @@ export default function TransactionsPage() {
     const [selectedTransaction, setSelectedTransaction] = React.useState<Transaction | null>(null)
     const [isEditSheetOpen, setIsEditSheetOpen] = React.useState(false)
     const [isNewSheetOpen, setIsNewSheetOpen] = React.useState(false)
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
+    const [isDeleting, setIsDeleting] = React.useState(false)
     const [newTransactionType, setNewTransactionType] = React.useState<"revenue" | "expense" | "investment">("expense")
 
     // URL params
@@ -69,7 +86,7 @@ export default function TransactionsPage() {
         fetchData()
     }, [fetchData])
 
-    // Hanlders
+    // Handlers
     const handleRangeChange = (newRange: string) => {
         const params = new URLSearchParams(searchParams.toString())
         params.set('range', newRange)
@@ -106,11 +123,79 @@ export default function TransactionsPage() {
         setIsNewSheetOpen(true)
     }
 
-    const handleRowClick = (transaction: Transaction) => {
+    const handleEdit = (transaction: Transaction) => {
         setSelectedTransaction(transaction)
         setIsEditSheetOpen(true)
     }
 
+    const handleDelete = (transaction: Transaction) => {
+        setSelectedTransaction(transaction)
+        setIsDeleteDialogOpen(true)
+    }
+
+    const confirmDelete = async () => {
+        if (!selectedTransaction?.id) return
+
+        setIsDeleting(true)
+        try {
+            await deleteTransaction(selectedTransaction.id)
+            toast.success("Transação excluída", {
+                description: "A transação foi excluída com sucesso."
+            })
+            fetchData()
+            setIsDeleteDialogOpen(false)
+            setSelectedTransaction(null)
+        } catch (error) {
+            console.error("Error deleting transaction:", error)
+            toast.error("Erro ao excluir", {
+                description: "Não foi possível excluir a transação."
+            })
+        } finally {
+            setIsDeleting(false)
+        }
+    }
+
+    const handleMarkAsPaid = async (transaction: Transaction) => {
+        try {
+            const result = await markAsPaid(transaction.id)
+            if (result.success) {
+                toast.success("Transação paga", {
+                    description: "A transação foi marcada como realizada com sucesso."
+                })
+                fetchData()
+            } else {
+                toast.error("Erro ao atualizar", {
+                    description: result.error || "Não foi possível marcar a transação como paga."
+                })
+            }
+        } catch (error) {
+            console.error("Error marking as paid:", error)
+            toast.error("Erro inesperado", {
+                description: "Ocorreu um erro ao processar sua solicitação."
+            })
+        }
+    }
+
+    const handleMarkAsPending = async (transaction: Transaction) => {
+        try {
+            const result = await markAsPending(transaction.id)
+            if (result.success) {
+                toast.success("Transação pendente", {
+                    description: "A transação foi marcada como pendente com sucesso."
+                })
+                fetchData()
+            } else {
+                toast.error("Erro ao atualizar", {
+                    description: result.error || "Não foi possível marcar a transação como pendente."
+                })
+            }
+        } catch (error) {
+            console.error("Error marking as pending:", error)
+            toast.error("Erro inesperado", {
+                description: "Ocorreu um erro ao processar sua solicitação."
+            })
+        }
+    }
 
     const handleSuccess = () => {
         fetchData()
@@ -126,29 +211,32 @@ export default function TransactionsPage() {
             filtered = filtered.filter(t => t.status === statusFilter)
         }
 
-        // Filter by search query
+        // Filter by search query (apenas descrição e valor)
         if (searchQuery) {
             const normalizedQuery = normalizeSearch(searchQuery)
             filtered = filtered.filter(t => {
                 const desc = normalizeSearch(t.description || "")
-                const payee = normalizeSearch(t.payees?.name || "")
-                const cat = normalizeSearch(t.categories?.name || "")
-                const amount = normalizeSearch((t.amount || 0).toString())
 
-                // Date formatting for search (DD/MM/YYYY)
-                let dateStr = ""
-                if (t.date && typeof t.date === 'string') {
-                    const [year, month, day] = t.date.split('-')
-                    if (year && month && day) {
-                        dateStr = normalizeSearch(`${day}/${month}/${year}`)
-                    }
-                }
+                // Formatar valor em múltiplos formatos para busca
+                const amount = t.amount || 0
+                // Formato com ponto decimal: 1234.56
+                const amountDot = amount.toFixed(2)
+                // Formato brasileiro com vírgula: 1234,56
+                const amountComma = amountDot.replace('.', ',')
+                // Formato brasileiro completo: 1.234,56
+                const amountBR = new Intl.NumberFormat("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                }).format(amount)
+
+                const normalizedAmountDot = normalizeSearch(amountDot)
+                const normalizedAmountComma = normalizeSearch(amountComma)
+                const normalizedAmountBR = normalizeSearch(amountBR)
 
                 return desc.includes(normalizedQuery) ||
-                    payee.includes(normalizedQuery) ||
-                    cat.includes(normalizedQuery) ||
-                    amount.includes(normalizedQuery) ||
-                    dateStr.includes(normalizedQuery)
+                    normalizedAmountDot.includes(normalizedQuery) ||
+                    normalizedAmountComma.includes(normalizedQuery) ||
+                    normalizedAmountBR.includes(normalizedQuery)
             })
         }
 
@@ -197,14 +285,21 @@ export default function TransactionsPage() {
                     isPending={loading}
                     searchQuery={searchQuery}
                     range={range}
-                    onRowClick={handleRowClick}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onMarkAsPaid={handleMarkAsPaid}
+                    onMarkAsPending={handleMarkAsPending}
                     onResetSearch={() => setSearchValue("")}
                     onAddClick={handleAddClick}
                 />
 
-                {/* Sheets and Dialogs */}
+                {/* Dialog Nova Transação */}
                 <Dialog open={isNewSheetOpen} onOpenChange={setIsNewSheetOpen}>
-                    <DialogContent className="sm:max-w-[480px]">
+                    <DialogContent
+                        className="sm:max-w-[480px]"
+                        onInteractOutside={(e) => e.preventDefault()}
+                        onEscapeKeyDown={(e) => e.preventDefault()}
+                    >
                         <DialogHeader>
                             <DialogTitle className="font-jakarta">
                                 Nova transação
@@ -223,11 +318,16 @@ export default function TransactionsPage() {
                     </DialogContent>
                 </Dialog>
 
+                {/* Dialog Editar Transação */}
                 <Dialog open={isEditSheetOpen} onOpenChange={(open) => {
                     setIsEditSheetOpen(open)
                     if (!open) setSelectedTransaction(null)
                 }}>
-                    <DialogContent className="sm:max-w-[480px]">
+                    <DialogContent
+                        className="sm:max-w-[480px]"
+                        onInteractOutside={(e) => e.preventDefault()}
+                        onEscapeKeyDown={(e) => e.preventDefault()}
+                    >
                         <DialogHeader>
                             <DialogTitle className="font-jakarta">Editar transação</DialogTitle>
                             <DialogDescription>
@@ -243,6 +343,28 @@ export default function TransactionsPage() {
                         />
                     </DialogContent>
                 </Dialog>
+
+                {/* Dialog Confirmação de Exclusão */}
+                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                    <AlertDialogContent className="sm:max-w-[400px]">
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Você está prestes a realizar uma exclusão permanente que não poderá ser desfeita. Tem certeza que deseja continuar?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={confirmDelete}
+                                variant="destructive"
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? "Excluindo..." : "Excluir"}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
     )

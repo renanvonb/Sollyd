@@ -4,21 +4,19 @@ import * as React from "react"
 import { TransactionTable } from "@/components/transaction-table"
 import { TransactionSummaryCards } from "@/components/transaction-summary-cards"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Inbox, Plus, ChevronDown } from "lucide-react"
+import { Inbox, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Transaction } from "@/types/transaction"
 
 interface TransactionsContentProps {
     data: any[]
     isPending: boolean
     searchQuery: string
     range: string
-    onRowClick: (transaction: any) => void
+    onEdit: (transaction: Transaction) => void
+    onDelete: (transaction: Transaction) => void
+    onMarkAsPaid: (transaction: Transaction) => void
+    onMarkAsPending: (transaction: Transaction) => void
     onResetSearch: () => void
     onAddClick: (type: "revenue" | "expense" | "investment") => void
 }
@@ -39,7 +37,10 @@ export function TransactionsContent({
     isPending,
     searchQuery,
     range,
-    onRowClick,
+    onEdit,
+    onDelete,
+    onMarkAsPaid,
+    onMarkAsPending,
     onResetSearch,
     onAddClick,
 }: TransactionsContentProps) {
@@ -108,7 +109,14 @@ export function TransactionsContent({
                     />
                 ) : (
                     <div id="data-table-wrapper" className="flex-1 min-h-0 bg-card rounded-lg border border-border shadow-sm flex flex-col relative overflow-hidden font-sans">
-                        <TransactionTable data={data} onRowClick={onRowClick} searchQuery={searchQuery} />
+                        <TransactionTable
+                            data={data}
+                            searchQuery={searchQuery}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                            onMarkAsPaid={onMarkAsPaid}
+                            onMarkAsPending={onMarkAsPending}
+                        />
                     </div>
                 )}
             </div>

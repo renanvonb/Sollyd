@@ -6,10 +6,23 @@ import { Transaction } from "@/types/transaction"
 
 interface TransactionTableProps {
     data: any[]
-    onRowClick?: (transaction: Transaction) => void
     searchQuery?: string
+    onEdit?: (transaction: Transaction) => void
+    onDelete?: (transaction: Transaction) => void
+    onMarkAsPaid?: (transaction: Transaction) => void
+    onMarkAsPending?: (transaction: Transaction) => void
 }
 
-export function TransactionTable({ data, onRowClick, searchQuery }: TransactionTableProps) {
-    return <DataTable columns={columns} data={data} onRowClick={onRowClick} searchQuery={searchQuery} />
+export function TransactionTable({ data, searchQuery, onEdit, onDelete, onMarkAsPaid, onMarkAsPending }: TransactionTableProps) {
+    return (
+        <DataTable
+            columns={columns}
+            data={data}
+            searchQuery={searchQuery}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onMarkAsPaid={onMarkAsPaid}
+            onMarkAsPending={onMarkAsPending}
+        />
+    )
 }
