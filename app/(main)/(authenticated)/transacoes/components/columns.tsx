@@ -148,6 +148,28 @@ export const columns: ColumnDef<Transaction>[] = [
         },
     },
     {
+        id: "classification",
+        accessorFn: (row) => row.classifications?.name,
+        size: 130,
+        header: ({ column }) => (
+            <DataTableFilterHeader column={column} title="Classificação" options={[]} />
+        ),
+        cell: ({ row }) => {
+            const classification = row.original.classifications?.name
+            return classification ? (
+                <Badge variant="secondary" className="text-xs font-normal whitespace-nowrap shadow-none">
+                    {classification}
+                </Badge>
+            ) : (
+                <span className="text-sm text-muted-foreground">-</span>
+            )
+        },
+        filterFn: (row, id, value) => {
+            const classificationName = row.original.classifications?.name
+            return classificationName?.toLowerCase().includes(value.toLowerCase()) ?? false
+        },
+    },
+    {
         id: "payment_method",
         accessorFn: (row) => row.payment_method,
         size: 90,
