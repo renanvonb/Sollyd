@@ -6,6 +6,7 @@ import { Maximize2, Inbox } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useVisibility } from "@/hooks/use-visibility-state"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 import {
     Card,
@@ -81,6 +82,7 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
     }
 
     const { isVisible } = useVisibility()
+    const isMobile = useIsMobile()
 
     const renderChart = (isExpanded = false) => {
         if (!hasData) {
@@ -117,8 +119,8 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
                         tickLine={false}
                         tickMargin={10}
                         axisLine={false}
-                        interval={0}
-                        tick={{ fontSize: isExpanded ? 14 : 10 }}
+                        interval={isMobile && !isExpanded ? 4 : 0}
+                        tick={{ fontSize: isExpanded ? 12 : 9 }}
                         tickFormatter={(value) => {
                             // Year View: YYYY-MM
                             if (value.length === 7) {
@@ -161,7 +163,7 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
                         tickLine={false}
                         axisLine={false}
                         width={80}
-                        tick={{ textAnchor: 'start', fontSize: isExpanded ? 14 : 11 }}
+                        tick={{ textAnchor: 'start', fontSize: isExpanded ? 12 : 9 }}
                         tickMargin={0}
                         dx={-75}
                         tickFormatter={(value) => {
@@ -283,14 +285,14 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
     return (
         <Dialog>
             <Card className="h-full flex flex-col hover:shadow-md transition-all">
-                <CardHeader className="border-b shrink-0 flex flex-row items-center justify-between px-6 py-4 space-y-0 group">
+                <CardHeader className="border-b shrink-0 flex flex-row items-center justify-between px-4 md:px-6 py-4 space-y-0 group">
                     <div className="flex items-center gap-2">
                         {hasData ? (
                             <DialogTrigger asChild>
-                                <CardTitle className="text-base font-semibold text-nowrap cursor-pointer">Balanço</CardTitle>
+                                <CardTitle className="text-sm md:text-base font-semibold text-nowrap cursor-pointer">Balanço</CardTitle>
                             </DialogTrigger>
                         ) : (
-                            <CardTitle className="text-base font-semibold text-nowrap">Balanço</CardTitle>
+                            <CardTitle className="text-sm md:text-base font-semibold text-nowrap">Balanço</CardTitle>
                         )}
                         {hasData && (
                             <TooltipProvider>
@@ -313,7 +315,7 @@ export function TransactionsHistoryChart({ data }: TransactionsHistoryChartProps
                         {hasData && <Legend />}
                     </div>
                 </CardHeader>
-                <CardContent className="flex-1 pt-6 min-h-0">
+                <CardContent className="flex-1 p-3 pt-3 md:p-6 md:pt-6 min-h-0">
                     {renderChart()}
                 </CardContent>
             </Card>

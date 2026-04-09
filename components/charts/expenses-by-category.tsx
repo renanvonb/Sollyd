@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/tooltip"
 import { EmptyState } from "@/components/ui/empty-state"
 import { useVisibility } from "@/hooks/use-visibility-state"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export interface CategoryData {
     category: string
@@ -56,9 +57,12 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
     const totalAmount = data.reduce((acc, curr) => acc + curr.amount, 0)
 
     const { isVisible } = useVisibility()
+    const isMobile = useIsMobile()
 
     const renderChart = (isExpanded = false) => {
-        if (!data || data.length === 0) {
+        const displayData = isMobile && !isExpanded ? data.slice(0, 5) : data
+
+        if (!displayData || displayData.length === 0) {
             return (
                 <div className="h-full w-full flex items-center justify-center">
                     <EmptyState
@@ -77,9 +81,10 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
             <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
                 <BarChart
                     accessibilityLayer
-                    data={data}
+                    data={displayData}
                     margin={{
                         top: 20,
+                        bottom: 20,
                         left: 0,
                         right: 0,
                     }}
@@ -96,14 +101,15 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
                         tickMargin={10}
                         axisLine={false}
                         interval={0}
-                        tick={{ fontSize: isExpanded ? 14 : 8 }}
-                        tickFormatter={(value) => value.length > 12 ? `${value.slice(0, 12)}...` : value}
+                        angle={0}
+                        tick={{ fontSize: isExpanded ? 12 : 8, textAnchor: 'middle' }}
+                        tickFormatter={(value) => value.length > 8 ? `${value.slice(0, 8)}...` : value}
                     />
                     <YAxis
                         tickLine={false}
                         axisLine={false}
                         width={80}
-                        tick={{ textAnchor: 'start', fontSize: isExpanded ? 14 : 11 }}
+                        tick={{ textAnchor: 'start', fontSize: isExpanded ? 12 : 9 }}
                         tickMargin={0}
                         dx={-75}
                         tickFormatter={(value) => {
@@ -185,14 +191,14 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
                             );
                         }}
                     >
-                        {data.map((entry, index) => (
+                        {displayData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
                         <LabelList
                             dataKey="amount"
                             content={(props: any) => {
                                 const { x, y, width, height, value, index } = props
-                                const category = data[index]?.category
+                                const category = displayData[index]?.category
                                 const isSelected = !selectedCategory || category === selectedCategory
                                 const opacity = isSelected ? 1 : 0.3
 
@@ -222,7 +228,7 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
                                         fill="white"
                                         textAnchor="middle"
                                         dominantBaseline="middle"
-                                        fontSize={isExpanded ? 14 : 10}
+                                        fontSize={isExpanded ? 12 : 9}
                                         fontWeight={500}
                                         transform={`rotate(-90, ${x + width / 2}, ${y + height / 2})`}
                                         style={{ pointerEvents: 'none', opacity, transition: 'opacity 0.3s' }}
@@ -243,14 +249,14 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
     return (
         <Dialog>
             <Card className="h-full flex flex-col hover:shadow-md transition-all">
-                <CardHeader className="border-b shrink-0 flex flex-row items-center justify-between px-6 py-4 space-y-0 group">
+                <CardHeader className="border-b shrink-0 flex flex-row items-center justify-between px-4 md:px-6 py-4 space-y-0 group">
                     <div className="flex items-center gap-2">
                         {hasData ? (
                             <DialogTrigger asChild>
-                                <CardTitle className="text-base font-semibold cursor-pointer">Categorias</CardTitle>
+                                <CardTitle className="text-sm md:text-base font-semibold cursor-pointer">Categorias</CardTitle>
                             </DialogTrigger>
                         ) : (
-                            <CardTitle className="text-base font-semibold">Categorias</CardTitle>
+                            <CardTitle className="text-sm md:text-base font-semibold">Categorias</CardTitle>
                         )}
                         {hasData && (
                             <TooltipProvider>
@@ -270,7 +276,7 @@ export function ExpensesByCategoryChart({ data, periodLabel, onCategoryClick, se
                         )}
                     </div>
                 </CardHeader>
-                <CardContent className="flex-1 pt-6 min-h-0">
+                <CardContent className="flex-1 p-3 pt-3 md:p-6 md:pt-6 min-h-0">
                     {renderChart()}
                 </CardContent>
             </Card>

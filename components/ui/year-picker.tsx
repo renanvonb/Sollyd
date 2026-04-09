@@ -50,12 +50,14 @@ export function YearPicker({ value, onChange, className }: YearPickerProps) {
                         className
                     )}
                 >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {value ? (
-                        format(value, "yyyy")
-                    ) : (
-                        <span>Selecione</span>
-                    )}
+                    <CalendarIcon className="h-4 w-4" />
+                    <span>
+                        {value ? (
+                            format(value, "yyyy")
+                        ) : (
+                            "Selecione"
+                        )}
+                    </span>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-3 bg-popover border-border text-popover-foreground" align="start">

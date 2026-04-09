@@ -81,12 +81,14 @@ export function WeekPicker({ value, onChange, className }: WeekPickerProps) {
                         className
                     )}
                 >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {value ? (
-                        `${format(displayWeekStart, "dd MMM", { locale: ptBR })} - ${format(displayWeekEnd, "dd MMM", { locale: ptBR })}`
-                    ) : (
-                        <span>Selecione a semana</span>
-                    )}
+                    <CalendarIcon className="h-4 w-4" />
+                    <span>
+                        {value ? (
+                            `${format(displayWeekStart, "dd MMM", { locale: ptBR })} - ${format(displayWeekEnd, "dd MMM", { locale: ptBR })}`
+                        ) : (
+                            "Selecione a semana"
+                        )}
+                    </span>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-3 bg-popover border-border text-popover-foreground" align="start">

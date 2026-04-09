@@ -351,17 +351,17 @@ export function DashboardGraphs({ initialData, metrics }: DashboardGraphsProps) 
     }, [filteredData, date, range, selectedYear, selectedCategory, selectedSubcategory, selectedClassification, selectedPayee, selectedPayer]);
 
     return (
-        <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-hidden">
-            <div className="flex flex-col flex-1 min-h-0 gap-4">
+        <div className="max-w-[1440px] mx-auto px-5 md:px-8 w-full flex-1 flex flex-col pt-5 md:pt-8 pb-5 md:pb-8 overflow-hidden">
+            <div className="flex flex-col flex-1 min-h-0 gap-4 md:gap-8 overflow-y-auto pb-4 scrollbar-hide">
                 {/* Row 1: Summary Cards (Fixed Height) */}
                 <div className="shrink-0">
                     <TransactionSummaryCards totals={totals} />
                 </div>
 
                 {/* Charts Area (Fills remaining space) */}
-                <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto pr-1 pb-4 scrollbar-hide">
+                <div className="flex-none flex flex-col gap-4">
                     {/* Row 1 (Top Charts) */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 min-h-[400px]">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 min-h-[600px] md:min-h-[400px]">
                         <div className="md:col-span-3 h-full">
                             <TransactionsHistoryChart
                                 data={chartsData.history}
@@ -378,7 +378,7 @@ export function DashboardGraphs({ initialData, metrics }: DashboardGraphsProps) 
                     </div>
 
                     {/* Row 2 (Middle Charts) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[600px] md:min-h-[400px]">
                         <div className="h-full">
                             <ExpensesByCategoryChart
                                 data={chartsData.byCategory}
@@ -398,7 +398,7 @@ export function DashboardGraphs({ initialData, metrics }: DashboardGraphsProps) 
                     </div>
 
                     {/* Row 3 (Bottom Charts - Contact analysis) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[600px] md:min-h-[400px]">
                         <div className="h-full">
                             <ExpensesByPayeeChart
                                 data={chartsData.byPayee}

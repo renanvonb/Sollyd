@@ -7,13 +7,14 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 import { TransactionFilters } from "@/components/transaction-filters"
 import { TransactionTable } from "@/components/transaction-table"
+import { TransactionMobileList } from "@/components/transaction-mobile-list"
 import { TransactionSummaryCards } from "@/components/transaction-summary-cards"
 import { TransactionDetailsDialog } from "@/components/transaction-details-dialog"
 import { TransactionDialog } from "@/components/transactions/transaction-dialog"
 import { TransactionsTableSkeleton } from "@/components/ui/skeletons"
 import { EmptyState } from "@/components/ui/empty-state"
 import { TimeRange } from "@/types/time-range"
-import { Plus, Search, ChevronDown, Inbox } from "lucide-react"
+import { Plus, Search, ChevronDown, Inbox, SlidersHorizontal } from "lucide-react"
 import type { Transaction } from "@/types/transaction"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -195,33 +196,24 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
     return (
         <div className="flex-1 flex flex-col overflow-hidden bg-background selection:bg-neutral-800">
             {/* Wrapper Principal Sagrado */}
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-6 overflow-hidden">
+            <div className="max-w-[1440px] mx-auto px-5 md:px-8 w-full flex-1 flex flex-col pt-5 md:pt-8 pb-5 md:pb-8 gap-5 md:gap-6 overflow-hidden">
 
-                {/* Header de Página (Área C) */}
-                <div className="flex items-center justify-between flex-none px-1">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground font-jakarta">
+                {/* Header de Página (Responsivo) */}
+                <div className="flex flex-wrap md:flex-nowrap items-center justify-between flex-none gap-y-3 gap-x-2 w-full">
+                    {/* 1. Título */}
+                    <div className="order-1 min-w-0 shrink">
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground font-jakarta truncate">
                             Transações
                         </h1>
-                        <p className="text-muted-foreground mt-1 font-sans text-sm font-inter">
+                        <p className="text-muted-foreground mt-1 font-sans text-sm font-inter hidden md:block">
                             Gerencie e acompanhe suas movimentações financeiras.
                         </p>
                     </div>
 
-                    <div id="filter-group" className="flex items-center gap-3 font-sans justify-end flex-wrap">
-                        {/* 1. Search Bar (200px) */}
-                        <div className="relative w-[200px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-                            <Input
-                                placeholder="Buscar"
-                                className="pl-9 h-10 font-inter w-full bg-neutral-900 border-neutral-800 text-neutral-50 placeholder:text-neutral-500"
-                                value={searchValue}
-                                onChange={(e) => setSearchValue(e.target.value)}
-                            />
-                        </div>
-
-                        {/* 2. Status Tabs */}
-                        <Tabs value={statusFilter} onValueChange={handleStatusFilterChange} className="h-10">
+                    {/* 2. Filtros (Mesma linha do título em mobile) */}
+                    <div className="order-2 flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide ml-auto shrink max-w-[55vw] md:max-w-none">
+                        {/* Status Tabs */}
+                        <Tabs value={statusFilter} onValueChange={handleStatusFilterChange} className="h-10 shrink-0">
                             <TabsList className="bg-neutral-900 border border-neutral-800 h-10">
                                 <TabsTrigger value="all" className="h-8 data-[state=active]:bg-neutral-800 data-[state=active]:text-neutral-50 font-inter">Todas</TabsTrigger>
                                 <TabsTrigger value="Realizado" className="h-8 data-[state=active]:bg-neutral-800 data-[state=active]:text-neutral-50 font-inter">Realizadas</TabsTrigger>
@@ -229,12 +221,9 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                             </TabsList>
                         </Tabs>
 
-                        {/* 3. Select Period (100px) */}
-                        <Select
-                            value={range}
-                            onValueChange={handleRangeChange}
-                        >
-                            <SelectTrigger className="w-[100px] font-inter bg-neutral-900 border-neutral-800 text-neutral-50">
+                        {/* Select Period */}
+                        <Select value={range} onValueChange={handleRangeChange}>
+                            <SelectTrigger className="w-[100px] h-10 shrink-0 font-inter bg-neutral-900 border-neutral-800 text-neutral-50">
                                 <SelectValue placeholder="Período" />
                             </SelectTrigger>
                             <SelectContent className='bg-neutral-900 border-neutral-800 text-neutral-50'>
@@ -246,18 +235,20 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                             </SelectContent>
                         </Select>
 
-                        {/* 4. Adaptive Date Picker (150px) */}
-                        <AdaptiveDatePicker
-                            mode={range}
-                            value={date}
-                            onChange={handleDateChange}
-                            className="w-[150px]"
-                        />
+                        {/* Adaptive Date Picker */}
+                        <div className="shrink-0">
+                            <AdaptiveDatePicker
+                                mode={range}
+                                value={date}
+                                onChange={handleDateChange}
+                                className="h-10 w-10 px-0 justify-center md:w-auto md:justify-start md:px-3 [&>span]:hidden md:[&>span]:inline md:[&>svg]:mr-2"
+                            />
+                        </div>
 
-                        {/* 5. Add Button -> Dropdown */}
+                        {/* Add Button -> Dropdown (Desktop apenas) */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button className="font-inter font-medium">
+                                <Button className="font-inter font-medium h-10 shrink-0 hidden md:flex">
                                     Adicionar
                                     <ChevronDown className="h-4 w-4 ml-2" />
                                 </Button>
@@ -269,9 +260,19 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                                 <DropdownMenuItem onClick={() => handleNewTransaction('expense')} className="cursor-pointer focus:bg-neutral-800 focus:text-neutral-50">
                                     Despesa
                                 </DropdownMenuItem>
-
                             </DropdownMenuContent>
                         </DropdownMenu>
+                    </div>
+
+                    {/* 3. Search Bar (Linha debaixo no mobile, direita no desktop) */}
+                    <div className="order-3 relative w-full md:w-[200px] shrink-0 md:ml-3">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                        <Input
+                            placeholder="Buscar transação..."
+                            className="pl-9 h-11 md:h-10 font-inter w-full bg-neutral-900 border-neutral-800 text-neutral-50 placeholder:text-neutral-500"
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                        />
                     </div>
                 </div>
 
@@ -284,12 +285,37 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                         <TransactionSummaryCards totals={totals} />
                     </div>
 
-                    {/* Container da Tabela (Área E) - Scroll Interno */}
-                    {/* Container da Tabela (Área E) - Scroll Interno */}
+                    {/* Container da Tabela (Área E) — Desktop only */}
                     {filteredData.length > 0 ? (
-                        <div id="data-table-wrapper" className="flex-1 min-h-0 bg-neutral-900 rounded-[16px] border border-neutral-800 shadow-sm flex flex-col relative overflow-hidden font-sans">
-                            <TransactionTable data={filteredData} onEdit={handleEdit} />
-                        </div>
+                        <>
+                            {/* Desktop: tabela */}
+                            <div id="data-table-wrapper" className="hidden md:flex flex-1 min-h-0 bg-neutral-900 rounded-[16px] border border-neutral-800 shadow-sm flex-col relative overflow-hidden font-sans">
+                                <TransactionTable data={filteredData} onEdit={handleEdit} />
+                            </div>
+
+                            {/* Mobile: card list */}
+                            <div className="block md:hidden pb-24">
+                                <TransactionMobileList
+                                    data={filteredData}
+                                    onEdit={handleEdit}
+                                    onDelete={async (tx) => {
+                                        const { deleteTransaction } = await import('@/app/actions/transactions')
+                                        await deleteTransaction(tx.id)
+                                        router.refresh()
+                                    }}
+                                    onMarkAsPaid={async (tx) => {
+                                        const { markAsPaid } = await import('@/app/actions/transactions')
+                                        await markAsPaid(tx.id)
+                                        router.refresh()
+                                    }}
+                                    onMarkAsPending={async (tx) => {
+                                        const { markAsPending } = await import('@/app/actions/transactions')
+                                        await markAsPending(tx.id)
+                                        router.refresh()
+                                    }}
+                                />
+                            </div>
+                        </>
                     ) : (
                         <EmptyState
                             variant="outlined"
@@ -333,6 +359,27 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                             className="flex-1 bg-neutral-900 border-neutral-800 border-dashed"
                         />
                     )}
+
+                    {/* FAB mobile — Nova transação (visível apenas em mobile) */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                className="fixed bottom-6 right-6 z-40 rounded-full shadow-lg w-14 h-14 md:hidden"
+                                size="icon"
+                                aria-label="Nova transação"
+                            >
+                                <Plus className="h-6 w-6" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" side="top" className="w-[160px] bg-neutral-900 border-neutral-800 text-neutral-50 mb-2">
+                            <DropdownMenuItem onClick={() => handleNewTransaction('revenue')} className="cursor-pointer focus:bg-neutral-800 focus:text-neutral-50">
+                                Receita
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleNewTransaction('expense')} className="cursor-pointer focus:bg-neutral-800 focus:text-neutral-50">
+                                Despesa
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
 
                     {/* New Transaction Dialog */}
                     <TransactionDialog

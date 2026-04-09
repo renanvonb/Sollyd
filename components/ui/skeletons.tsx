@@ -86,7 +86,7 @@ export function TransactionsTableSkeleton() {
     return (
         <div className="flex-1 flex flex-col overflow-hidden bg-background selection:bg-neutral-800">
             {/* Wrapper Principal Sagrado */}
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-6 overflow-hidden">
+            <div className="max-w-[1440px] mx-auto px-5 md:px-8 w-full flex-1 flex flex-col pt-5 md:pt-8 pb-5 md:pb-8 gap-5 md:gap-6 overflow-hidden">
 
                 {/* Header de Página (Área C) */}
                 <div className="flex items-center justify-between flex-none px-1">
@@ -268,8 +268,8 @@ export function DashboardSkeleton() {
     return (
         <div className="flex flex-col h-full animate-pulse bg-background font-sans overflow-hidden">
             {/* Dashboard Content - Matches the spacing after the Header */}
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-hidden">
-                <div className="flex flex-col flex-1 min-h-0 gap-4">
+            <div className="max-w-[1440px] mx-auto px-5 md:px-8 w-full flex-1 flex flex-col pt-5 md:pt-8 pb-5 md:pb-8 overflow-hidden">
+                <div className="flex flex-col flex-1 min-h-0 gap-4 md:gap-8 overflow-hidden pb-4">
                     {/* Row 1: Summary Cards */}
                     <div className="shrink-0">
                         <TransactionSummaryCards
@@ -279,9 +279,9 @@ export function DashboardSkeleton() {
                     </div>
 
                     {/* Charts Area */}
-                    <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden pr-1 pb-4">
+                    <div className="flex-none flex flex-col gap-4">
                         {/* Row 1 Charts */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 min-h-[400px]">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 min-h-[600px] md:min-h-[400px]">
                             <div className="md:col-span-3 h-full">
                                 <ChartSkeletonCard title="Balanço financeiro" />
                             </div>
@@ -291,7 +291,7 @@ export function DashboardSkeleton() {
                         </div>
 
                         {/* Row 2 Charts */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[600px] md:min-h-[400px]">
                             <div className="h-full">
                                 <ChartSkeletonCard title="Categorias" />
                             </div>
@@ -301,7 +301,7 @@ export function DashboardSkeleton() {
                         </div>
 
                         {/* Row 3 Charts */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[400px]">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0 min-h-[600px] md:min-h-[400px]">
                             <div className="h-full">
                                 <ChartSkeletonCard title="Beneficiários" />
                             </div>

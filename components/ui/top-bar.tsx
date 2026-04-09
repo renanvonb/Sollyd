@@ -1,6 +1,7 @@
 'use client';
 
-import { PanelLeftClose, PanelLeftOpen, Eye, EyeOff, Sun, Bell, Moon } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Eye, EyeOff, Sun, Moon, Menu } from 'lucide-react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { ReactNode } from 'react';
 import { useSidebar } from '@/hooks/use-sidebar-state';
@@ -59,7 +60,56 @@ export function TopBar({
 
     return (
         <TooltipProvider delayDuration={300}>
-            <header className="sticky top-0 z-30 w-[calc(100%+16px)] -ml-4 pl-4 border-b border-border bg-card dark:bg-[#0a0a0a] h-[72px] flex-none font-sans transition-colors duration-200">
+            {/* ── MOBILE Topbar (oculto em desktop) ── */}
+            <header className="sticky top-0 z-30 border-b border-border bg-card dark:bg-[#0a0a0a] h-14 flex-none font-sans flex md:hidden items-center justify-between px-4">
+                {/* Hambúrguer */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggle}
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label="Abrir menu"
+                >
+                    <Menu className="h-5 w-5" />
+                </Button>
+
+                {/* Logo */}
+                <div className="relative h-7 w-7">
+                    <Image
+                        src="/brand/symbol.png"
+                        alt="Sollyd"
+                        fill
+                        className="object-contain"
+                        style={{ filter: 'brightness(0) saturate(100%) invert(93%) sepia(46%) saturate(1272%) hue-rotate(8deg) brightness(104%) contrast(98%)' }}
+                    />
+                </div>
+
+                {/* Ações direita */}
+                <div className="flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hidden text-muted-foreground hover:text-foreground"
+                        onClick={toggleVisibility}
+                        aria-label={isVisible ? 'Ocultar valores' : 'Mostrar valores'}
+                    >
+                        {isVisible ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        aria-label="Alternar tema"
+                    >
+                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    </Button>
+                </div>
+            </header>
+
+            {/* ── DESKTOP TopBar (oculto em mobile) ── */}
+            <header className="sticky top-0 z-30 w-[calc(100%+16px)] -ml-4 pl-4 border-b border-border bg-card dark:bg-[#0a0a0a] h-[72px] flex-none font-sans transition-colors duration-200 hidden md:block">
                 <div className="max-w-[1440px] mx-auto px-8 h-full flex items-center justify-between w-full">
 
                     {/* Left: Sidebar Toggle + Module/Tab Name */}

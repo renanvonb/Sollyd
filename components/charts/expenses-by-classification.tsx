@@ -82,7 +82,7 @@ export function ExpensesByClassificationChart({ data, periodLabel, onClassificat
                 config={chartConfig}
                 className="mx-auto h-full w-full aspect-auto [&_.recharts-pie-label-text]:fill-foreground"
             >
-                <PieChart margin={{ top: 0, bottom: 40, left: 20, right: 20 }}>
+                <PieChart margin={{ top: 20, bottom: 20, left: 20, right: 20 }}>
                     <ChartTooltip
                         cursor={false}
                         content={(props) => (
@@ -123,8 +123,8 @@ export function ExpensesByClassificationChart({ data, periodLabel, onClassificat
                         data={data}
                         dataKey="amount"
                         nameKey="classification"
-                        innerRadius={isExpanded ? 120 : 65}
-                        outerRadius={isExpanded ? 180 : 95}
+                        innerRadius={isExpanded ? 120 : 60}
+                        outerRadius={isExpanded ? 180 : 85}
                         paddingAngle={2}
                         onMouseEnter={(_, index) => setActiveIndex(index)}
                         onMouseLeave={() => setActiveIndex(undefined)}
@@ -145,7 +145,7 @@ export function ExpensesByClassificationChart({ data, periodLabel, onClassificat
                                     fill="hsl(var(--muted-foreground))"
                                     textAnchor={labelX > cx ? 'start' : 'end'}
                                     dominantBaseline="central"
-                                    fontSize={isExpanded ? 14 : 11}
+                                    fontSize={isExpanded ? 12 : 9}
                                     fontWeight={600}
                                     style={{ opacity: 1, transition: 'opacity 0.2s' }}
                                 >
@@ -218,14 +218,14 @@ export function ExpensesByClassificationChart({ data, periodLabel, onClassificat
     return (
         <Dialog>
             <Card className="flex flex-col h-full hover:shadow-md transition-all">
-                <CardHeader className="flex flex-row items-center justify-between border-b shrink-0 py-4 space-y-0 group">
+                <CardHeader className="flex flex-row items-center justify-between border-b shrink-0 px-4 md:px-6 py-4 space-y-0 group">
                     <div className="flex items-center gap-2">
                         {hasData ? (
                             <DialogTrigger asChild>
-                                <CardTitle className="text-base font-semibold cursor-pointer">Classificações</CardTitle>
+                                <CardTitle className="text-sm md:text-base font-semibold cursor-pointer">Classificações</CardTitle>
                             </DialogTrigger>
                         ) : (
-                            <CardTitle className="text-base font-semibold">Classificações</CardTitle>
+                            <CardTitle className="text-sm md:text-base font-semibold">Classificações</CardTitle>
                         )}
                         {hasData && (
                             <TooltipProvider>
@@ -245,7 +245,7 @@ export function ExpensesByClassificationChart({ data, periodLabel, onClassificat
                         )}
                     </div>
                 </CardHeader>
-                <CardContent className="flex-1 pt-6 pb-0 min-h-0">
+                <CardContent className="flex-1 p-3 pt-3 pb-0 md:p-6 md:pt-6 md:pb-0 min-h-0">
                     {renderChart()}
                 </CardContent>
                 {hasData && (

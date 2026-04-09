@@ -349,24 +349,41 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
                 variant="simple"
             />
 
-            <div className="max-w-[1440px] mx-auto px-8 w-full flex-1 flex flex-col pt-8 pb-8 gap-8 overflow-hidden">
+            <div className="max-w-[1440px] mx-auto px-5 md:px-8 w-full flex-1 flex flex-col pt-5 md:pt-8 pb-5 md:pb-8 gap-5 md:gap-8 overflow-hidden">
                 {/* Page Header */}
-                <div className="flex items-center justify-between flex-none px-1">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between flex-none">
+                    {/* Título — isolado no topo em mobile */}
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground font-jakarta">
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground font-jakarta">
                             Olá, {userName.split(' ')[0]}!
                         </h1>
                     </div>
 
-                    <div id="standard-filters" className="flex items-center gap-3 font-sans justify-end flex-wrap">
-                        <AdaptiveDatePicker
-                            mode={range}
-                            value={date}
-                            onChange={handleDateChange}
-                            className="w-auto"
-                        />
+                    {/* Filtros — abaixo do título em mobile, à direita em desktop */}
+                    <div id="standard-filters" className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3 font-sans">
+                        {/* Linha de filtros rápidos: DatePicker + Status */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <AdaptiveDatePicker
+                                mode={range}
+                                value={date}
+                                onChange={handleDateChange}
+                                className="h-10"
+                            />
 
-                        <div className="relative w-[250px]">
+                            <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                                <SelectTrigger className="w-[130px] h-10 font-inter">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todas</SelectItem>
+                                    <SelectItem value="Realizado">Realizadas</SelectItem>
+                                    <SelectItem value="Pendente">Pendentes</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Busca — largura total em mobile */}
+                        <div className="relative w-full md:w-[250px]">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Buscar"
@@ -375,17 +392,6 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
                                 onChange={(e) => setSearchValue(e.target.value)}
                             />
                         </div>
-
-                        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                            <SelectTrigger className="w-[140px] h-10 font-inter">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todas</SelectItem>
-                                <SelectItem value="Realizado">Realizadas</SelectItem>
-                                <SelectItem value="Pendente">Pendentes</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
                 </div>
 
@@ -397,7 +403,7 @@ export default function DashboardClient({ initialData, userName, metrics }: Dash
                     </div>
 
                     {/* Charts Area (Fills remaining space) */}
-                    <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto pr-1 pb-4 scrollbar-hide">
+                    <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto pb-4 scrollbar-hide">
                         {/* Row 1 (Top Charts) */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 min-h-[400px]">
                             <div className="md:col-span-3 h-full">

@@ -50,12 +50,14 @@ export function MonthPicker({ value, onChange, className }: MonthPickerProps) {
                         className
                     )}
                 >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {value ? (
-                        format(value, "MMM/yyyy", { locale: ptBR }).replace(/^\w/, (c) => c.toUpperCase())
-                    ) : (
-                        <span>Selecione o mês</span>
-                    )}
+                    <CalendarIcon className="h-4 w-4" />
+                    <span>
+                        {value ? (
+                            format(value, "MMM/yyyy", { locale: ptBR }).replace(/^\w/, (c) => c.toUpperCase())
+                        ) : (
+                            "Selecione o mês"
+                        )}
+                    </span>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-3 bg-popover border-border text-popover-foreground" align="start">
